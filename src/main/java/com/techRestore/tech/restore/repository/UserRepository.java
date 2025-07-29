@@ -1,6 +1,6 @@
 package com.techRestore.tech.restore.repository;
 
-import com.techRestore.tech.restore.model.User;
+import com.techRestore.tech.restore.model.entities.User;
 
 import java.util.UUID;
 

@@ -2,7 +2,7 @@ package com.techRestore.tech.restore.services;
 
 import com.techRestore.tech.restore.dto.LoginDto;
 import com.techRestore.tech.restore.dto.UserDto;
-import com.techRestore.tech.restore.model.User;
+import com.techRestore.tech.restore.model.entities.User;
 import com.techRestore.tech.restore.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,7 +30,7 @@ public class AuthServices {
         }
 
         User user = new User();
-        user.setUsername(userDto.name());
+        user.setFirst_name(userDto.name());
         user.setEmail(userDto.email());
         user.setPassword(passwordEncoder.encode(userDto.password()));
         user.setCreatedAt(LocalDateTime.now());
