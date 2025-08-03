@@ -1,9 +1,13 @@
 package com.techRestore.tech.restore.services;
 
 import com.techRestore.tech.restore.dto.LoginDto;
+import com.techRestore.tech.restore.dto.TokenResponse;
 import com.techRestore.tech.restore.dto.UserDto;
+import com.techRestore.tech.restore.jwtImpl.JwtService;
+import com.techRestore.tech.restore.jwtImpl.RefreshTokenService;
 import com.techRestore.tech.restore.model.entities.User;
-import com.techRestore.tech.restore.repository.UserRepository;
+import com.techRestore.tech.restore.model.repository.UserRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -12,6 +16,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class AuthServices {
@@ -24,30 +30,114 @@ public class AuthServices {
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    @Autowired
+    private  JwtService jwtService;
+ 
+    @Autowired
+    private  RefreshTokenService refreshTokenService;
+
     public String register(UserDto userDto) {
+        if (userDto == null) {
+            throw new RuntimeException("User data cannot be null");
+        }
+        if (userDto.email() == null || userDto.email().trim().isEmpty()) {
+            throw new RuntimeException("Email cannot be empty");
+        }
+        if (userDto.password() == null || userDto.password().trim().isEmpty()) {
+            throw new RuntimeException("Password cannot be empty");
+        }
+        if (userDto.first_name() == null || userDto.first_name().trim().isEmpty()) {
+            throw new RuntimeException("Name cannot be empty");
+        }
+
         if (userRepository.existsByEmail(userDto.email())) {
             throw new RuntimeException("Email already exists");
         }
 
-        User user = new User();
-        user.setFirst_name(userDto.name());
-        user.setEmail(userDto.email());
-        user.setPassword(passwordEncoder.encode(userDto.password()));
-        user.setCreatedAt(LocalDateTime.now());
+        try {
+            User user = new User();
+            user.setFirst_name(userDto.first_name());
+            user.setLast_name(userDto.last_name());
+            user.setEmail(userDto.email());
+            user.setPassword(passwordEncoder.encode(userDto.password()));
+            user.setPhone(userDto.phone());
+            user.setCreatedAt(LocalDateTime.now());
 
-        User savedUser = userRepository.save(user);
-        return savedUser.getId().toString();
+            User savedUser = userRepository.save(user);
+            return savedUser.getId().toString();
+        } catch (Exception e) {
+            System.err.println("Error saving user: " + e.getMessage());
+            throw new RuntimeException("Failed to create user: " + e.getMessage());
+        }
     }
 
-    public Authentication login(LoginDto loginDto) {
+
+    
+    public TokenResponse login(LoginDto loginDto) {
         try {
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginDto.email(),
-                            loginDto.password())
+                    new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password())
             );
-            return authentication;
+            
+            String accessToken = jwtService.generateAccessToken(authentication);
+            String refreshToken = jwtService.generateRefreshToken(authentication);
+            
+            refreshTokenService.saveRefreshToken(authentication.getName(), refreshToken);
+            
+            return new TokenResponse(
+                accessToken,
+                refreshToken,
+                "Bearer",
+                15 * 60
+            );
         } catch (Exception e) {
-            throw new RuntimeException("User no found");
+            throw new RuntimeException("Invalid User");
+        }
+    }
+
+    public TokenResponse refreshToken(String refreshToken) {
+        try {
+            if (jwtService.isTokenExpired(refreshToken) || !jwtService.isRefreshToken(refreshToken)) {
+                throw new RuntimeException("Invalid refresh token");
+            }
+            
+            String username = jwtService.extractClaim(refreshToken, claims -> claims.get("username", String.class));
+            
+            if (!refreshTokenService.isValidRefreshToken(username, refreshToken)) {
+                throw new RuntimeException("Invalid refresh token");
+            }
+            
+            User user = userRepository.findByEmail(username);
+            if (user == null) {
+                throw new RuntimeException("User not found");
+            }
+            
+            Authentication authentication = new UsernamePasswordAuthenticationToken(
+                    username, null, 
+                    java.util.Collections.singletonList(() -> "USER")
+            );
+            
+            String newAccessToken = jwtService.generateAccessToken(authentication);
+            String newRefreshToken = jwtService.generateRefreshToken(authentication);
+            
+            refreshTokenService.saveRefreshToken(username, newRefreshToken);
+            
+            return new TokenResponse(
+                newAccessToken,
+                newRefreshToken,
+                "Bearer",
+                15 * 60 // rob3 sa3a
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Invalid refresh token");
+        }
+    }
+
+    public void logout(String refreshToken) {
+        try {
+            String username = jwtService.extractClaim(refreshToken, claims -> claims.get("username", String.class));
+            refreshTokenService.deleteRefreshToken(username);
+        } catch (Exception e) {
         }
     }
 }

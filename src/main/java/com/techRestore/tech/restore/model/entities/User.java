@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.techRestore.tech.restore.model.enums.Role;
+
 @Entity
 @Table(name = "users")
 @Data
@@ -31,6 +33,9 @@ public class User {
 
     @Column(name = "phone", nullable = false, unique = true, length = 20)
     private String phone;
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
 //    @Column(name = "role", nullable = false)
 //    private String role = "USER";

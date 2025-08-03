@@ -1,6 +1,8 @@
 package com.techRestore.tech.restore.contoller;
 
 import com.techRestore.tech.restore.dto.LoginDto;
+import com.techRestore.tech.restore.dto.RefreshTokenDto;
+import com.techRestore.tech.restore.dto.TokenResponse;
 import com.techRestore.tech.restore.dto.UserDto;
 import com.techRestore.tech.restore.services.AuthServices;
 import lombok.RequiredArgsConstructor;
@@ -17,19 +19,43 @@ public class UserController {
     public ResponseEntity<String> create(@RequestBody UserDto userDto) {
         try {
             String id = authServices.register(userDto);
-            return ResponseEntity.ok("ok id: " + id);
+            return ResponseEntity.ok("User created successfully with ID: " + id);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("Email already exists")) {
+                return ResponseEntity.badRequest().body("Email already exists");
+            }
+            return ResponseEntity.badRequest().body("Registration failed: " + e.getMessage());
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("Email is already Exist");
+            System.err.println("Unexpected error during registration: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body("An unexpected error occurred");
         }
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginDto loginDto) {
+    public ResponseEntity<TokenResponse> login(@RequestBody LoginDto loginDto) {
         try {
-            authServices.login(loginDto);
-            return ResponseEntity.ok().body("login success");
+            TokenResponse tokens = authServices.login(loginDto);
+            return ResponseEntity.ok(tokens);
         } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body("User not found");
+            return ResponseEntity.badRequest().build();
         }
     }
+    
+    @PostMapping("/refresh-token")
+    public ResponseEntity<TokenResponse> refreshToken(@RequestBody RefreshTokenDto refreshTokenDto) {
+        try {
+            TokenResponse tokens = authServices.refreshToken(refreshTokenDto.refreshToken());
+            return ResponseEntity.ok(tokens);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestBody RefreshTokenDto refreshTokenDto) {
+        authServices.logout(refreshTokenDto.refreshToken());
+        return ResponseEntity.ok("Logged out successfully");
+    }
+
 }

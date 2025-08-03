@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.config;
 
+import com.techRestore.tech.restore.filter.JWTAuthenticationFilter;
 import com.techRestore.tech.restore.filter.JWTTokenGeneratorFilter;
 import com.techRestore.tech.restore.security.services.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -28,7 +30,8 @@ import java.util.List;
 public class AppConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
-    private final JWTTokenGeneratorFilter jwtTokenGeneratorFilter;
+    // private final JWTTokenGeneratorFilter jwtTokenGeneratorFilter;
+    private final JWTAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -37,10 +40,11 @@ public class AppConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(corsConfig -> corsConfig.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(requests -> requests
-                .requestMatchers("/api/auth/create", "/api/auth/login").permitAll()
-                        .requestMatchers("/api/auth/home").authenticated())
+                        .requestMatchers("/api/auth/create", "/api/auth/login", "/api/auth/refresh").permitAll()
+                        .requestMatchers("/api/auth/home", "/api/auth/logout").authenticated()
+                        .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
-                .addFilterAfter(jwtTokenGeneratorFilter, BasicAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -67,6 +71,7 @@ public class AppConfig {
         return config.getAuthenticationManager();
     }
 
+    // @SuppressWarnings("deprecation")
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();

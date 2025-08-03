@@ -1,4 +1,4 @@
-package com.techRestore.tech.restore.repository;
+package com.techRestore.tech.restore.model.repository;
 
 import com.techRestore.tech.restore.model.entities.User;
 
