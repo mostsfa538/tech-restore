@@ -6,7 +6,7 @@ import com.techRestore.tech.restore.dto.UserDto;
 import com.techRestore.tech.restore.jwtImpl.JwtService;
 import com.techRestore.tech.restore.jwtImpl.RefreshTokenService;
 import com.techRestore.tech.restore.model.entities.User;
-import com.techRestore.tech.restore.model.repository.UserRepository;
+import com.techRestore.tech.restore.repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,8 +16,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
 
 @Service
 public class AuthServices {

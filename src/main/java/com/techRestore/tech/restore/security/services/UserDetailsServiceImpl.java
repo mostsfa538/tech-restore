@@ -1,7 +1,7 @@
 package com.techRestore.tech.restore.security.services;
 
 import com.techRestore.tech.restore.model.entities.User;
-import com.techRestore.tech.restore.model.repository.UserRepository;
+import com.techRestore.tech.restore.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
