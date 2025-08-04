@@ -2,7 +2,7 @@ package com.techRestore.tech.restore.services.auth;
 
 import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
-import com.techRestore.tech.restore.dto.user.UserDto;
+import com.techRestore.tech.restore.dto.auth.UserRegistration;
 import com.techRestore.tech.restore.security.jwt.JwtService;
 import com.techRestore.tech.restore.security.jwt.RefreshTokenService;
 import com.techRestore.tech.restore.model.entities.User;
@@ -34,31 +34,31 @@ public class AuthServices {
     @Autowired
     private  RefreshTokenService refreshTokenService;
 
-    public String register(UserDto userDto) {
-        if (userDto == null) {
+    public String register(UserRegistration userRegistration) {
+        if (userRegistration == null) {
             throw new RuntimeException("User data cannot be null");
         }
-        if (userDto.email() == null || userDto.email().trim().isEmpty()) {
+        if (userRegistration.email() == null || userRegistration.email().trim().isEmpty()) {
             throw new RuntimeException("Email cannot be empty");
         }
-        if (userDto.password() == null || userDto.password().trim().isEmpty()) {
+        if (userRegistration.password() == null || userRegistration.password().trim().isEmpty()) {
             throw new RuntimeException("Password cannot be empty");
         }
-        if (userDto.first_name() == null || userDto.first_name().trim().isEmpty()) {
+        if (userRegistration.first_name() == null || userRegistration.first_name().trim().isEmpty()) {
             throw new RuntimeException("Name cannot be empty");
         }
 
-        if (userRepository.existsByEmail(userDto.email())) {
+        if (userRepository.existsByEmail(userRegistration.email())) {
             throw new RuntimeException("Email already exists");
         }
 
         try {
             User user = new User();
-            user.setFirst_name(userDto.first_name());
-            user.setLast_name(userDto.last_name());
-            user.setEmail(userDto.email());
-            user.setPassword(passwordEncoder.encode(userDto.password()));
-            user.setPhone(userDto.phone());
+            user.setFirst_name(userRegistration.first_name());
+            user.setLast_name(userRegistration.last_name());
+            user.setEmail(userRegistration.email());
+            user.setPassword(passwordEncoder.encode(userRegistration.password()));
+            user.setPhone(userRegistration.phone());
             user.setCreatedAt(LocalDateTime.now());
 
             User savedUser = userRepository.save(user);

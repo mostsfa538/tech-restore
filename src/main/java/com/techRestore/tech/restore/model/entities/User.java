@@ -35,7 +35,7 @@ public class User {
     private String phone;
 
     @Enumerated(EnumType.STRING)
-    private Role role;
+    private Role role = Role.GUEST;
 
 //    @Column(name = "role", nullable = false)
 //    private String role = "USER";

@@ -3,7 +3,7 @@ package com.techRestore.tech.restore.controller.auth;
 import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.RefreshTokenDto;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
-import com.techRestore.tech.restore.dto.user.UserDto;
+import com.techRestore.tech.restore.dto.auth.UserRegistration;
 import com.techRestore.tech.restore.services.auth.AuthServices;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,9 +16,9 @@ public class UserAuthController {
     private final AuthServices authServices;
 
     @PostMapping("/create")
-    public ResponseEntity<String> create(@RequestBody UserDto userDto) {
+    public ResponseEntity<String> create(@RequestBody UserRegistration userRegistration) {
         try {
-            String id = authServices.register(userDto);
+            String id = authServices.register(userRegistration);
             return ResponseEntity.ok("User created successfully with ID: " + id);
         } catch (RuntimeException e) {
             if (e.getMessage().contains("Email already exists")) {
@@ -38,6 +38,7 @@ public class UserAuthController {
             TokenResponse tokens = authServices.login(loginDto);
             return ResponseEntity.ok(tokens);
         } catch (RuntimeException e) {
+            System.out.println(e.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }

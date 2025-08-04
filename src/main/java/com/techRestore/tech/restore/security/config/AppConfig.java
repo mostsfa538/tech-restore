@@ -1,13 +1,11 @@
 package com.techRestore.tech.restore.security.config;
 
 import com.techRestore.tech.restore.security.filter.JWTAuthenticationFilter;
+import com.techRestore.tech.restore.security.userdetails.ShopDetailsServiceImpl;
 import com.techRestore.tech.restore.security.userdetails.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -28,7 +26,7 @@ import java.util.List;
 public class AppConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
-    // private final JWTTokenGeneratorFilter jwtTokenGeneratorFilter;
+    private final ShopDetailsServiceImpl shopDetailsService;
     private final JWTAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
@@ -38,10 +36,11 @@ public class AppConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(corsConfig -> corsConfig.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/api/auth/create", "/api/auth/login", "/api/auth/refresh").permitAll()
+                        .requestMatchers("/api/auth/create", "/api/auth/login", "/api/auth/refresh", "/api/auth/shops/**").permitAll()
                         .requestMatchers("/api/auth/home", "/api/auth/logout").authenticated()
                         .anyRequest().authenticated())
-                .authenticationProvider(authenticationProvider())
+                .authenticationManager(customAuthenticationManager())
+
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -65,16 +64,11 @@ public class AppConfig {
         return source;
     }
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
-    }
-
-    // @SuppressWarnings("deprecation")
-    @Bean
-    public DaoAuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return authProvider;
-    }
+    public CustomAuthenticationManager customAuthenticationManager() {
+        return new CustomAuthenticationManager(
+                userDetailsService,
+                shopDetailsService,
+                passwordEncoder()
+        );
+}
 }
