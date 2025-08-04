@@ -1,8 +1,8 @@
-package com.techRestore.tech.restore.filter;
+package com.techRestore.tech.restore.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.techRestore.tech.restore.dto.ErrorResponse;
-import com.techRestore.tech.restore.jwtImpl.JwtService;
+import com.techRestore.tech.restore.dto.common.ErrorResponse;
+import com.techRestore.tech.restore.security.jwt.JwtService;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

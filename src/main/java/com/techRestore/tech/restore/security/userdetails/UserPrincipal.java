@@ -1,4 +1,4 @@
-package com.techRestore.tech.restore.security.services;
+package com.techRestore.tech.restore.security.userdetails;
 
 import com.techRestore.tech.restore.model.entities.User;
 import lombok.RequiredArgsConstructor;

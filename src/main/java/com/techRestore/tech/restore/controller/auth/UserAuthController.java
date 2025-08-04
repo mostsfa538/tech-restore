@@ -1,10 +1,10 @@
-package com.techRestore.tech.restore.contoller;
+package com.techRestore.tech.restore.controller.auth;
 
-import com.techRestore.tech.restore.dto.LoginDto;
-import com.techRestore.tech.restore.dto.RefreshTokenDto;
-import com.techRestore.tech.restore.dto.TokenResponse;
-import com.techRestore.tech.restore.dto.UserDto;
-import com.techRestore.tech.restore.services.AuthServices;
+import com.techRestore.tech.restore.dto.auth.LoginDto;
+import com.techRestore.tech.restore.dto.auth.RefreshTokenDto;
+import com.techRestore.tech.restore.dto.auth.TokenResponse;
+import com.techRestore.tech.restore.dto.user.UserDto;
+import com.techRestore.tech.restore.services.auth.AuthServices;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/auth")
-public class UserController {
+public class UserAuthController {
     private final AuthServices authServices;
 
     @PostMapping("/create")

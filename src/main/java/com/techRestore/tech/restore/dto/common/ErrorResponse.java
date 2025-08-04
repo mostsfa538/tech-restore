@@ -1,4 +1,4 @@
-package com.techRestore.tech.restore.dto;
+package com.techRestore.tech.restore.dto.common;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

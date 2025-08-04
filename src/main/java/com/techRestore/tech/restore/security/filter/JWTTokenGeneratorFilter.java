@@ -1,4 +1,4 @@
-package com.techRestore.tech.restore.filter;
+package com.techRestore.tech.restore.security.filter;
 
 import io.jsonwebtoken.Jwts;
 import jakarta.servlet.FilterChain;

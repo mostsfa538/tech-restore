@@ -1,10 +1,10 @@
-package com.techRestore.tech.restore.services;
+package com.techRestore.tech.restore.services.auth;
 
-import com.techRestore.tech.restore.dto.LoginDto;
-import com.techRestore.tech.restore.dto.TokenResponse;
-import com.techRestore.tech.restore.dto.UserDto;
-import com.techRestore.tech.restore.jwtImpl.JwtService;
-import com.techRestore.tech.restore.jwtImpl.RefreshTokenService;
+import com.techRestore.tech.restore.dto.auth.LoginDto;
+import com.techRestore.tech.restore.dto.auth.TokenResponse;
+import com.techRestore.tech.restore.dto.user.UserDto;
+import com.techRestore.tech.restore.security.jwt.JwtService;
+import com.techRestore.tech.restore.security.jwt.RefreshTokenService;
 import com.techRestore.tech.restore.model.entities.User;
 import com.techRestore.tech.restore.repository.UserRepository;
 

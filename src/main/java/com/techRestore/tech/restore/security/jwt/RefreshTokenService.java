@@ -1,4 +1,4 @@
-package com.techRestore.tech.restore.jwtImpl;
+package com.techRestore.tech.restore.security.jwt;
 
 import org.springframework.stereotype.Service;
 
