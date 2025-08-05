@@ -24,10 +24,13 @@ public class RepairRequest {
     @Column(name = "shop_id")
     private UUID shopId;
 
-    @Column(name = "device_category")
-    private String deviceCategory;
+    @Column(name = "device_category", nullable = false)
+    private Integer deviceCategory;
 
     private String description;
+
+    @Column(name = "delivery_address", nullable = false)
+    private UUID deliveryAddress;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method")
@@ -46,6 +49,9 @@ public class RepairRequest {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "payment_id")
+    private UUID paymentId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User user;
@@ -55,8 +61,8 @@ public class RepairRequest {
     private Shop shop;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "delivery_address_id", insertable = false, updatable = false)
-    private Address deliveryAddress;
+    @JoinColumn(name = "delivery_address", insertable = false, updatable = false)
+    private Address deliveryAddressEntity;
 
     // One repair request can have one payment
     @OneToOne(mappedBy = "repairRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

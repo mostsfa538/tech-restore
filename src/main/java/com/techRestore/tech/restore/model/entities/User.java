@@ -31,14 +31,12 @@ public class User {
     @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
-    @Column(name = "phone", nullable = false, unique = true, length = 20)
+    @Column(name = "phone", length = 20)
     private String phone;
 
     @Enumerated(EnumType.STRING)
     private Role role = Role.GUEST;
 
-//    @Column(name = "role", nullable = false)
-//    private String role = "USER";
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

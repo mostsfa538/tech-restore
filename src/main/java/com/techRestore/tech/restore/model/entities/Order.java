@@ -39,6 +39,9 @@ public class Order {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "payment_id")
+    private UUID paymentId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User user;

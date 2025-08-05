@@ -21,10 +21,8 @@ public class Review {
     @Column(name = "shop_id")
     private UUID shopId;
 
-    @Column(nullable = false)
     private int rating;
 
-    @Column(nullable = false)
     private String comment;
 
     @Column(name = "created_at")

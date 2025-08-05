@@ -29,7 +29,7 @@ public class Address {
     @Column(name = "building", nullable = false, length = 50)
     private String building;
 
-    @Column(name = "notes", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
     @Column(name = "is_default", nullable = false)

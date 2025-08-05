@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.model.entities;
 
+import com.techRestore.tech.restore.model.enums.ContractType;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -32,11 +33,18 @@ public class Shop {
     @Column(nullable = false)
     private Boolean verified = false;
 
-    @Column(nullable = false, length = 20)
+    @Column(name = "phone", length = 20)
     private String phone;
 
     @Column(precision = 10, scale = 2)
     private BigDecimal rating;
+
+    @Column(name = "contract_type")
+    @Enumerated(EnumType.STRING)
+    private ContractType contractType;
+
+    @Column(name = "revenue_percentage", precision = 10, scale = 2)
+    private BigDecimal revenuePercentage;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
