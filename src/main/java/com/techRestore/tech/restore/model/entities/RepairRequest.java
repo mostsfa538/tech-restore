@@ -25,7 +25,7 @@ public class RepairRequest {
     private UUID shopId;
 
     @Column(name = "device_category", nullable = false)
-    private Integer deviceCategory;
+    private UUID deviceCategory;
 
     private String description;
 
