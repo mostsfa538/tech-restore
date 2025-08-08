@@ -46,6 +46,8 @@ public class RepairRequest {
     @Column(precision = 10, scale = 2)
     private BigDecimal price;
 
+    private boolean confirmed = false;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
