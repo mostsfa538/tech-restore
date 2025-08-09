@@ -2,6 +2,8 @@ package com.techRestore.tech.restore.model.entities;
 
 import com.techRestore.tech.restore.model.enums.DeliveryMethod;
 import com.techRestore.tech.restore.model.enums.PaymentMethod;
+import com.techRestore.tech.restore.model.enums.RepairStatus;
+
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -47,6 +49,10 @@ public class RepairRequest {
     private BigDecimal price;
 
     private boolean confirmed = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private RepairStatus status = RepairStatus.SUBMITTED;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
