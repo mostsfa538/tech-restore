@@ -1,0 +1,17 @@
+package com.techRestore.tech.restore.repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import com.techRestore.tech.restore.model.entities.OrderItem;
+
+@Repository
+public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
+    Optional<OrderItem> findByIdAndOrderId(UUID id, UUID orderId);
+    Optional<OrderItem> findByOrderIdAndDeviceId(UUID orderId, UUID deviceId);
+    List<OrderItem> findByOrderId(UUID orderId);
+}

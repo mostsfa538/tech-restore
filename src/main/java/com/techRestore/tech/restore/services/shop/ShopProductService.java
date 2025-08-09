@@ -30,24 +30,23 @@ public class ShopProductService {
 
     public Product addProductToShop(UUID shopId, CreateProductDto createProductDto) {
         Shop shop = shopRepository.findById(shopId)
-                .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
+            .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
 
         Product product = new Product();
-        product.setShop(shop);
+        product.setShopId(shop.getId()); 
         product.setName(createProductDto.name());
         product.setDescription(createProductDto.description());
         product.setPrice(createProductDto.price());
         product.setImageUrl(createProductDto.imageUrl());
-        product.setCategory(createProductDto.category());
+        product.setCategoryId(createProductDto.category().getId());
         product.setStock(createProductDto.stockQuantity());
         product.setCondition(createProductDto.condition());
 
-        Product savedProduct = productRepository.save(product);
+        shop.getProducts().add(product);
 
-        shop.getProducts().add(savedProduct);
-
-        return savedProduct;
+        return productRepository.save(product);
     }
+
 
     public void updateProduct(UUID productId, UpdateProductDto updateProductDto) {
         Product product = productRepository.findById(productId)
