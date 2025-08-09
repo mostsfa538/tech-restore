@@ -30,7 +30,7 @@ public record CreateProductDto(
 
         @NotNull(message = "Stock quantity cannot be null")
         @Min(value = 0, message = "Stock quantity cannot be negative")
-                Integer stockQuantity,
+        Integer stockQuantity,
 
         @NotNull(message = "Product condition cannot be null")
         ProductCondition condition
