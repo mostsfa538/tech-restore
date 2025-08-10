@@ -38,7 +38,7 @@ public class AppConfig {
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/api/auth/create", "/api/auth/login", "/api/auth/refresh", "/api/auth/shops/**").permitAll()
                         .requestMatchers("/api/auth/home", "/api/auth/logout").authenticated()
-                        .requestMatchers("/api/shops/**", "/api/products/**", "/api/user/**").permitAll()
+                        .requestMatchers("/api/shops/**", "/api/products/**", "/api/user/**", "/api/categories/**").permitAll()
                         .anyRequest().authenticated())
                 .authenticationManager(customAuthenticationManager())
 
