@@ -1,6 +1,7 @@
 package com.techRestore.tech.restore.controller.shop;
 
 import com.techRestore.tech.restore.dto.product.CreateProductDto;
+import com.techRestore.tech.restore.dto.product.ProductResponseDTO;
 import com.techRestore.tech.restore.dto.product.UpdateProductDto;
 import com.techRestore.tech.restore.dto.shop.StockUpdateRequest;
 import com.techRestore.tech.restore.model.entities.Product;
@@ -72,12 +73,6 @@ public class ShopProductController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/category/{category}")
-    public ResponseEntity<List<Product>> getShopProductsWithCategory(@PathVariable String category) {
-        UUID shopId = getCurrentShopId();
-        List<Product> products = shopProductService.getShopProductsWithCategory(shopId, category);
-        return ResponseEntity.ok(products);
-    }
 
     @PatchMapping("/{productId}/stock")
     public ResponseEntity<Void> updateProductStock(

@@ -4,8 +4,10 @@ import com.techRestore.tech.restore.dto.product.CreateProductDto;
 import com.techRestore.tech.restore.dto.product.UpdateProductDto;
 import com.techRestore.tech.restore.dto.shop.StockUpdateRequest;
 import com.techRestore.tech.restore.exception.NotFoundException;
+import com.techRestore.tech.restore.model.entities.Category;
 import com.techRestore.tech.restore.model.entities.Product;
 import com.techRestore.tech.restore.model.entities.Shop;
+import com.techRestore.tech.restore.repository.CategoryRepository;
 import com.techRestore.tech.restore.repository.ProductRepository;
 import com.techRestore.tech.restore.repository.ShopRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,9 @@ public class ShopProductService {
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private CategoryRepository categoryRepository;
+
     public List<Product> getProductsByShopId(UUID shopId) {
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
@@ -33,16 +38,33 @@ public class ShopProductService {
             .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
 
         Product product = new Product();
-        product.setShopId(shop.getId()); 
+        product.setShopId(shopId);
         product.setName(createProductDto.name());
         product.setDescription(createProductDto.description());
         product.setPrice(createProductDto.price());
         product.setImageUrl(createProductDto.imageUrl());
-        product.setCategoryId(createProductDto.category().getId());
         product.setStock(createProductDto.stockQuantity());
         product.setCondition(createProductDto.condition());
 
-        shop.getProducts().add(product);
+        if (createProductDto.category() != null) {
+            Category category;
+
+            if (createProductDto.category().getId() != null) {
+                category = categoryRepository.findById(createProductDto.category().getId())
+                        .orElseThrow(() -> new NotFoundException("Category not found"));
+            } else if (createProductDto.category().getName() != null) {
+                category = categoryRepository.findByName(createProductDto.category().getName())
+                        .orElseGet(() -> {
+                            Category newCategory = new Category();
+                            newCategory.setName(createProductDto.category().getName());
+                            return categoryRepository.save(newCategory);
+                        });
+            } else {
+                throw new RuntimeException("Category must have either ID or name");
+            }
+
+            product.setCategory(category);
+        }
 
         return productRepository.save(product);
     }
@@ -82,10 +104,6 @@ public class ShopProductService {
             throw new NotFoundException("Product not found with id: " + productId);
         }
         productRepository.deleteById(productId);
-    }
-
-    public List<Product> getShopProductsWithCategory(UUID shopId, String category) {
-        return productRepository.findByCategoryWithShopIdAndCategory(shopId, category);
     }
 
     public void updateProductStock(UUID shopId, UUID productId, StockUpdateRequest stockUpdateRequest) {
