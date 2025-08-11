@@ -1,10 +1,11 @@
 package com.techRestore.tech.restore.controller.admin;
 
+import com.techRestore.tech.restore.dto.common.SearchRequest;
 import com.techRestore.tech.restore.dto.shop.ShopResponseDto;
 import com.techRestore.tech.restore.dto.user.ResponseUsersDto;
 import com.techRestore.tech.restore.dto.user.UpdateRoleRequest;
 import com.techRestore.tech.restore.model.entities.RepairRequest;
-import com.techRestore.tech.restore.model.enums.Role;
+import com.techRestore.tech.restore.model.entities.Shop;
 import com.techRestore.tech.restore.services.admin.AdminServices;
 import com.techRestore.tech.restore.services.repair.RepairRequestService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +50,24 @@ public class AdminController {
     public ResponseEntity<List<ShopResponseDto>> getAllShops() {
         return ResponseEntity.ok().body(adminServices.getShops());
     }
+
+    @GetMapping("/shops/{shopId}")
+    public ResponseEntity<ShopResponseDto> getShopById(@PathVariable UUID shopId) {
+        return ResponseEntity.ok().body(adminServices.getShopById(shopId));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteShopById(@PathVariable UUID id) {
+        adminServices.deleteShop(id);
+        return ResponseEntity.ok().body("Removed Success");
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<?> searchByName(@RequestBody SearchRequest searchRequest) {
+        List<Shop> shop = adminServices.search(searchRequest.name());
+        return  ResponseEntity.ok().body(shop);
+    }
+
 
     @GetMapping("/shops/approved")
     public ResponseEntity<List<ShopResponseDto>> getAllApprovedShops() {

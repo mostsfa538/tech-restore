@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -53,7 +54,24 @@ public class AdminServices {
                 .toList();
     }
 
+    public ShopResponseDto getShopById(UUID shopId){
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> new NotFoundException("Shop not Found"));
 
+        return toShopDto(shop);
+    }
+
+    public void deleteShop(UUID id) {
+        Optional<Shop> findShop = shopRepository.findById(id);
+        if (findShop.isEmpty()) {
+            throw new NotFoundException("Shop Not Found");
+        }
+        shopRepository.deleteById(id);
+    }
+
+    public List<Shop> search(String name) {
+        return shopRepository.findByName(name);
+    }
 
     public void updateRole(UUID id, Role role) {
         User user = userRepository.findById(id)
