@@ -3,6 +3,7 @@ package com.techRestore.tech.restore.services.auth;
 import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.dto.auth.UserRegistration;
+import com.techRestore.tech.restore.model.enums.Role;
 import com.techRestore.tech.restore.security.jwt.JwtService;
 import com.techRestore.tech.restore.security.jwt.RefreshTokenService;
 import com.techRestore.tech.restore.model.entities.User;
@@ -12,10 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 
 @Service
 public class AuthServices {
@@ -57,6 +60,7 @@ public class AuthServices {
             user.setFirst_name(userRegistration.first_name());
             user.setLast_name(userRegistration.last_name());
             user.setEmail(userRegistration.email());
+            user.setRole(Role.GUEST);
             user.setPassword(passwordEncoder.encode(userRegistration.password()));
             user.setPhone(userRegistration.phone());
             user.setCreatedAt(LocalDateTime.now());
@@ -88,7 +92,7 @@ public class AuthServices {
                 "Bearer",
                 15 * 60
             );
-        } catch (Exception e) {
+        } catch (Exception e)    {
             throw new RuntimeException("Invalid User");
         }
     }
@@ -109,10 +113,10 @@ public class AuthServices {
             if (user == null) {
                 throw new RuntimeException("User not found");
             }
-            
+
             Authentication authentication = new UsernamePasswordAuthenticationToken(
-                    username, null, 
-                    java.util.Collections.singletonList(() -> "USER")
+                    username, null,
+                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
             );
             
             String newAccessToken = jwtService.generateAccessToken(authentication);

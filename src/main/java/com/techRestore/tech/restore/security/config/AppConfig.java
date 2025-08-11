@@ -39,6 +39,7 @@ public class AppConfig {
                         .requestMatchers("/api/auth/create", "/api/auth/login", "/api/auth/refresh", "/api/auth/shops/**").permitAll()
                         .requestMatchers("/api/auth/home", "/api/auth/logout").authenticated()
                         .requestMatchers("/api/shops/**", "/api/products/**", "/api/user/**", "/api/categories/**").permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .authenticationManager(customAuthenticationManager())
 
