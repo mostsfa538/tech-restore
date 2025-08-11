@@ -9,7 +9,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,16 +16,6 @@ import java.util.UUID;
 public class ShopServices {
     @Autowired
     private ShopRepository shopRepository;
-
-    public List<Shop> getShops() {
-        return shopRepository.findAll();
-    }
-
-    public ShopResponseDto getShopById(UUID id) {
-        Shop shop = shopRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Shop not found with id: " + id));
-        return toShopDto(shop);
-    }
 
     @PreAuthorize("hasRole('SHOP_OWNER')")
     public void updateShop(UUID id, ShopUpdateRequest shopUpdateRequest) {
@@ -45,19 +34,6 @@ public class ShopServices {
             shop.setPhone(shopUpdateRequest.phone());
         }
         shopRepository.save(shop);
-    }
-
-    @PreAuthorize("hasRole('ADMIN')")
-    public void deleteShop(UUID id) {
-        Optional<Shop> findShop = shopRepository.findById(id);
-        if (findShop.isEmpty()) {
-            throw new NotFoundException("Shop Not Found");
-        }
-        shopRepository.deleteById(id);
-    }
-
-    public List<Shop> search(String name) {
-        return shopRepository.findByName(name);
     }
 
     public ShopResponseDto toShopDto(Shop shop) {
