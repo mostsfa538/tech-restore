@@ -63,7 +63,7 @@ public class RepairRequestService {
         repairRequest.setDeliveryAddress(requestCreateDto.deliveryAddress());
         repairRequest.setDescription(requestCreateDto.description());
         repairRequest.setDeliveryMethod(requestCreateDto.deliveryMethod());
-        repairRequest.setDeviceCategory(requestCreateDto.deviceCategory());
+        repairRequest.setCategoryId(requestCreateDto.deviceCategory());
         repairRequest.setPaymentMethod(requestCreateDto.paymentMethod());
         repairRequest.setConfirmed(false);
 
@@ -98,7 +98,7 @@ public class RepairRequestService {
         repairRequest.setDeliveryAddress(requestCreateDto.deliveryAddress());
         repairRequest.setDescription(requestCreateDto.description());
         repairRequest.setDeliveryMethod(requestCreateDto.deliveryMethod());
-        repairRequest.setDeviceCategory(requestCreateDto.deviceCategory());
+        repairRequest.setCategoryId(requestCreateDto.deviceCategory());
         repairRequest.setPaymentMethod(requestCreateDto.paymentMethod());
 
         RepairRequest updatedRepairRequest = repairRequestRepository.save(repairRequest);
@@ -138,7 +138,7 @@ public class RepairRequestService {
                 repairRequest.getPaymentId(),
                 repairRequest.getDescription(),
                 repairRequest.getDeliveryMethod().name(),
-                repairRequest.getDeviceCategory(),
+                repairRequest.getCategoryId(),
                 repairRequest.getPaymentMethod().name(),
                 repairRequest.isConfirmed(),
                 repairRequest.getStatus()
