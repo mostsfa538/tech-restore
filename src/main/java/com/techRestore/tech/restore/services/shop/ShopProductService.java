@@ -1,6 +1,7 @@
 package com.techRestore.tech.restore.services.shop;
 
 import com.techRestore.tech.restore.dto.product.CreateProductDto;
+import com.techRestore.tech.restore.dto.product.ProductResponseDTO;
 import com.techRestore.tech.restore.dto.product.UpdateProductDto;
 import com.techRestore.tech.restore.dto.shop.StockUpdateRequest;
 import com.techRestore.tech.restore.exception.NotFoundException;
@@ -27,14 +28,17 @@ public class ShopProductService {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    public List<Product> getProductsByShopId(UUID shopId) {
+    public List<ProductResponseDTO> getProductsByShopId(UUID shopId) {
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
-        return shop.getProducts();
+        return shop.getProducts()
+                .stream()
+                .map(this::convertDto)
+                .toList();
     }
 
-    public Product addProductToShop(UUID shopId, CreateProductDto createProductDto) {
-        Shop shop = shopRepository.findById(shopId)
+    public ProductResponseDTO addProductToShop(UUID shopId, CreateProductDto createProductDto) {
+        shopRepository.findById(shopId)
             .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
 
         Product product = new Product();
@@ -48,17 +52,9 @@ public class ShopProductService {
 
         if (createProductDto.category() != null) {
             Category category;
-
             if (createProductDto.category().getId() != null) {
                 category = categoryRepository.findById(createProductDto.category().getId())
                         .orElseThrow(() -> new NotFoundException("Category not found"));
-            } else if (createProductDto.category().getName() != null) {
-                category = categoryRepository.findByName(createProductDto.category().getName())
-                        .orElseGet(() -> {
-                            Category newCategory = new Category();
-                            newCategory.setName(createProductDto.category().getName());
-                            return categoryRepository.save(newCategory);
-                        });
             } else {
                 throw new RuntimeException("Category must have either ID or name");
             }
@@ -66,11 +62,12 @@ public class ShopProductService {
             product.setCategory(category);
         }
 
-        return productRepository.save(product);
+        productRepository.save(product);
+        return convertDto(product);
     }
 
 
-    public void updateProduct(UUID productId, UpdateProductDto updateProductDto) {
+    public ProductResponseDTO updateProduct(UUID productId, UpdateProductDto updateProductDto) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + productId));
 
@@ -97,6 +94,8 @@ public class ShopProductService {
         }
 
         productRepository.save(product);
+
+        return convertDto(product);
     }
 
     public void deleteProduct(UUID productId) {
@@ -106,7 +105,7 @@ public class ShopProductService {
         productRepository.deleteById(productId);
     }
 
-    public void updateProductStock(UUID shopId, UUID productId, StockUpdateRequest stockUpdateRequest) {
+    public ProductResponseDTO updateProductStock(UUID shopId, UUID productId, StockUpdateRequest stockUpdateRequest) {
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
 
@@ -118,5 +117,21 @@ public class ShopProductService {
 
         product.setStock(stockUpdateRequest.newStock());
         productRepository.save(product);
+
+        return convertDto(product);
+    }
+
+    private ProductResponseDTO convertDto(Product product) {
+        return new ProductResponseDTO(
+                product.getId(),
+                product.getName(),
+                product.getDescription(),
+                product.getPrice(),
+                product.getStock(),
+                product.getImageUrl(),
+                product.getCondition(),
+                product.getCreatedAt(),
+                product.getCategory() != null ? product.getCategory().getName() : null
+        );
     }
 }
