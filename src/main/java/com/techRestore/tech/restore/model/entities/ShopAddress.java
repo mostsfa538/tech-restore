@@ -1,15 +1,15 @@
 package com.techRestore.tech.restore.model.entities;
 
+
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "address")
+@Table(name = "shop_address")
 @Data
-public class Address {
+public class ShopAddress {
     @Id
     @GeneratedValue
     @Column(name = "id", nullable = false, unique = true)
@@ -34,14 +34,6 @@ public class Address {
     private boolean isDefault;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    private User user;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
-
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
+    @JoinColumn(name = "shop_id")
+    private Shop shop;
 }

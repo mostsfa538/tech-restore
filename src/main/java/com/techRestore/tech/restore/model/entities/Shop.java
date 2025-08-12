@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.model.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.techRestore.tech.restore.model.enums.ContractType;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -60,6 +61,16 @@ public class Shop {
 
     @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Review> reviews;
+
+    @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Chat> chats;
+
+    @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Message> sentMessages;
+
+    @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<ShopAddress> addresses;
 
     @PrePersist
     protected void onCreate() {

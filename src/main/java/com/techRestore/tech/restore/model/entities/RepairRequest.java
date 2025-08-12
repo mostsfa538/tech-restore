@@ -27,11 +27,11 @@ public class RepairRequest {
     private UUID shopId;
 
     @Column(name = "device_category", nullable = false)
-    private UUID deviceCategory;
+    private UUID categoryId;
 
     private String description;
 
-    @Column(name = "delivery_address", nullable = false)
+    @Column(name = "delivery_address_id", nullable = false)
     private UUID deliveryAddress;
 
     @Enumerated(EnumType.STRING)
@@ -41,9 +41,6 @@ public class RepairRequest {
     @Enumerated(EnumType.STRING)
     @Column(name = "delivery_method")
     private DeliveryMethod deliveryMethod;
-
-    @Column(name = "delivery_address_id")
-    private UUID deliveryAddressId;
 
     @Column(precision = 10, scale = 2)
     private BigDecimal price;
@@ -72,9 +69,12 @@ public class RepairRequest {
     @JoinColumn(name = "delivery_address", insertable = false, updatable = false)
     private Address deliveryAddressEntity;
 
-    // One repair request can have one payment
     @OneToOne(mappedBy = "repairRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private RepairPayment repairPayment;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
 
     @PrePersist
     protected void onCreate() {
