@@ -4,7 +4,6 @@ import com.techRestore.tech.restore.dto.product.CreateProductDto;
 import com.techRestore.tech.restore.dto.product.ProductResponseDTO;
 import com.techRestore.tech.restore.dto.product.UpdateProductDto;
 import com.techRestore.tech.restore.dto.shop.StockUpdateRequest;
-import com.techRestore.tech.restore.model.entities.Product;
 import com.techRestore.tech.restore.model.entities.Shop;
 import com.techRestore.tech.restore.repository.ShopRepository;
 import com.techRestore.tech.restore.services.shop.ShopProductService;
@@ -45,26 +44,25 @@ public class ShopProductController {
 
 
     @GetMapping
-    public ResponseEntity<List<Product>> getProductsByCurrentShop() {
+    public ResponseEntity<List<ProductResponseDTO>> getProductsByCurrentShop() {
         UUID shopId = getCurrentShopId();
-        List<Product> products = shopProductService.getProductsByShopId(shopId);
+        List<ProductResponseDTO> products = shopProductService.getProductsByShopId(shopId);
         return ResponseEntity.ok(products);
     }
 
     @PostMapping
-    public ResponseEntity<Product> addProductToShop(
+    public ResponseEntity<ProductResponseDTO> addProductToShop(
             @RequestBody CreateProductDto createProductDto) {
         UUID shopId = getCurrentShopId();
-        Product product = shopProductService.addProductToShop(shopId, createProductDto);
+        ProductResponseDTO product = shopProductService.addProductToShop(shopId, createProductDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(product);
     }
 
     @PutMapping("/{productId}")
-    public ResponseEntity<Void> updateProduct(
+    public ResponseEntity<ProductResponseDTO> updateProduct(
             @PathVariable UUID productId,
             @RequestBody UpdateProductDto updateProductDto) {
-        shopProductService.updateProduct(productId, updateProductDto);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(shopProductService.updateProduct(productId, updateProductDto));
     }
 
     @DeleteMapping("/{productId}")
@@ -73,14 +71,12 @@ public class ShopProductController {
         return ResponseEntity.noContent().build();
     }
 
-
     @PatchMapping("/{productId}/stock")
-    public ResponseEntity<Void> updateProductStock(
+    public ResponseEntity<ProductResponseDTO> updateProductStock(
             @PathVariable UUID productId,
             @RequestBody StockUpdateRequest request) {
         UUID shopId = getCurrentShopId();
-        shopProductService.updateProductStock(shopId, productId, request);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(shopProductService.updateProductStock(shopId, productId, request));
     }
 
 }
