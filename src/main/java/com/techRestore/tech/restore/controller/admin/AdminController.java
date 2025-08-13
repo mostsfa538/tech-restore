@@ -46,6 +46,18 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/users/{userId}/deactivate")
+    public ResponseEntity<Void> suspendUser(@PathVariable UUID userId) {
+        adminServices.suspendUser(userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/users/{userId}/activate")
+    public ResponseEntity<Void> approveUser(@PathVariable UUID userId) {
+        adminServices.approveUser(userId);
+        return ResponseEntity.ok().build();
+    }
+
     @GetMapping("/shops")
     public ResponseEntity<List<ShopResponseDto>> getAllShops() {
         return ResponseEntity.ok().body(adminServices.getShops());
