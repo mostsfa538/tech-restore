@@ -4,40 +4,34 @@ import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.ShopRegistrationRequest;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.model.entities.Shop;
+import com.techRestore.tech.restore.model.entities.ShopAddress;
 import com.techRestore.tech.restore.repository.ShopRepository;
 import com.techRestore.tech.restore.repository.UserRepository;
+import com.techRestore.tech.restore.security.config.CustomAuthenticationManager;
 import com.techRestore.tech.restore.security.jwt.JwtService;
 import com.techRestore.tech.restore.security.jwt.RefreshTokenService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class ShopAuthService {
-    @Autowired
-    private ShopRepository shopRepository;
+    private final ShopRepository shopRepository;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
+    private final CustomAuthenticationManager customAuthenticationManager;
 
-    @Autowired
-    private JwtService jwtService;
+    private final JwtService jwtService;
 
-    @Autowired
-    private RefreshTokenService refreshTokenService;
+    private final RefreshTokenService refreshTokenService;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     public String register(ShopRegistrationRequest shopRegistrationRequest) {
         if (shopRepository.existsByEmail(shopRegistrationRequest.email())
@@ -53,9 +47,18 @@ public class ShopAuthService {
             shop.setDescription(shopRegistrationRequest.description());
             shop.setVerified(shopRegistrationRequest.verified());
 
+            ShopAddress address = new ShopAddress();
+            address.setState(shopRegistrationRequest.shopAddress().state());
+            address.setCity(shopRegistrationRequest.shopAddress().city());
+            address.setStreet(shopRegistrationRequest.shopAddress().street());
+            address.setBuilding(shopRegistrationRequest.shopAddress().building());
+            address.setNotes(shopRegistrationRequest.shopAddress().notes());
+            address.setDefault(shopRegistrationRequest.shopAddress().isDefault());
+
+            address.setShop(shop);
             shopRepository.save(shop);
 
-            return shop.getId().toString();
+            return "Registration successfully, wait for acceptance";
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -64,19 +67,9 @@ public class ShopAuthService {
 
     public TokenResponse login(LoginDto loginDto) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            loginDto.email(),
-                            loginDto.password()
-                    )
+            Authentication authentication = customAuthenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password())
             );
-
-            Shop shop = shopRepository.findByEmail(loginDto.email())
-                    .orElseThrow(() -> new UsernameNotFoundException("Shop not found"));
-
-            if (!shop.getVerified()) {
-                throw new RuntimeException("Shop account is suspended");
-            }
 
             String accessToken = jwtService.generateAccessToken(authentication);
             String refreshToken = jwtService.generateRefreshToken(authentication);

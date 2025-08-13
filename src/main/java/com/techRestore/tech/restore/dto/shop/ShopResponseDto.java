@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.dto.shop;
 
+import com.techRestore.tech.restore.model.entities.ShopAddress;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,6 +18,7 @@ public class ShopResponseDto {
     private boolean verified;
     private String phone;
     private BigDecimal rating;
+    private ShopAddress shopAddress;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

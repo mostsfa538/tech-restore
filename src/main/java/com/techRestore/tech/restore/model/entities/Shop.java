@@ -7,6 +7,7 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -69,8 +70,8 @@ public class Shop {
     @JsonIgnore
     private List<Message> sentMessages;
 
-    @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<ShopAddress> addresses;
+    @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ShopAddress> addresses = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {
