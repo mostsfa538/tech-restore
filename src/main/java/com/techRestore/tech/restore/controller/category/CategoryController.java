@@ -1,11 +1,9 @@
 package com.techRestore.tech.restore.controller.category;
 
 import com.techRestore.tech.restore.dto.category.CategoryDTO;
-import com.techRestore.tech.restore.model.entities.Category;
 import com.techRestore.tech.restore.services.category.CategoryServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.method.P;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
