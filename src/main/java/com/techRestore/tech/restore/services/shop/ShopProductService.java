@@ -12,6 +12,9 @@ import com.techRestore.tech.restore.repository.CategoryRepository;
 import com.techRestore.tech.restore.repository.ProductRepository;
 import com.techRestore.tech.restore.repository.ShopRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,16 +31,29 @@ public class ShopProductService {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    public List<ProductResponseDTO> getProductsByShopId(UUID shopId) {
-        Shop shop = shopRepository.findById(shopId)
-                .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
-        return shop.getProducts()
-                .stream()
-                .map(this::convertDto)
-                .toList();
+
+        private UUID getCurrentShopId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+      String email = authentication.getName();
+      Shop shop = shopRepository.findByEmail(email)
+        .orElseThrow(() -> new UsernameNotFoundException("Shop not found"));
+
+      if (shop == null) {
+          throw new RuntimeException("User not found with email: " + email);
+      }
+      return shop.getId();
     }
 
-    public ProductResponseDTO addProductToShop(UUID shopId, CreateProductDto createProductDto) {
+    public List<ProductResponseDTO> getProductsByShopId() {
+        UUID shopId = getCurrentShopId();
+        List<Product> products = productRepository.findByShopId(shopId);
+        return products.stream()
+                       .map(this::convertDto)
+                       .toList();
+    }
+
+    public ProductResponseDTO addProductToShop(CreateProductDto createProductDto) {
+        UUID shopId = getCurrentShopId();
         shopRepository.findById(shopId)
             .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
 
@@ -105,9 +121,8 @@ public class ShopProductService {
         productRepository.deleteById(productId);
     }
 
-    public ProductResponseDTO updateProductStock(UUID shopId, UUID productId, StockUpdateRequest stockUpdateRequest) {
-        Shop shop = shopRepository.findById(shopId)
-                .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
+    public ProductResponseDTO updateProductStock(UUID productId, StockUpdateRequest stockUpdateRequest) {
+        getCurrentShopId();
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + productId));

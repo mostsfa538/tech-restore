@@ -46,4 +46,7 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
 
     @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId")
     List<Product> findByCategoryId(@Param("categoryId") UUID categoryId);
+
+    @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId")
+    List<Product> findByShopId(@Param("shopId") UUID shopId);
 }
