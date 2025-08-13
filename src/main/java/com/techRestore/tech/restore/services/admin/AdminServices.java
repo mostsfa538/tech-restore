@@ -36,6 +36,22 @@ public class AdminServices {
         return convertDto(user);
     }
 
+    public void suspendUser(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("user not found"));
+        user.setActivate(false);
+
+        userRepository.save(user);
+    }
+
+    public void approveUser(UUID id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("user not found"));
+        user.setActivate(true);
+
+        userRepository.save(user);
+    }
+
     public List<ShopResponseDto> getShops() {
         return shopRepository.findAll().stream()
                 .map(this::toShopDto)
