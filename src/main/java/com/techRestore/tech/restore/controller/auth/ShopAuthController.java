@@ -27,8 +27,8 @@ public class ShopAuthController {
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody ShopRegistrationRequest shopRegistrationRequest) {
         try {
-            String id = shopAuthService.register(shopRegistrationRequest);
-            return ResponseEntity.ok().body("User created successfully with ID: " + id);
+            String message = shopAuthService.register(shopRegistrationRequest);
+            return ResponseEntity.ok().body(message);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

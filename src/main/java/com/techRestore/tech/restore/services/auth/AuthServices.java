@@ -4,13 +4,12 @@ import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.dto.auth.UserRegistration;
 import com.techRestore.tech.restore.model.enums.Role;
+import com.techRestore.tech.restore.security.config.CustomAuthenticationManager;
 import com.techRestore.tech.restore.security.jwt.JwtService;
 import com.techRestore.tech.restore.security.jwt.RefreshTokenService;
 import com.techRestore.tech.restore.model.entities.User;
 import com.techRestore.tech.restore.repository.UserRepository;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,21 +20,13 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 
 @Service
+@RequiredArgsConstructor
 public class AuthServices {
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private  JwtService jwtService;
- 
-    @Autowired
-    private  RefreshTokenService refreshTokenService;
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final CustomAuthenticationManager customAuthenticationManager;
+    private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
 
     public String register(UserRegistration userRegistration) {
         if (userRegistration == null) {
@@ -77,7 +68,7 @@ public class AuthServices {
     
     public TokenResponse login(LoginDto loginDto) {
         try {
-            Authentication authentication = authenticationManager.authenticate(
+            Authentication authentication = customAuthenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password())
             );
             
