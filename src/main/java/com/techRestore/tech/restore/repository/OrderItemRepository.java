@@ -12,6 +12,6 @@ import com.techRestore.tech.restore.model.entities.OrderItem;
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
     Optional<OrderItem> findByIdAndOrderId(UUID id, UUID orderId);
-    Optional<OrderItem> findByOrderIdAndDeviceId(UUID orderId, UUID deviceId);
+    Optional<OrderItem> findByOrderIdAndProductId(UUID orderId, UUID productId);
     List<OrderItem> findByOrderId(UUID orderId);
 }

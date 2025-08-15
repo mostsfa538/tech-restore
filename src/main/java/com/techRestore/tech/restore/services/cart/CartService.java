@@ -4,6 +4,7 @@ import com.techRestore.tech.restore.dto.cart.AddToCartRequestDTO;
 import com.techRestore.tech.restore.dto.cart.CartItemResponseDTO;
 import com.techRestore.tech.restore.dto.cart.CartResponseDTO;
 import com.techRestore.tech.restore.dto.cart.UpdateCartItemRequestDTO;
+import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.entities.CartItem;
 import com.techRestore.tech.restore.model.entities.Product;
 import com.techRestore.tech.restore.repository.CartItemRepository;
@@ -33,7 +34,7 @@ public class CartService {
     @Transactional
     public CartResponseDTO addItemToCart(UUID userId, AddToCartRequestDTO request) {
         Product product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new NotFoundException("Product not found"));
 
         CartItem existingItem = cartItemRepository.findByUserIdAndProductId(userId, request.getProductId())
                 .orElse(null);
@@ -45,6 +46,7 @@ public class CartService {
             CartItem newItem = new CartItem();
             newItem.setUserId(userId);
             newItem.setProductId(request.getProductId());
+            newItem.setShopId(product.getShopId()); 
             newItem.setQuantity(request.getQuantity());
             cartItemRepository.save(newItem);
         }
@@ -56,7 +58,7 @@ public class CartService {
     @Transactional
     public CartResponseDTO updateCartItem(UUID userId, UUID itemId, UpdateCartItemRequestDTO request) {
         CartItem cartItem = cartItemRepository.findByIdAndUserId(itemId, userId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+                .orElseThrow(() -> new NotFoundException("Cart item not found"));
 
         if (request.getQuantity() <= 0) {
             cartItemRepository.delete(cartItem);
@@ -72,7 +74,7 @@ public class CartService {
     @Transactional
     public void removeCartItem(UUID userId, UUID itemId) {
         CartItem cartItem = cartItemRepository.findByIdAndUserId(itemId, userId)
-                .orElseThrow(() -> new RuntimeException("Cart item not found"));
+                .orElseThrow(() -> new NotFoundException("Cart item not found"));
         cartItemRepository.delete(cartItem);
     }
 
@@ -105,12 +107,11 @@ public class CartService {
         dto.setProductId(cartItem.getProductId());
         dto.setQuantity(cartItem.getQuantity());
 
-        if (cartItem.getProduct() != null) {
-            dto.setProductName(cartItem.getProduct().getName());
-            dto.setProductPrice(cartItem.getProduct().getPrice());
-            dto.setSubtotal(cartItem.getProduct().getPrice()
-                    .multiply(BigDecimal.valueOf(cartItem.getQuantity())));
-        }
+        Product product = productRepository.findById(cartItem.getProductId())
+                .orElseThrow(() -> new NotFoundException("Product not found"));
+        dto.setProductName(product.getName());
+        dto.setProductPrice(product.getPrice());
+        dto.setSubtotal(product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
 
         return dto;
     }

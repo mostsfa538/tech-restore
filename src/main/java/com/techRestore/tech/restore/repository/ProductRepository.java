@@ -26,4 +26,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
 
     @Query("SELECT p FROM Product p WHERE p.price BETWEEN :min AND :max")
     List<Product> findByPriceBetween(BigDecimal min, BigDecimal max);
+
+    List<Product> findByShopId(UUID shopId);
 }

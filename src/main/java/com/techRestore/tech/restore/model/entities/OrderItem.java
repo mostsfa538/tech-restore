@@ -19,19 +19,26 @@ public class OrderItem {
     @Column(name = "order_id")
     private UUID orderId;
 
-    @Column(name = "device_id")
-    private UUID deviceId;
+    @Column(name = "product_id", nullable = false)
+    private UUID productId;
 
     private Integer quantity;
 
     @Column(name = "price_at_checkout", precision = 10, scale = 2)
     private BigDecimal priceAtCheckout;
 
+    @Column(name = "shop_id", nullable = false)
+    private UUID shopId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", insertable = false, updatable = false)
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "device_id", insertable = false, updatable = false)
+    @JoinColumn(name = "product_id", insertable = false, updatable = false)
     private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shop_id", insertable = false, updatable = false)
+    private Shop shop;
 }

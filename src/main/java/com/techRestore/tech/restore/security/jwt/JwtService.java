@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 public class JwtService {
 
     private final String jwtSecretKey;
-    private final long accessTokenExpiration = 15 * 60 * 1000; // rob3 sa3a
+    private final long accessTokenExpiration = 60 * 60 * 1000; // rob3 sa3a
     private final long refreshTokenExpiration = 7 * 24 * 60 * 60 * 1000; //7 ayam
 
     public JwtService(@Value("${jwt.secret}") String jwtSecretKey) {
