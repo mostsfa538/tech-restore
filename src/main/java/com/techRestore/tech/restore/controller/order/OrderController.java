@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.techRestore.tech.restore.dto.order.OrderRequestDTO;
 import com.techRestore.tech.restore.dto.order.OrderResponseDTO;
 import com.techRestore.tech.restore.dto.order.TrackingResponseDTO;
+import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.entities.User;
 import com.techRestore.tech.restore.repository.UserRepository;
 import com.techRestore.tech.restore.services.order.OrderService;
@@ -36,7 +37,7 @@ public class OrderController {
         String email = authentication.getName();
         User user = userRepository.findByEmail(email);
         if (user == null) {
-            throw new RuntimeException("User not found with email: " + email);
+            throw new NotFoundException("User not found with email: " + email);
         }
         return user.getId();
     }

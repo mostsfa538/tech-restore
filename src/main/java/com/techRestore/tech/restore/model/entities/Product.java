@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.model.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.techRestore.tech.restore.model.enums.ProductCondition;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -46,13 +47,16 @@ public class Product {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shop_id", insertable = false, updatable = false)
+    @JsonIgnore
     private Shop shop;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", insertable = false, updatable = false)
+    @JsonIgnore
     private Category category;
 
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<OrderItem> orderItems;
 
     @PrePersist

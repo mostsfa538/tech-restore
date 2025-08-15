@@ -112,6 +112,7 @@ public class CartService {
         dto.setProductName(product.getName());
         dto.setProductPrice(product.getPrice());
         dto.setSubtotal(product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+        dto.setShopId(cartItem.getShopId());
 
         return dto;
     }
