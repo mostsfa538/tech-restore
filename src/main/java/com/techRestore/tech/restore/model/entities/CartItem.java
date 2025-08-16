@@ -22,6 +22,9 @@ public class CartItem {
     @Column(name = "product_id", nullable = false)
     private UUID productId;
 
+    @Column(name = "shop_id", nullable = false)
+    private UUID shopId;
+
     @Column(nullable = false)
     private Integer quantity;
 
@@ -36,6 +39,10 @@ public class CartItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", insertable = false, updatable = false)
     private Product product;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shop_id", insertable = false, updatable = false)
+    private Shop shop;
 
     @PrePersist
     protected void onCreate() {

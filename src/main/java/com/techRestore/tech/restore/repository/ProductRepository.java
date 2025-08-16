@@ -14,6 +14,22 @@ import java.util.UUID;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, UUID> {
 
+    List<Product> findByCategoryId(UUID id);
+
+    @Query("SELECT p FROM Product p WHERE LOWER(p.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(p.description) LIKE LOWER(CONCAT('%', :keyword, '%'))")
+    List<Product> searchByKeyword(@Param("keyword") String keyword);
+
+    @Query("SELECT p FROM Product p WHERE p.shopId = :id AND p.category = :category")
+    List<Product> findByCategoryWithShopIdAndCategory(@Param("id") UUID id, @Param("category")String category);
+
+    @Query("SELECT p FROM Product p WHERE p.category = :category")
+    List<Product> findWithFilters(@Param("category")String category);
+
+    @Query("SELECT p FROM Product p WHERE p.price BETWEEN :min AND :max")
+    List<Product> findByPriceBetween(BigDecimal min, BigDecimal max);
+
+    List<Product> findByShopId(UUID shopId);
+
     @Query("SELECT new com.techRestore.tech.restore.dto.product.ProductResponseDTO(" +
                 "p.id, p.name, p.description, p.price, p.stock, p.imageUrl, p.condition, p.createdAt, c.name) " +
                 "FROM Product p LEFT JOIN p.category c WHERE p.shopId = :shopId AND p.category.id = :categoryId")

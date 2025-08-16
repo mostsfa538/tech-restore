@@ -48,7 +48,8 @@ public class Product {
     private Shop shop;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
+    @JoinColumn(name = "category_id", insertable = false, updatable = false)
+    @JsonIgnore
     private Category category;
 
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
