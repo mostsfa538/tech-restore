@@ -17,4 +17,10 @@ public interface ShopRepository extends JpaRepository<Shop, UUID> {
     @Query("SELECT s FROM Shop s WHERE s.name LIKE %:name%")
     List<Shop> findByName(String name);
 
+    @Query("SELECT s FROM Shop s WHERE s.verified = true")
+    List<Shop> findAllApprovedShops();
+
+    @Query("SELECT s FROM Shop s WHERE s.verified = false")
+    List<Shop> findAllSuspendedShops();
+
 }

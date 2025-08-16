@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.controller.product;
 
+import com.techRestore.tech.restore.dto.product.ProductResponseDTO;
 import com.techRestore.tech.restore.dto.product.UpdateProductDto;
 import com.techRestore.tech.restore.model.entities.Product;
 import com.techRestore.tech.restore.services.product.ProductServices;
@@ -31,29 +32,24 @@ public class ProductController {
 
     // GET /api/products/search?keyword={keyword} - Search products
     @GetMapping("/search")
-    public ResponseEntity<List<Product>> searchProducts(@RequestParam String keyword) {
-        List<Product> products = productServices.searchProducts(keyword);
+    public ResponseEntity<List<ProductResponseDTO>> searchProducts(@RequestParam String keyword) {
+        List<ProductResponseDTO> products = productServices.searchProducts(keyword);
         return ResponseEntity.ok(products);
     }
 
     @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable UUID categoryId) {
-        List<Product> products = productServices.getProductsByCategory(categoryId);
+    public ResponseEntity<List<ProductResponseDTO>> getProductsByCategory(@PathVariable UUID categoryId) {
+        List<ProductResponseDTO> products = productServices.getProductsByCategory(categoryId);
         return ResponseEntity.ok(products);
     }
 
-    @GetMapping("/filter")
-    public ResponseEntity<List<Product>> getProductsWithFilters(@RequestParam String category) {
-        List<Product> products = productServices.getProductsWithFilters(category);
-        return ResponseEntity.ok(products);
-    }
 
     // GET /api/products/price-range?minPrice={min}&maxPrice={max} - Get products by price range
     @GetMapping("/price-range")
-    public ResponseEntity<List<Product>> getProductsByPriceRange(
+    public ResponseEntity<List<ProductResponseDTO>> getProductsByPriceRange(
             @RequestParam BigDecimal minPrice,
             @RequestParam BigDecimal maxPrice) {
-        List<Product> products = productServices.getProductsByPriceRange(minPrice, maxPrice);
+        List<ProductResponseDTO> products = productServices.getProductsByPriceRange(minPrice, maxPrice);
         return ResponseEntity.ok(products);
     }
 

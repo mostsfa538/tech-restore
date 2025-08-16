@@ -67,7 +67,7 @@ public class ShopRepairService {
                 repairRequest.getPaymentId(),
                 repairRequest.getDescription(),
                 repairRequest.getDeliveryMethod().name(),
-                repairRequest.getDeviceCategory(),
+                repairRequest.getCategoryId(),
                 repairRequest.getPaymentMethod().name(),
                 repairRequest.isConfirmed(),
                 repairRequest.getStatus()

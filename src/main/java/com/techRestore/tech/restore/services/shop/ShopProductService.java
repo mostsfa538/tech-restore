@@ -1,14 +1,20 @@
 package com.techRestore.tech.restore.services.shop;
 
 import com.techRestore.tech.restore.dto.product.CreateProductDto;
+import com.techRestore.tech.restore.dto.product.ProductResponseDTO;
 import com.techRestore.tech.restore.dto.product.UpdateProductDto;
 import com.techRestore.tech.restore.dto.shop.StockUpdateRequest;
 import com.techRestore.tech.restore.exception.NotFoundException;
+import com.techRestore.tech.restore.model.entities.Category;
 import com.techRestore.tech.restore.model.entities.Product;
 import com.techRestore.tech.restore.model.entities.Shop;
+import com.techRestore.tech.restore.repository.CategoryRepository;
 import com.techRestore.tech.restore.repository.ProductRepository;
 import com.techRestore.tech.restore.repository.ShopRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -22,33 +28,62 @@ public class ShopProductService {
     @Autowired
     private ProductRepository productRepository;
 
-    public List<Product> getProductsByShopId(UUID shopId) {
-        Shop shop = shopRepository.findById(shopId)
-                .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
-        return shop.getProducts();
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+
+        private UUID getCurrentShopId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+      String email = authentication.getName();
+      Shop shop = shopRepository.findByEmail(email)
+        .orElseThrow(() -> new UsernameNotFoundException("Shop not found"));
+
+      if (shop == null) {
+          throw new RuntimeException("User not found with email: " + email);
+      }
+      return shop.getId();
     }
 
-    public Product addProductToShop(UUID shopId, CreateProductDto createProductDto) {
-        Shop shop = shopRepository.findById(shopId)
+    public List<ProductResponseDTO> getProductsByShopId() {
+        UUID shopId = getCurrentShopId();
+        List<Product> products = productRepository.findByShopId(shopId);
+        return products.stream()
+                       .map(this::convertDto)
+                       .toList();
+    }
+
+    public ProductResponseDTO addProductToShop(CreateProductDto createProductDto) {
+        UUID shopId = getCurrentShopId();
+        shopRepository.findById(shopId)
             .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
 
         Product product = new Product();
-        product.setShopId(shop.getId()); 
+        product.setShopId(shopId);
         product.setName(createProductDto.name());
         product.setDescription(createProductDto.description());
         product.setPrice(createProductDto.price());
         product.setImageUrl(createProductDto.imageUrl());
-        product.setCategoryId(createProductDto.category().getId());
         product.setStock(createProductDto.stockQuantity());
         product.setCondition(createProductDto.condition());
 
-        shop.getProducts().add(product);
+        if (createProductDto.category() != null) {
+            Category category;
+            if (createProductDto.category().getId() != null) {
+                category = categoryRepository.findById(createProductDto.category().getId())
+                        .orElseThrow(() -> new NotFoundException("Category not found"));
+            } else {
+                throw new RuntimeException("Category must have either ID or name");
+            }
 
-        return productRepository.save(product);
+            product.setCategory(category);
+        }
+
+        productRepository.save(product);
+        return convertDto(product);
     }
 
 
-    public void updateProduct(UUID productId, UpdateProductDto updateProductDto) {
+    public ProductResponseDTO updateProduct(UUID productId, UpdateProductDto updateProductDto) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + productId));
 
@@ -75,6 +110,8 @@ public class ShopProductService {
         }
 
         productRepository.save(product);
+
+        return convertDto(product);
     }
 
     public void deleteProduct(UUID productId) {
@@ -84,13 +121,8 @@ public class ShopProductService {
         productRepository.deleteById(productId);
     }
 
-    public List<Product> getShopProductsWithCategory(UUID shopId, String category) {
-        return productRepository.findByCategoryWithShopIdAndCategory(shopId, category);
-    }
-
-    public void updateProductStock(UUID shopId, UUID productId, StockUpdateRequest stockUpdateRequest) {
-        Shop shop = shopRepository.findById(shopId)
-                .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
+    public ProductResponseDTO updateProductStock(UUID productId, StockUpdateRequest stockUpdateRequest) {
+        getCurrentShopId();
 
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + productId));
@@ -100,5 +132,21 @@ public class ShopProductService {
 
         product.setStock(stockUpdateRequest.newStock());
         productRepository.save(product);
+
+        return convertDto(product);
+    }
+
+    private ProductResponseDTO convertDto(Product product) {
+        return new ProductResponseDTO(
+                product.getId(),
+                product.getName(),
+                product.getDescription(),
+                product.getPrice(),
+                product.getStock(),
+                product.getImageUrl(),
+                product.getCondition(),
+                product.getCreatedAt(),
+                product.getCategory() != null ? product.getCategory().getName() : null
+        );
     }
 }

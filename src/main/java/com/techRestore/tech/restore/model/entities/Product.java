@@ -28,9 +28,6 @@ public class Product {
 
     private String description;
 
-    @Column(name = "category_id")
-    private UUID categoryId;
-
     @Column(precision = 10, scale = 2)
     private BigDecimal price;
 
@@ -63,4 +60,5 @@ public class Product {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
+
 }
