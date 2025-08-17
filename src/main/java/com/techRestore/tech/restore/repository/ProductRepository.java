@@ -23,14 +23,9 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
     """)
     List<Product> searchByKeyword(@Param("keyword") String keyword);
     
-    @Query("""
-    FROM Product p
-    WHERE p.price BETWEEN :min AND :max
-    """)
+    @Query("FROM Product p WHERE p.price BETWEEN :min AND :max")
     List<Product> findByPriceBetween(@Param("min") BigDecimal min, @Param("max") BigDecimal max);
     
-
-
     @Query("SELECT p FROM Product p WHERE p.category.id = :categoryId")
     List<Product> findByCategoryId(@Param("categoryId") UUID categoryId);
 
