@@ -1,7 +1,8 @@
-package com.techRestore.tech.restore.services.repair;
+package com.techRestore.tech.restore.services.user;
 
 import com.techRestore.tech.restore.dto.repair.RepairRequestCreateDto;
 import com.techRestore.tech.restore.dto.repair.RepairRequestDto;
+import com.techRestore.tech.restore.dto.repair.RepairRequestUpdateDto;
 import com.techRestore.tech.restore.dto.repair.RepairStatusDto;
 import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.entities.RepairRequest;
@@ -43,15 +44,28 @@ public class RepairRequestService {
         return user.getId();
     }
 
-    public List<RepairRequest> getAllRepairRequest() {
-        return repairRequestRepository.findAll();
+    public List<RepairRequestDto> getAllRepairRequestByUserId() {
+        UUID userId = getUserId();
+        List<RepairRequest> repairRequests = repairRequestRepository.getAllRepairRequestByUserId(userId);
+
+        return repairRequests
+                .stream()
+                .map(this::convertToDto)
+                .toList();
     }
 
-    public RepairRequestDto createRepairRequest(RepairRequestCreateDto requestCreateDto) {
+    public List<RepairRequestDto> getAllRepairRequest() {
+        return repairRequestRepository.findAll()
+                .stream()
+                .map(this::convertToDto)
+                .toList();
+    }
+
+    public RepairRequestDto createRepairRequest(UUID shopId, RepairRequestCreateDto requestCreateDto) {
         UUID userId = getUserId();
 
-        shopRepository.findById(requestCreateDto.shopId())
-                .orElseThrow(() -> new NotFoundException("Shop not found with id: " + requestCreateDto.shopId()));
+        shopRepository.findById(shopId)
+                .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
 
         addressRepository.findById(requestCreateDto.deliveryAddress())
                 .orElseThrow(() -> new NotFoundException("Address not found with id: " + requestCreateDto.deliveryAddress()));
@@ -59,7 +73,7 @@ public class RepairRequestService {
         RepairRequest repairRequest = new RepairRequest();
 
         repairRequest.setUserId(userId);
-        repairRequest.setShopId(requestCreateDto.shopId());
+        repairRequest.setShopId(shopId);
         repairRequest.setDeliveryAddress(requestCreateDto.deliveryAddress());
         repairRequest.setDescription(requestCreateDto.description());
         repairRequest.setDeliveryMethod(requestCreateDto.deliveryMethod());
@@ -80,26 +94,39 @@ public class RepairRequestService {
         return convertToDto(repairRequest);
     }
 
-    public RepairRequestDto updateRepairRequest(UUID id, RepairRequestCreateDto requestCreateDto) {
+    public RepairRequestDto updateRepairRequest(UUID shopId, UUID requestId, RepairRequestUpdateDto requestCreateDto) {
         UUID userId = getUserId();
 
-        RepairRequest repairRequest = repairRequestRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Repair request not found with id: " + id));
+        RepairRequest repairRequest = repairRequestRepository.findById(requestId)
+                .orElseThrow(() -> new NotFoundException("Repair request not found with id: " + requestId));
 
 
-        shopRepository.findById(requestCreateDto.shopId())
-                .orElseThrow(() -> new NotFoundException("Shop not found with id: " + requestCreateDto.shopId()));
+        shopRepository.findById(shopId)
+                .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
 
-        addressRepository.findById(requestCreateDto.deliveryAddress())
-                .orElseThrow(() -> new NotFoundException("Address not found with id: " + requestCreateDto.deliveryAddress()));
+        if (requestCreateDto.deliveryAddressId() != null) {
+            addressRepository.findById(requestCreateDto.deliveryAddressId())
+                .orElseThrow(() -> new NotFoundException("Address not found with id: " + requestCreateDto.deliveryAddressId()));
+            repairRequest.setDeliveryAddress(requestCreateDto.deliveryAddressId());
+        }
+
 
         repairRequest.setUserId(userId);
-        repairRequest.setShopId(requestCreateDto.shopId());
-        repairRequest.setDeliveryAddress(requestCreateDto.deliveryAddress());
-        repairRequest.setDescription(requestCreateDto.description());
-        repairRequest.setDeliveryMethod(requestCreateDto.deliveryMethod());
-        repairRequest.setCategoryId(requestCreateDto.deviceCategory());
-        repairRequest.setPaymentMethod(requestCreateDto.paymentMethod());
+        repairRequest.setShopId(shopId);
+        if (requestCreateDto.deliveryAddressId() != null) {
+            repairRequest.setDeliveryAddress(requestCreateDto.deliveryAddressId());
+        }
+        if (requestCreateDto.description() != null) {
+            repairRequest.setDescription(requestCreateDto.description());
+        }
+        if (requestCreateDto.deliveryMethod() != null) {
+            repairRequest.setDeliveryMethod(requestCreateDto.deliveryMethod());
+        }
+        if (requestCreateDto.paymentMethod() != null) {
+            repairRequest.setPaymentMethod(requestCreateDto.paymentMethod());
+        }
+        if (requestCreateDto.categoryId() != null)
+            repairRequest.setCategoryId(requestCreateDto.categoryId());
 
         RepairRequest updatedRepairRequest = repairRequestRepository.save(repairRequest);
 
