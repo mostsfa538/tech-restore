@@ -2,7 +2,6 @@ package com.techRestore.tech.restore.controller.product;
 
 import com.techRestore.tech.restore.dto.product.ProductResponseDTO;
 import com.techRestore.tech.restore.dto.product.UpdateProductDto;
-import com.techRestore.tech.restore.model.entities.Product;
 import com.techRestore.tech.restore.services.product.ProductServices;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,15 +18,13 @@ public class ProductController {
     private ProductServices productServices;
 
     @GetMapping
-    public ResponseEntity<List<Product>> getAllProducts() {
-        List<Product> products = productServices.getAllProducts();
-        return ResponseEntity.ok(products);
+    public ResponseEntity<List<ProductResponseDTO>> getAllProducts() {
+        return ResponseEntity.ok(productServices.getAllProducts());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable UUID id) {
-        Product product = productServices.getProductById(id);
-        return ResponseEntity.ok(product);
+    public ResponseEntity<ProductResponseDTO> getProductById(@PathVariable UUID id) {
+        return ResponseEntity.ok(productServices.getProductById(id));
     }
 
     // GET /api/products/search?keyword={keyword} - Search products
