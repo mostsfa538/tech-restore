@@ -23,21 +23,31 @@ public class ProductServices {
     @Autowired
     private CategoryRepository categoryRepository;
 
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
+    public List<ProductResponseDTO> getAllProducts() {
+        return productRepository.findAll().stream()
+                .map(this::convertToDTO)
+                .toList();
     }
 
-    public Product getProductById(UUID productId) {
-        return productRepository.findById(productId)
+    public ProductResponseDTO getProductById(UUID productId) {
+        return productRepository.findById(productId).stream()
+                .map(this::convertToDTO)
+                .findFirst()
                 .orElseThrow(() -> new NotFoundException("Product not found with id: " + productId));
     }
 
     public List<ProductResponseDTO> searchProducts(String keyword) {
-        return productRepository.searchByKeyword(keyword);
+        return productRepository.searchByKeyword(keyword)
+            .stream()
+            .map(this::convertToDTO)
+            .toList();
     }
 
     public List<ProductResponseDTO> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
-        return productRepository.findByPriceBetween(minPrice, maxPrice);
+        return productRepository.findByPriceBetween(minPrice, maxPrice)
+        .stream()
+        .map(this::convertToDTO)
+        .toList();
     }
 
     public List<ProductResponseDTO> getProductsByCategory(UUID categoryId) {
