@@ -13,4 +13,6 @@ import java.util.UUID;
 public interface RepairRequestRepository extends JpaRepository<RepairRequest, UUID> {
     
     public List<RepairRequest> findByStatus(RepairStatus status);
+    List<RepairRequest> getAllRepairRequestByUserId(UUID userId);
+    List<RepairRequest> findAllByShopId(UUID shopId);
 }

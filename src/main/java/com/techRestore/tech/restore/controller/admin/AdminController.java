@@ -1,13 +1,14 @@
 package com.techRestore.tech.restore.controller.admin;
 
 import com.techRestore.tech.restore.dto.common.SearchRequest;
+import com.techRestore.tech.restore.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.dto.shop.ShopResponseDto;
 import com.techRestore.tech.restore.dto.user.ResponseUsersDto;
 import com.techRestore.tech.restore.dto.user.UpdateRoleRequest;
-import com.techRestore.tech.restore.model.entities.RepairRequest;
 import com.techRestore.tech.restore.model.entities.Shop;
 import com.techRestore.tech.restore.services.admin.AdminServices;
-import com.techRestore.tech.restore.services.repair.RepairRequestService;
+import com.techRestore.tech.restore.services.user.RepairRequestService;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,8 +26,8 @@ public class AdminController {
     private AdminServices adminServices;
 
     @GetMapping("/repair-requests")
-    public ResponseEntity<List<RepairRequest>> getAllRepairRequests(){
-        List<RepairRequest> repairRequests = repairRequestService.getAllRepairRequest();
+    public ResponseEntity<List<RepairRequestDto>> getAllRepairRequests(){
+        List<RepairRequestDto> repairRequests = repairRequestService.getAllRepairRequest();
         return ResponseEntity.ok().body(repairRequests);
     }
 

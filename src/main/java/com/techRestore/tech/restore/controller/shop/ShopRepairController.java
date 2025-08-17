@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.techRestore.tech.restore.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.dto.repair.RepairStatusDto;
-import com.techRestore.tech.restore.model.entities.RepairRequest;
 import com.techRestore.tech.restore.model.enums.RepairStatus;
 import com.techRestore.tech.restore.services.shop.ShopRepairService;
 
@@ -26,19 +25,19 @@ public class ShopRepairController {
     private ShopRepairService shopRepairService;
 
     @GetMapping
-    public ResponseEntity<List<RepairRequest>> getAllRepairRequests() {
+    public ResponseEntity<List<RepairRequestDto>> getAllRepairRequests() {
         return ResponseEntity.ok().body(shopRepairService.getAllRepairRequest());
     }
 
-    @GetMapping("/{request_id}")
+    @GetMapping("/{requestId}")
     public ResponseEntity<RepairRequestDto> getRepairRequestById(@PathVariable UUID requestId) {
         RepairRequestDto repairRequest = shopRepairService.getRepairRequestById(requestId);
         return ResponseEntity.ok().body(repairRequest);
     }
 
-    @PutMapping("/{request_id}/status")
-    public ResponseEntity<String> updateStatus(@PathVariable UUID id, @RequestBody RepairStatusDto statusDto) {
-        shopRepairService.setStatus(id, statusDto);
+    @PutMapping("/{requestId}/status")
+    public ResponseEntity<String> updateStatus(@PathVariable UUID requestId, @RequestBody RepairStatusDto statusDto) {
+        shopRepairService.setStatus(requestId, statusDto);
         return ResponseEntity.ok().body("Updated Success");
     }    
 
@@ -49,9 +48,9 @@ public class ShopRepairController {
         return ResponseEntity.ok(repairs);
     }
 
-    @PutMapping("/{request_id}/price")
-    public ResponseEntity<String> setPrice(@PathVariable UUID id, RepairPriceUpdateDto repairPriceUpdateDto) {
-        shopRepairService.setPrice(id, repairPriceUpdateDto);
+    @PutMapping("/{requestId}/price")
+    public ResponseEntity<String> setPrice(@PathVariable UUID requestId, @RequestBody RepairPriceUpdateDto repairPriceUpdateDto) {
+        shopRepairService.setPrice(requestId, repairPriceUpdateDto);
         return ResponseEntity.ok().body("Price updated Successfully");
     }
 }

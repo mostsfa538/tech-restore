@@ -40,6 +40,7 @@ public class AppConfig {
                         .requestMatchers("/api/auth/home", "/api/auth/logout").authenticated()
                         .requestMatchers("/api/shops/**", "/api/products/**", "/api/user/**", "/api/categories/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/user/**").hasAnyRole("GUEST")
                         .anyRequest().authenticated())
                 .authenticationManager(customAuthenticationManager())
 
