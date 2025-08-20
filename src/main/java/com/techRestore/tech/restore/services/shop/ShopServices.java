@@ -10,45 +10,46 @@ import com.techRestore.tech.restore.model.entities.Shop;
 import com.techRestore.tech.restore.model.entities.ShopAddress;
 import com.techRestore.tech.restore.repository.ShopAddressRepository;
 import com.techRestore.tech.restore.repository.ShopRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.techRestore.tech.restore.services.BaseService;
+import com.techRestore.tech.restore.utils.DTOConverter;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class ShopServices {
-    @Autowired
-    private ShopRepository shopRepository;
+public class ShopServices extends BaseService<Shop, UUID> {
+    
+    private final ShopAddressRepository shopAddressRepository;
 
-    @Autowired
-    private ShopAddressRepository shopAddressRepository;
-
-    private Shop getShop() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        Optional<Shop> shop = shopRepository.findByEmail(authentication.getName());
-
-        if (shop.isEmpty()) {
-            throw new NotFoundException("Shop Not Found");
-        }
-        return shop.get();
+    public ShopServices(ShopRepository shopRepository, ShopAddressRepository shopAddressRepository) {
+        super(shopRepository);
+        this.shopAddressRepository = shopAddressRepository;
     }
 
-    public List<AddressResponse> getAllAddresses() {
-        Shop shop = getShop();
-        List<ShopAddress> addresses = shopAddressRepository.findShopAddressByShopId(shop.getId());
-        return addresses.stream()
-                .map(this::convertDto)
-                .toList();
+    /**
+     * Get current authenticated shop
+     */
+    private Shop getCurrentShop() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return ((ShopRepository) repository).findByEmail(authentication.getName())
+                .orElseThrow(() -> new NotFoundException("Shop not found"));
+    }
+
+    public Page<AddressResponse> getAllAddresses(Pageable pageable) {
+        Shop shop = getCurrentShop();
+        Page<ShopAddress> addresses = shopAddressRepository.findShopAddressByShopId(shop.getId(), pageable);
+        return addresses.map(DTOConverter::convertToAddressDTO);
     }
 
     @PreAuthorize("hasRole('SHOP_OWNER')")
     public ShopResponseDto updateShop(ShopUpdateRequest shopUpdateRequest) {
-        Shop shop = getShop();
+        Shop shop = getCurrentShop();
 
         if (shopUpdateRequest.description() != null) {
             shop.setDescription(shopUpdateRequest.description());
@@ -59,13 +60,13 @@ public class ShopServices {
         if (shopUpdateRequest.phone() != null) {
             shop.setPhone(shopUpdateRequest.phone());
         }
-        shopRepository.save(shop);
+        repository.save(shop);
 
-        return toShopDto(shop);
+        return DTOConverter.convertToShopyDTO(shop);
     }
 
     public void addAddress(AddressRequest addressRequest) {
-        Shop shop = getShop();
+        Shop shop = getCurrentShop();
         ShopAddress shopAddress = new ShopAddress();
 
         shopAddress.setShop(shop);
@@ -80,13 +81,10 @@ public class ShopServices {
     }
 
     public void updateAddress(UUID id, AddressUpdate addressUpdate) {
-        getShop();
-
-        Optional<ShopAddress> address = shopAddressRepository.findById(id);
-        if (address.isEmpty()) {
-            throw new NotFoundException("Address Not found");
-        }
-        ShopAddress shopAddress = address.get();
+        getCurrentShop();
+        
+        ShopAddress shopAddress = findByIdOrThrow(shopAddressRepository, id, "Address");
+        
         if (addressUpdate.state() != null) {
             shopAddress.setState(addressUpdate.state());
         }
@@ -108,36 +106,7 @@ public class ShopServices {
     }
 
     public void deleteAddress(UUID id) {
-        getShop();
-        shopAddressRepository.findById(id)
-                        .orElseThrow(() -> new NotFoundException("Address not found"));
-
-        shopAddressRepository.deleteById(id);
-
-    }
-
-    private AddressResponse convertDto(ShopAddress address) {
-        return new AddressResponse(
-                address.getState(),
-                address.getCity(),
-                address.getStreet(),
-                address.getBuilding(),
-                address.getNotes(),
-                address.isDefault()
-        );
-    }
-
-    public ShopResponseDto toShopDto(Shop shop) {
-        ShopResponseDto dto = new ShopResponseDto();
-        dto.setId(shop.getId());
-        dto.setEmail(shop.getEmail());
-        dto.setName(shop.getName());
-        dto.setDescription(shop.getDescription());
-        dto.setVerified(shop.getVerified());
-        dto.setPhone(shop.getPhone());
-        dto.setRating(shop.getRating());
-        dto.setCreatedAt(shop.getCreatedAt());
-        dto.setUpdatedAt(shop.getUpdatedAt());
-        return dto;
+        getCurrentShop();
+        deleteByIdOrThrow(shopAddressRepository, id, "Address");
     }
 }

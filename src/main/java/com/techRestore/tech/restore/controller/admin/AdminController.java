@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.controller.admin;
 
+import com.techRestore.tech.restore.controller.BaseController;
 import com.techRestore.tech.restore.dto.common.SearchRequest;
 import com.techRestore.tech.restore.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.dto.shop.ShopResponseDto;
@@ -10,15 +11,16 @@ import com.techRestore.tech.restore.services.admin.AdminServices;
 import com.techRestore.tech.restore.services.user.RepairRequestService;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin")
-public class AdminController {
+public class AdminController extends BaseController {
     @Autowired
     private RepairRequestService repairRequestService;
 
@@ -26,81 +28,81 @@ public class AdminController {
     private AdminServices adminServices;
 
     @GetMapping("/repair-requests")
-    public ResponseEntity<List<RepairRequestDto>> getAllRepairRequests(){
-        List<RepairRequestDto> repairRequests = repairRequestService.getAllRepairRequest();
-        return ResponseEntity.ok().body(repairRequests);
+    public ResponseEntity<Page<RepairRequestDto>> getAllRepairRequests(Pageable pageable) {
+        Page<RepairRequestDto> repairRequests = repairRequestService.getAllRepairRequest(pageable);
+        return successResponse(repairRequests);
     }
 
     @GetMapping("/users")
-    public ResponseEntity<List<ResponseUsersDto>> getAllUsers() {
-        return ResponseEntity.ok().body(adminServices.getAllUsers());
+    public ResponseEntity<Page<ResponseUsersDto>> getAllUsers(Pageable pageable) {
+        return successResponse(adminServices.getAllUsers(pageable));
     }
 
     @GetMapping("/users/{userId}")
     public ResponseEntity<ResponseUsersDto> getUserById(@PathVariable UUID userId) {
-        return ResponseEntity.ok().body(adminServices.getUserDetailsById(userId));
+        return successResponse(adminServices.getUserDetailsById(userId));
     }
 
     @PutMapping("/users/{userId}")
     public ResponseEntity<Void> updateRole(@PathVariable UUID userId, @RequestBody UpdateRoleRequest role) {
         adminServices.updateRole(userId, role.role());
-        return ResponseEntity.ok().build();
+        return updatedResponse();
     }
 
     @PutMapping("/users/{userId}/deactivate")
     public ResponseEntity<Void> suspendUser(@PathVariable UUID userId) {
         adminServices.suspendUser(userId);
-        return ResponseEntity.ok().build();
+        return updatedResponse();
     }
 
     @PutMapping("/users/{userId}/activate")
     public ResponseEntity<Void> approveUser(@PathVariable UUID userId) {
         adminServices.approveUser(userId);
-        return ResponseEntity.ok().build();
+        return updatedResponse();
     }
 
     @GetMapping("/shops")
-    public ResponseEntity<List<ShopResponseDto>> getAllShops() {
-        return ResponseEntity.ok().body(adminServices.getShops());
+    public ResponseEntity<Page<ShopResponseDto>> getAllShops(Pageable pageable) {
+        return ResponseEntity.ok().body(adminServices.getShops(pageable));
     }
 
     @GetMapping("/shops/{shopId}")
     public ResponseEntity<ShopResponseDto> getShopById(@PathVariable UUID shopId) {
-        return ResponseEntity.ok().body(adminServices.getShopById(shopId));
+        return successResponse(adminServices.getShopById(shopId));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteShopById(@PathVariable UUID id) {
+    public ResponseEntity<Void> deleteShopById(@PathVariable UUID id) {
         adminServices.deleteShop(id);
-        return ResponseEntity.ok().body("Removed Success");
+        return deletedResponse();
     }
 
     @GetMapping("/search")
-    public ResponseEntity<?> searchByName(@RequestBody SearchRequest searchRequest) {
-        List<Shop> shop = adminServices.search(searchRequest.name());
-        return  ResponseEntity.ok().body(shop);
+    public ResponseEntity<?> searchByName(@RequestBody SearchRequest searchRequest, Pageable pageable) {
+        Page<Shop> shop = adminServices.search(searchRequest.name(), pageable);
+        return successResponse(shop);
     }
 
 
     @GetMapping("/shops/approved")
-    public ResponseEntity<List<ShopResponseDto>> getAllApprovedShops() {
-        return ResponseEntity.ok().body(adminServices.getApprovedShops());
+    public ResponseEntity<Page<ShopResponseDto>> getAllApprovedShops(Pageable pageable) {
+        return successResponse(adminServices.getApprovedShops(pageable));
     }
 
     @GetMapping("/shops/suspend")
-    public ResponseEntity<List<ShopResponseDto>> getAllSuspendedShops() {
-        return ResponseEntity.ok().body(adminServices.getSuspendedShops());
+    public ResponseEntity<Page<ShopResponseDto>> getAllSuspendedShops(Pageable pageable) {
+        return successResponse(adminServices.getSuspendedShops(pageable));
     }
 
     @PutMapping("/shops/{shopId}/approve")
     public ResponseEntity<Void> approveShop(@PathVariable UUID shopId) {
         adminServices.approveShop(shopId);
-        return ResponseEntity.ok().build();
+        return updatedResponse();
     }
 
     @PutMapping("/shops/{shopId}/suspend")
     public ResponseEntity<Void> suspendShop(@PathVariable UUID shopId) {
         adminServices.suspendShop(shopId);
-        return ResponseEntity.ok().build();
+        return updatedResponse();
     }
 }

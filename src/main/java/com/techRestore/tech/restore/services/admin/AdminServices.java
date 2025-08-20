@@ -8,73 +8,67 @@ import com.techRestore.tech.restore.model.entities.User;
 import com.techRestore.tech.restore.model.enums.Role;
 import com.techRestore.tech.restore.repository.ShopRepository;
 import com.techRestore.tech.restore.repository.UserRepository;
+import com.techRestore.tech.restore.services.BaseService;
+import com.techRestore.tech.restore.utils.DTOConverter;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
-public class AdminServices {
-    @Autowired
-    private UserRepository userRepository;
-
+public class AdminServices extends BaseService<User, UUID> {
     @Autowired
     private ShopRepository shopRepository;
 
-    public List<ResponseUsersDto> getAllUsers() {
-        List<User> users = userRepository.findAll();
+    public AdminServices(UserRepository userRepository) {
+        super(userRepository);
+    }
 
-        return users.stream().map(this::convertDto).toList();
+    public Page<ResponseUsersDto> getAllUsers(Pageable pageable) {
+        return repository.findAll(pageable).map(this::convertDto);
     }
 
     public ResponseUsersDto getUserDetailsById(UUID id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("user not found"));
-
+        User user = findByIdOrThrow(id, "User");
         return convertDto(user);
     }
 
     public void suspendUser(UUID id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("user not found"));
+        User user = findByIdOrThrow(id, "User");
         user.setActivate(false);
-
-        userRepository.save(user);
+        repository.save(user);
     }
 
     public void approveUser(UUID id) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("user not found"));
+        User user = findByIdOrThrow(id, "User");
         user.setActivate(true);
-
-        userRepository.save(user);
+        repository.save(user);
     }
 
-    public List<ShopResponseDto> getShops() {
-        return shopRepository.findAll().stream()
-                .map(this::toShopDto)
-                .toList();
+    public Page<ShopResponseDto> getShops(Pageable pageable) {
+        return shopRepository.findAll(pageable)
+                .map(DTOConverter::convertToShopyDTO);
     }
 
-    public List<ShopResponseDto> getApprovedShops() {
-        return shopRepository.findAllApprovedShops().stream()
-                .map(this::toShopDto)
-                .toList();
+    public Page<ShopResponseDto> getApprovedShops(Pageable pageable) {
+        return shopRepository.findAllApprovedShops(pageable)
+                .map(DTOConverter::convertToShopyDTO);
     }
 
-    public List<ShopResponseDto> getSuspendedShops() {
-        return shopRepository.findAllSuspendedShops().stream()
-                .map(this::toShopDto)
-                .toList();
+    public Page<ShopResponseDto> getSuspendedShops(Pageable pageable) {
+        return shopRepository.findAllSuspendedShops(pageable)
+                .map(DTOConverter::convertToShopyDTO);
     }
 
     public ShopResponseDto getShopById(UUID shopId){
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new NotFoundException("Shop not Found"));
 
-        return toShopDto(shop);
+        return DTOConverter.convertToShopyDTO(shop);
     }
 
     public void deleteShop(UUID id) {
@@ -85,16 +79,15 @@ public class AdminServices {
         shopRepository.deleteById(id);
     }
 
-    public List<Shop> search(String name) {
-        return shopRepository.findByName(name);
+    public Page<Shop> search(String name, Pageable pageable) {
+        return shopRepository.findByName(name, pageable);
     }
 
     public void updateRole(UUID id, Role role) {
-        User user = userRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("user not found"));
+        User user = findByIdOrThrow(id, "User");
         user.setRole(role);
 
-        userRepository.save(user);
+        repository.save(user);
     }
 
     public void approveShop(UUID shopId) {
@@ -110,20 +103,6 @@ public class AdminServices {
 
         shop.setVerified(false);
         shopRepository.save(shop);
-    }
-
-    public ShopResponseDto toShopDto(Shop shop) {
-        ShopResponseDto dto = new ShopResponseDto();
-        dto.setId(shop.getId());
-        dto.setEmail(shop.getEmail());
-        dto.setName(shop.getName());
-        dto.setDescription(shop.getDescription());
-        dto.setVerified(shop.getVerified());
-        dto.setPhone(shop.getPhone());
-        dto.setRating(shop.getRating());
-        dto.setCreatedAt(shop.getCreatedAt());
-        dto.setUpdatedAt(shop.getUpdatedAt());
-        return dto;
     }
 
     public ResponseUsersDto convertDto(User user) {

@@ -1,50 +1,42 @@
 package com.techRestore.tech.restore.services.category;
 
 import com.techRestore.tech.restore.dto.category.CategoryDTO;
-import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.entities.Category;
 import com.techRestore.tech.restore.repository.CategoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.techRestore.tech.restore.services.BaseService;
+import com.techRestore.tech.restore.utils.DTOConverter;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
-public class CategoryServices {
+public class CategoryServices extends BaseService<Category, UUID> {
 
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-    public List<CategoryDTO> getAllCategories() {
-        return categoryRepository.findAll().stream()
-                .map(this::convertToDTO)
-                .toList();
+    public CategoryServices(CategoryRepository categoryRepository) {
+        super(categoryRepository);
     }
+
+    public Page<CategoryDTO> getAllCategories(Pageable pageable) {
+        return repository.findAll(pageable)
+                .map(DTOConverter::convertToCategoryDTO);
+    }
+    
     public void addCategory(CategoryDTO categoryDTO) {
         Category category = new Category();
         category.setName(categoryDTO.name());
-        categoryRepository.save(category);
+        repository.save(category);
     }
 
     public void updateCategory(UUID id, CategoryDTO categoryDTO) {
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Category not found"));
+        Category category = findByIdOrThrow(id, "Category");
         category.setName(categoryDTO.name());
-        categoryRepository.save(category);
+        repository.save(category);
     }
 
     public void removeCategory(UUID id) {
-        categoryRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Category Not found"));
-
-        categoryRepository.deleteById(id);
+        deleteByIdOrThrow(id, "Category");
     }
-
-    private CategoryDTO convertToDTO(Category category) {
-        return new CategoryDTO(
-                category.getName()
-        );
-    }
-
 }

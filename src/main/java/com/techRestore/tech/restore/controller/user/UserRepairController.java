@@ -1,9 +1,10 @@
 package com.techRestore.tech.restore.controller.user;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.techRestore.tech.restore.controller.BaseController;
 import com.techRestore.tech.restore.dto.repair.RepairRequestCreateDto;
 import com.techRestore.tech.restore.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.dto.repair.RepairRequestUpdateDto;
@@ -22,25 +24,27 @@ import com.techRestore.tech.restore.services.user.RepairRequestService;
 
 @RestController
 @RequestMapping("/api/user/repair-request")
-public class UserRepairController {
+public class UserRepairController extends BaseController {
     @Autowired
     private RepairRequestService repairRequestService;
 
     @GetMapping
-    public ResponseEntity<List<RepairRequestDto>> getAllRepairRequests() {
-        return ResponseEntity.ok().body(repairRequestService.getAllRepairRequestByUserId());
+    public ResponseEntity<Page<RepairRequestDto>> getAllRepairRequests(Pageable pageable) {
+        return successResponse(repairRequestService.getAllRepairRequestByUserId(pageable));
     }
 
     @PostMapping("/{shopId}")
-    public ResponseEntity<RepairRequestDto> createRepairRequest(@PathVariable UUID shopId ,@RequestBody RepairRequestCreateDto repairRequest) {
+    public ResponseEntity<RepairRequestDto> createRepairRequest(
+            @PathVariable UUID shopId, 
+            @RequestBody RepairRequestCreateDto repairRequest) {
         RepairRequestDto createdRequest = repairRequestService.createRepairRequest(shopId, repairRequest);
-        return ResponseEntity.status(201).body(createdRequest);
+        return createdResponse(createdRequest);
     }
 
     @GetMapping("/{requestId}")
     public ResponseEntity<RepairRequestDto> getRepairRequestById(@PathVariable UUID requestId) {
         RepairRequestDto repairRequest = repairRequestService.getRepairRequestById(requestId);
-        return ResponseEntity.ok().body(repairRequest);
+        return successResponse(repairRequest);
     }
 
     @PutMapping("/{shopId}/{requestId}")
@@ -49,18 +53,18 @@ public class UserRepairController {
             @PathVariable UUID requestId,
             @RequestBody RepairRequestUpdateDto repairRequest) {
         RepairRequestDto updatedRequest = repairRequestService.updateRepairRequest(shopId, requestId, repairRequest);
-        return ResponseEntity.ok().body(updatedRequest);
+        return updatedResponse(updatedRequest);
     }
 
     @DeleteMapping("{requestId}/cancel")
-    public ResponseEntity<String> deleteRepairRequest(@PathVariable UUID requestId) {
+    public ResponseEntity<Void> deleteRepairRequest(@PathVariable UUID requestId) {
         repairRequestService.deleteRepairRequest(requestId);
-        return ResponseEntity.ok().body("Repair request deleted successfully.");
+        return deletedResponse();
     }
 
     @PutMapping("/{requestId}/status")
-    public ResponseEntity<String> confirmRepairRequest(@PathVariable UUID requestId, @RequestBody RepairStatusDto repairStatusDto) {
+    public ResponseEntity<Void> confirmRepairRequest(@PathVariable UUID requestId, @RequestBody RepairStatusDto repairStatusDto) {
         repairRequestService.setStatus(requestId, repairStatusDto);
-        return ResponseEntity.ok().body("Repair request confirmed successfully.");
+        return updatedResponse();
     }
 }

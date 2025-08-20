@@ -11,51 +11,53 @@ import com.techRestore.tech.restore.model.entities.Shop;
 import com.techRestore.tech.restore.repository.CategoryRepository;
 import com.techRestore.tech.restore.repository.ProductRepository;
 import com.techRestore.tech.restore.repository.ShopRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.techRestore.tech.restore.services.BaseService;
+import com.techRestore.tech.restore.utils.DTOConverter;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
-public class ShopProductService {
-    @Autowired
-    private ShopRepository shopRepository;
+public class ShopProductService extends BaseService<Product, UUID> {
+    
+    private final ShopRepository shopRepository;
+    private final CategoryRepository categoryRepository;
 
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private CategoryRepository categoryRepository;
-
-
-        private UUID getCurrentShopId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-      String email = authentication.getName();
-      Shop shop = shopRepository.findByEmail(email)
-        .orElseThrow(() -> new UsernameNotFoundException("Shop not found"));
-
-      if (shop == null) {
-          throw new RuntimeException("User not found with email: " + email);
-      }
-      return shop.getId();
+    public ShopProductService(ProductRepository productRepository, 
+                             ShopRepository shopRepository, 
+                             CategoryRepository categoryRepository) {
+        super(productRepository);
+        this.shopRepository = shopRepository;
+        this.categoryRepository = categoryRepository;
     }
 
-    public List<ProductResponseDTO> getProductsByShopId() {
+    /**
+     * Get current authenticated shop ID
+     */
+    private UUID getCurrentShopId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        Shop shop = shopRepository.findByEmail(email)
+            .orElseThrow(() -> new NotFoundException("Shop not found with email: " + email));
+        return shop.getId();
+    }
+
+    public Page<ProductResponseDTO> getProductsByShopId(Pageable pageable) {
         UUID shopId = getCurrentShopId();
-        List<Product> products = productRepository.findByShopId(shopId);
-        return products.stream()
-                       .map(this::convertDto)
-                       .toList();
+        return ((ProductRepository) repository).findByShopId(shopId, pageable)
+                .map(DTOConverter::convertToProductDTO);
     }
 
     public ProductResponseDTO addProductToShop(CreateProductDto createProductDto) {
         UUID shopId = getCurrentShopId();
-        shopRepository.findById(shopId)
-            .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
+        
+        // Validate shop exists
+        findByIdOrThrow(shopRepository, shopId, "Shop");
 
         Product product = new Product();
         product.setShopId(shopId);
@@ -66,32 +68,23 @@ public class ShopProductService {
         product.setStock(createProductDto.stockQuantity());
         product.setCondition(createProductDto.condition());
 
-        if (createProductDto.category() != null) {
-            Category category;
-            if (createProductDto.category().getId() != null) {
-                category = categoryRepository.findById(createProductDto.category().getId())
-                        .orElseThrow(() -> new NotFoundException("Category not found"));
-            } else {
-                throw new RuntimeException("Category must have either ID or name");
-            }
-
+        if (createProductDto.category() != null && createProductDto.category().getId() != null) {
+            Category category = findByIdOrThrow(categoryRepository, createProductDto.category().getId(), "Category");
             product.setCategory(category);
         }
 
-        productRepository.save(product);
-        return convertDto(product);
+        repository.save(product);
+        return DTOConverter.convertToProductDTO(product);
     }
 
-
     public ProductResponseDTO updateProduct(UUID productId, UpdateProductDto updateProductDto) {
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new NotFoundException("Product not found with id: " + productId));
+        Product product = findByIdOrThrow(productId, "Product");
 
-        if (updateProductDto.name() != null) {
-            product.setName(updateProductDto.name());
+        if (updateProductDto.name() != null && !updateProductDto.name().trim().isEmpty()) {
+            product.setName(updateProductDto.name().trim());
         }
-        if (updateProductDto.description() != null) {
-            product.setDescription(updateProductDto.description());
+        if (updateProductDto.description() != null && !updateProductDto.description().trim().isEmpty()) {
+            product.setDescription(updateProductDto.description().trim());
         }
         if (updateProductDto.price() != null) {
             product.setPrice(updateProductDto.price());
@@ -109,44 +102,26 @@ public class ShopProductService {
             product.setCondition(updateProductDto.condition());
         }
 
-        productRepository.save(product);
-
-        return convertDto(product);
+        repository.save(product);
+        return DTOConverter.convertToProductDTO(product);
     }
 
     public void deleteProduct(UUID productId) {
-        if (!productRepository.existsById(productId)) {
-            throw new NotFoundException("Product not found with id: " + productId);
-        }
-        productRepository.deleteById(productId);
+        deleteByIdOrThrow(productId, "Product");
     }
 
     public ProductResponseDTO updateProductStock(UUID productId, StockUpdateRequest stockUpdateRequest) {
-        getCurrentShopId();
+        getCurrentShopId(); // Validate shop access
+        
+        Product product = findByIdOrThrow(productId, "Product");
 
-        Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new NotFoundException("Product not found with id: " + productId));
-
-        if (stockUpdateRequest.newStock() < 0)
-            throw new RuntimeException("Invalid input");
+        if (stockUpdateRequest.newStock() < 0) {
+            throw new IllegalArgumentException("Stock quantity cannot be negative");
+        }
 
         product.setStock(stockUpdateRequest.newStock());
-        productRepository.save(product);
+        repository.save(product);
 
-        return convertDto(product);
-    }
-
-    private ProductResponseDTO convertDto(Product product) {
-        return new ProductResponseDTO(
-                product.getId(),
-                product.getName(),
-                product.getDescription(),
-                product.getPrice(),
-                product.getStock(),
-                product.getImageUrl(),
-                product.getCondition(),
-                product.getCreatedAt(),
-                product.getCategory() != null ? product.getCategory().getName() : null
-        );
+        return DTOConverter.convertToProductDTO(product);
     }
 }

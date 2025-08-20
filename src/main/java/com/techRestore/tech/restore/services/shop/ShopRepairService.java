@@ -1,14 +1,12 @@
 package com.techRestore.tech.restore.services.shop;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.techRestore.tech.restore.dto.repair.RepairPriceUpdateDto;
@@ -20,81 +18,56 @@ import com.techRestore.tech.restore.model.entities.Shop;
 import com.techRestore.tech.restore.model.enums.RepairStatus;
 import com.techRestore.tech.restore.repository.RepairRequestRepository;
 import com.techRestore.tech.restore.repository.ShopRepository;
+import com.techRestore.tech.restore.services.BaseService;
+import com.techRestore.tech.restore.utils.DTOConverter;
 
 @Service
-public class ShopRepairService {
-    @Autowired
-    private RepairRequestRepository repairRequestRepository;
+public class ShopRepairService extends BaseService<RepairRequest, UUID> {
     
-    @Autowired
-    private ShopRepository shopRepository;
+    private final ShopRepository shopRepository;
 
-    private UUID getCurrentShopId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-      String email = authentication.getName();
-      Shop shop = shopRepository.findByEmail(email)
-        .orElseThrow(() -> new UsernameNotFoundException("Shop not found"));
-
-      if (shop == null) {
-          throw new RuntimeException("User not found with email: " + email);
-      }
-      return shop.getId();
+    public ShopRepairService(RepairRequestRepository repairRequestRepository, ShopRepository shopRepository) {
+        super(repairRequestRepository);
+        this.shopRepository = shopRepository;
     }
 
-    public List<RepairRequestDto> getAllRepairRequest() {
+    /**
+     * Get current authenticated shop ID
+     */
+    private UUID getCurrentShopId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        Shop shop = shopRepository.findByEmail(email)
+            .orElseThrow(() -> new NotFoundException("Shop not found with email: " + email));
+        return shop.getId();
+    }
+
+    public Page<RepairRequestDto> getAllRepairRequest(Pageable pageable) {
         UUID shopId = getCurrentShopId();
-        return repairRequestRepository.findAllByShopId(shopId).stream()
-                .map(this::convertToDto)
-                .toList();
+        return ((RepairRequestRepository) repository).findAllByShopId(shopId, pageable)
+                .map(DTOConverter::convertToRepairRequestDTO);
     }
 
     @PreAuthorize("hasRole('SHOP_OWNER')")
     public void setPrice(UUID id, RepairPriceUpdateDto repairPriceUpdateDto) {
-        RepairRequest repairRequest = repairRequestRepository.findById(id)
-            .orElseThrow(() -> new NotFoundException("Repair request not found with id: " + id));
-
+        RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
         repairRequest.setPrice(repairPriceUpdateDto.price());
-        repairRequestRepository.save(repairRequest);         
+        repository.save(repairRequest);
     }
 
-
     public void setStatus(UUID id, RepairStatusDto repairStatusDto) {
-        RepairRequest repairRequest = repairRequestRepository.findById(id)
-            .orElseThrow(() -> new NotFoundException("Repair request not found with id: " + id));
-
+        RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
         repairRequest.setStatus(repairStatusDto.status());
-        repairRequestRepository.save(repairRequest);  
+        repository.save(repairRequest);
     }
 
     public RepairRequestDto getRepairRequestById(UUID id) {
-        RepairRequest repairRequest = repairRequestRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Repair request not found with id: " + id));
-        return convertToDto(repairRequest);
+        RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
+        return DTOConverter.convertToRepairRequestDTO(repairRequest);
     }
 
-
-    public List<RepairRequestDto> getRepairsByStatus(RepairStatus status) {
-        List<RepairRequest> repairRequests = repairRequestRepository.findByStatus(status);
-        return repairRequests.stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
+    public Page<RepairRequestDto> getRepairsByStatus(RepairStatus status, Pageable pageable) {
+        Page<RepairRequest> repairRequests = ((RepairRequestRepository) repository).findByStatus(status, pageable);
+        return repairRequests.map(DTOConverter::convertToRepairRequestDTO);
     }
-
-    private RepairRequestDto convertToDto(RepairRequest repairRequest) {
-        return new RepairRequestDto(
-                repairRequest.getId(),
-                null,
-                repairRequest.getUserId(),
-                repairRequest.getShopId(),
-                repairRequest.getDeliveryAddress(),
-                repairRequest.getPaymentId(),
-                repairRequest.getDescription(),
-                repairRequest.getDeliveryMethod().name(),
-                repairRequest.getCategoryId(),
-                repairRequest.getPaymentMethod().name(),
-                repairRequest.isConfirmed(),
-                repairRequest.getStatus()
-        );
-    }
-
 }
