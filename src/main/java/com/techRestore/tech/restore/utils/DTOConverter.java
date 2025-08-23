@@ -5,15 +5,18 @@ import com.techRestore.tech.restore.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.dto.shop.ShopResponseDto;
 import com.techRestore.tech.restore.dto.category.CategoryDTO;
 import com.techRestore.tech.restore.dto.common.address.AddressResponse;
-import com.techRestore.tech.restore.model.entities.Product;
-import com.techRestore.tech.restore.model.entities.RepairRequest;
-import com.techRestore.tech.restore.model.entities.Shop;
-import com.techRestore.tech.restore.model.entities.ShopAddress;
-import com.techRestore.tech.restore.model.entities.Category;
+import com.techRestore.tech.restore.dto.order.OrderItemResponseDTO;
+import com.techRestore.tech.restore.dto.order.OrderResponseDTO;
+import com.techRestore.tech.restore.model.entities.*;
 import org.hibernate.LazyInitializationException;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class DTOConverter {
-    
+
     public static ProductResponseDTO convertToProductDTO(Product product) {
         String categoryName = null;
         try {
@@ -36,7 +39,7 @@ public class DTOConverter {
                 categoryName
         );
     }
-    
+
     public static CategoryDTO convertToCategoryDTO(Category category) {
         return new CategoryDTO(category.getName());
     }
@@ -82,4 +85,52 @@ public class DTOConverter {
                 repairRequest.getStatus()
         );
     }
-} 
+
+    // Alias method to match the method name used in UserServices
+    public static RepairRequestDto convertToRepairRequestDto(RepairRequest repairRequest) {
+        return convertToRepairRequestDTO(repairRequest);
+    }
+
+    public static OrderResponseDTO convertToOrderResponseDTO(Order order) {
+        OrderResponseDTO dto = new OrderResponseDTO();
+        dto.setId(order.getId());
+        dto.setUserId(order.getUserId());
+        dto.setDeliveryAddressId(order.getDeliveryAddressId());
+        dto.setTotalPrice(order.getTotalPrice());
+        dto.setStatus(order.getStatus());
+        dto.setPaymentMethod(order.getPaymentMethod());
+        dto.setCreatedAt(order.getCreatedAt());
+        dto.setPaymentId(order.getPaymentId());
+
+        // Convert order items if they are loaded
+        try {
+            if (order.getOrderItems() != null) {
+                List<OrderItemResponseDTO> itemDTOs = order.getOrderItems().stream()
+                        .map(DTOConverter::convertToOrderItemResponseDTO)
+                        .collect(Collectors.toList());
+                dto.setOrderItems(itemDTOs);
+            }
+        } catch (LazyInitializationException e) {
+            // Items were not loaded, set empty list
+            dto.setOrderItems(new ArrayList<>());
+        }
+
+        return dto;
+    }
+
+    public static OrderItemResponseDTO convertToOrderItemResponseDTO(OrderItem item) {
+        OrderItemResponseDTO dto = new OrderItemResponseDTO();
+        dto.setId(item.getId());
+        dto.setProductId(item.getProductId());
+        dto.setQuantity(item.getQuantity());
+        dto.setPriceAtCheckout(item.getPriceAtCheckout());
+        dto.setShopId(item.getShopId());
+
+        // Calculate subtotal
+        if (item.getQuantity() != null && item.getPriceAtCheckout() != null) {
+            dto.setSubtotal(item.getPriceAtCheckout().multiply(new BigDecimal(item.getQuantity())));
+        }
+
+        return dto;
+    }
+}

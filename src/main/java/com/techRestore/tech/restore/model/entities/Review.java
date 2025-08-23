@@ -8,7 +8,10 @@ import java.util.UUID;
 
 @Entity
 @Data
-@Table(name = "review")
+@Table(name = "review",
+        uniqueConstraints = {
+        @UniqueConstraint(columnNames={"user_id", "shop_id"})
+        })
 public class Review {
     @Id
     @GeneratedValue

@@ -4,6 +4,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import com.techRestore.tech.restore.exception.NotFoundException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -35,12 +40,11 @@ public class ReviewService {
   */
 
   @PreAuthorize("hasRole('ADMIN')")
-  public List<ReviewResponseDTO> getAllReviews(){
-    return reviewRepository.findAll().stream()
-        .map(this::toResponseDTO)
-        .collect(Collectors.toList());
+  public Page<ReviewResponseDTO> getAllReviews(int page, int size) {
+    Pageable pageable = PageRequest.of(page, size);
+    return reviewRepository.findAll(pageable)
+            .map(this::toResponseDTO);
   }
-
 
   @PreAuthorize("hasRole('GUEST')")
   public ReviewResponseDTO createReview(UUID shopId, ReviewRequestDTO reviewRequestDTO) {
@@ -48,7 +52,11 @@ public class ReviewService {
     String email = authentication.getName();
     User user = userRepository.findByEmail(email);
     if (user == null) {
-        throw new RuntimeException("User not found with email: " + email);
+      throw new NotFoundException("User not found with email: " + email);
+    }
+
+    if (reviewRepository.existsByUserIdAndShopId(user.getId(), shopId)) {
+      throw new RuntimeException("You have already submitted a review for this shop.");
     }
 
     Review review = new Review();
@@ -60,55 +68,53 @@ public class ReviewService {
 
     review = reviewRepository.save(review);
     return toResponseDTO(review);
-}
+  }
 
   public ReviewResponseDTO getReviewById(UUID id) {
     Review review = reviewRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Review not found with id: " + id));
+            .orElseThrow(() -> new NotFoundException("Review not found with id: " + id));
     return toResponseDTO(review);
   }
-
 
   @PreAuthorize("hasRole('GUEST')")
   public ReviewResponseDTO updateReview(UUID reviewId, ReviewRequestDTO reviewRequestDTO) {
     Review review = reviewRepository.findById(reviewId)
-        .orElseThrow(() -> new RuntimeException("Review not found with id: " + reviewId));
-    
+            .orElseThrow(() -> new NotFoundException("Review not found with id: " + reviewId));
 
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     String email = authentication.getName();
     User user = userRepository.findByEmail(email);
 
     if (!review.getUserId().equals(user.getId())) {
-        throw new RuntimeException("You can only update your own reviews.");
-    }    
+      throw new RuntimeException("You can only update your own reviews.");
+    }
 
     review.setRating(reviewRequestDTO.getRating());
     review.setComment(reviewRequestDTO.getComment());
     review = reviewRepository.save(review);
     return toResponseDTO(review);
-}
+  }
 
   public void deleteReview(UUID id) {
     Review review = reviewRepository.findById(id)
-        .orElseThrow(() -> new RuntimeException("Review not found with id: " + id));
+            .orElseThrow(() -> new NotFoundException("Review not found with id: " + id));
     reviewRepository.delete(review);
   }
 
-  public List<ReviewResponseDTO> getReviewsByShopId(UUID shopId) {
-    return reviewRepository.findAllByShopId(shopId).stream()
-        .map(this::toResponseDTO)
-        .collect(Collectors.toList());
+  public Page<ReviewResponseDTO> getReviewsByShopId(UUID shopId, int page, int size) {
+    Pageable pageable = PageRequest.of(page, size);
+    return reviewRepository.findAllByShopId(shopId, pageable)
+            .map(this::toResponseDTO);
   }
 
   private ReviewResponseDTO toResponseDTO(Review review) {
-      ReviewResponseDTO dto = new ReviewResponseDTO();
-      dto.setId(review.getId());
-      dto.setUserId(review.getUserId());
-      dto.setShopId(review.getShopId());
-      dto.setRating(review.getRating());
-      dto.setComment(review.getComment());
-      dto.setCreatedAt(review.getCreatedAt());
-      return dto;
-    }
+    ReviewResponseDTO dto = new ReviewResponseDTO();
+    dto.setId(review.getId());
+    dto.setUserId(review.getUserId());
+    dto.setShopId(review.getShopId());
+    dto.setRating(review.getRating());
+    dto.setComment(review.getComment());
+    dto.setCreatedAt(review.getCreatedAt());
+    return dto;
+  }
 }

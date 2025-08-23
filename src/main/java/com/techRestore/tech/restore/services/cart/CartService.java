@@ -10,6 +10,8 @@ import com.techRestore.tech.restore.model.entities.Product;
 import com.techRestore.tech.restore.repository.CartItemRepository;
 import com.techRestore.tech.restore.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,13 +28,30 @@ public class CartService {
     private final ProductRepository productRepository;
 
     @Transactional(readOnly = true)
-    public CartResponseDTO getCart(UUID userId) {
-        List<CartItem> items = cartItemRepository.findByUserId(userId);
-        return mapToCartResponseDTO(userId, items);
+    public CartResponseDTO getCart(UUID userId, Pageable pageable) {
+        Page<CartItem> items = cartItemRepository.findByUserId(userId,pageable);
+        List<CartItemResponseDTO> itemDTOs = items
+                .map(this::mapToCartItemResponseDTO)
+                .getContent();
+
+        CartResponseDTO dto = new CartResponseDTO();
+        dto.setUserId(userId);
+        dto.setItems(itemDTOs);
+        dto.setTotalItems(itemDTOs.stream().mapToInt(CartItemResponseDTO::getQuantity).sum());
+        dto.setTotalPrice(itemDTOs.stream()
+                .map(CartItemResponseDTO::getSubtotal)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
+
+        dto.setPage(items.getNumber());
+        dto.setSize(items.getSize());
+        dto.setTotalElements(items.getTotalElements());
+        dto.setTotalPages(items.getTotalPages());
+
+        return dto;
     }
 
     @Transactional
-    public CartResponseDTO addItemToCart(UUID userId, AddToCartRequestDTO request) {
+    public CartResponseDTO addItemToCart(UUID userId, AddToCartRequestDTO request,Pageable pageable) {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new NotFoundException("Product not found"));
 
@@ -46,17 +65,16 @@ public class CartService {
             CartItem newItem = new CartItem();
             newItem.setUserId(userId);
             newItem.setProductId(request.getProductId());
-            newItem.setShopId(product.getShopId()); 
+            newItem.setShopId(product.getShopId());
             newItem.setQuantity(request.getQuantity());
-            cartItemRepository.save(newItem);
+            CartItem savedItem = cartItemRepository.save(newItem);
         }
 
-        List<CartItem> items = cartItemRepository.findByUserId(userId);
-        return mapToCartResponseDTO(userId, items);
+        return getCart(userId, pageable);
     }
 
     @Transactional
-    public CartResponseDTO updateCartItem(UUID userId, UUID itemId, UpdateCartItemRequestDTO request) {
+    public CartResponseDTO updateCartItem(UUID userId, UUID itemId, UpdateCartItemRequestDTO request,Pageable pageable) {
         CartItem cartItem = cartItemRepository.findByIdAndUserId(itemId, userId)
                 .orElseThrow(() -> new NotFoundException("Cart item not found"));
 
@@ -67,8 +85,7 @@ public class CartService {
             cartItemRepository.save(cartItem);
         }
 
-        List<CartItem> items = cartItemRepository.findByUserId(userId);
-        return mapToCartResponseDTO(userId, items);
+        return getCart(userId, pageable);
     }
 
     @Transactional

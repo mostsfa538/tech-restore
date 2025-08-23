@@ -42,6 +42,9 @@ public class OrderPayment {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "paid_at")
+    private LocalDateTime paidAt;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User user;

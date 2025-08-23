@@ -19,6 +19,9 @@ public class Payment {
     @Column(name = "id", nullable = false, unique = true)
     private UUID id;
 
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
+
     @Column(name = "amount", precision = 10, scale = 2)
     private BigDecimal amount;
 
@@ -35,6 +38,12 @@ public class Payment {
 
     @Column(name = "type", nullable = false)
     private String type;
+
+    @Column(name = "details", columnDefinition = "TEXT")
+    private String details;
+
+    @Column(name = "is_default")
+    private boolean isDefault;
 
     @Column(name = "paid_at")
     private LocalDateTime paidAt;
