@@ -29,28 +29,28 @@ public class ReviewController {
   private final ReviewService reviewService;
 
   /*
-    #### endpoints ####
-    - getAllReviews (only admin, paginated)
-    - createReview (only guest)
-    - getReviewById
-    - updateReview
-    - deleteReview
-    - getReviewsByShopId (paginated)
-  */
+   * #### endpoints ####
+   * - getAllReviews (only admin, paginated)
+   * - createReview (only guest)
+   * - getReviewById
+   * - updateReview
+   * - deleteReview
+   * - getReviewsByShopId (paginated)
+   */
 
   @GetMapping("/reviews")
   @PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<Page<ReviewResponseDTO>> getAllReviews(
-          @RequestParam(defaultValue = "0") int page,
-          @RequestParam(defaultValue = "10") int size) {
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size) {
     return ResponseEntity.ok(reviewService.getAllReviews(page, size));
   }
 
   @PostMapping("/shops/{shopId}/reviews")
   @PreAuthorize("hasRole('GUEST')")
   public ResponseEntity<ReviewResponseDTO> createReview(
-          @RequestBody ReviewRequestDTO reviewRequestDTO,
-          @PathVariable UUID shopId) {
+      @RequestBody ReviewRequestDTO reviewRequestDTO,
+      @PathVariable UUID shopId) {
     return ResponseEntity.ok(reviewService.createReview(shopId, reviewRequestDTO));
   }
 
@@ -62,8 +62,8 @@ public class ReviewController {
   @PutMapping("reviews/{id}")
   @PreAuthorize("hasRole('GUEST')")
   public ResponseEntity<ReviewResponseDTO> updateReview(
-          @PathVariable UUID id,
-          @RequestBody ReviewRequestDTO reviewRequestDTO) {
+      @PathVariable UUID id,
+      @RequestBody ReviewRequestDTO reviewRequestDTO) {
     return ResponseEntity.ok(reviewService.updateReview(id, reviewRequestDTO));
   }
 
@@ -76,9 +76,9 @@ public class ReviewController {
 
   @GetMapping("/shops/{shopId}/reviews")
   public ResponseEntity<Page<ReviewResponseDTO>> getReviewsByShopId(
-          @PathVariable UUID shopId,
-          @RequestParam(defaultValue = "0") int page,
-          @RequestParam(defaultValue = "10") int size) {
+      @PathVariable UUID shopId,
+      @RequestParam(defaultValue = "0") int page,
+      @RequestParam(defaultValue = "10") int size) {
     return ResponseEntity.ok(reviewService.getReviewsByShopId(shopId, page, size));
   }
 }

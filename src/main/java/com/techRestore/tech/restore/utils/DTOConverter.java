@@ -36,8 +36,7 @@ public class DTOConverter {
                 product.getImageUrl(),
                 product.getCondition(),
                 product.getCreatedAt(),
-                categoryName
-        );
+                categoryName);
     }
 
     public static CategoryDTO convertToCategoryDTO(Category category) {
@@ -65,11 +64,10 @@ public class DTOConverter {
                 address.getStreet(),
                 address.getBuilding(),
                 address.getNotes(),
-                address.isDefault()
-        );
+                address.isDefault());
     }
 
-        public static RepairRequestDto convertToRepairRequestDTO(RepairRequest repairRequest) {
+    public static RepairRequestDto convertToRepairRequestDTO(RepairRequest repairRequest) {
         return new RepairRequestDto(
                 repairRequest.getId(),
                 null,
@@ -82,8 +80,7 @@ public class DTOConverter {
                 repairRequest.getCategoryId(),
                 repairRequest.getPaymentMethod().name(),
                 repairRequest.isConfirmed(),
-                repairRequest.getStatus()
-        );
+                repairRequest.getStatus());
     }
 
     // Alias method to match the method name used in UserServices

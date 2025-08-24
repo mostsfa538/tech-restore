@@ -6,9 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 @RequiredArgsConstructor
 public abstract class BaseService<T, ID> {
-    
+
     protected final JpaRepository<T, ID> repository;
-    
+
     /**
      * Generic method to find entity by ID with proper exception handling
      */
@@ -16,29 +16,30 @@ public abstract class BaseService<T, ID> {
         return repository.findById(id)
                 .orElseThrow(() -> new NotFoundException(entityName + " not found with id: " + id));
     }
-    
+
     /**
-     * Generic method to find entity by ID from any repository with proper exception handling
+     * Generic method to find entity by ID from any repository with proper exception
+     * handling
      */
     protected <E> E findByIdOrThrow(JpaRepository<E, ID> repo, ID id, String entityName) {
         return repo.findById(id)
                 .orElseThrow(() -> new NotFoundException(entityName + " not found with id: " + id));
     }
-    
+
     /**
      * Generic method to check if entity exists
      */
     protected boolean existsById(ID id) {
         return repository.existsById(id);
     }
-    
+
     /**
      * Generic method to check if entity exists in any repository
      */
     protected <E> boolean existsById(JpaRepository<E, ID> repo, ID id) {
         return repo.existsById(id);
     }
-    
+
     /**
      * Generic method to delete entity with existence check
      */
@@ -48,7 +49,7 @@ public abstract class BaseService<T, ID> {
         }
         repository.deleteById(id);
     }
-    
+
     /**
      * Generic method to delete entity from any repository with existence check
      */

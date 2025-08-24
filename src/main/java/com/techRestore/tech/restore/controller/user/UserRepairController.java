@@ -35,7 +35,7 @@ public class UserRepairController extends BaseController {
 
     @PostMapping("/{shopId}")
     public ResponseEntity<RepairRequestDto> createRepairRequest(
-            @PathVariable UUID shopId, 
+            @PathVariable UUID shopId,
             @RequestBody RepairRequestCreateDto repairRequest) {
         RepairRequestDto createdRequest = repairRequestService.createRepairRequest(shopId, repairRequest);
         return createdResponse(createdRequest);
@@ -63,7 +63,8 @@ public class UserRepairController extends BaseController {
     }
 
     @PutMapping("/{requestId}/status")
-    public ResponseEntity<Void> confirmRepairRequest(@PathVariable UUID requestId, @RequestBody RepairStatusDto repairStatusDto) {
+    public ResponseEntity<Void> confirmRepairRequest(@PathVariable UUID requestId,
+            @RequestBody RepairStatusDto repairStatusDto) {
         repairRequestService.setStatus(requestId, repairStatusDto);
         return updatedResponse();
     }

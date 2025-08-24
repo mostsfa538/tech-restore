@@ -35,7 +35,7 @@ import lombok.AllArgsConstructor;
 @Service
 @AllArgsConstructor
 public class OrderService {
-  private final OrderRepository orderRepository;
+    private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final OrderPaymentRepository orderPaymentRepository;
     private final CartItemRepository cartItemRepository;
@@ -132,7 +132,7 @@ public class OrderService {
 
         TrackingResponseDTO dto = new TrackingResponseDTO();
         dto.setStatus(order.getStatus());
-        dto.setOrderId(order.getId());  
+        dto.setOrderId(order.getId());
         return dto;
     }
 
@@ -152,7 +152,8 @@ public class OrderService {
         dto.setCreatedAt(order.getCreatedAt());
         dto.setPaymentId(order.getPaymentId());
 
-        List<OrderItemResponseDTO> itemDTOs = orderItems.stream().map(this::mapToOrderItemResponseDTO).collect(Collectors.toList());
+        List<OrderItemResponseDTO> itemDTOs = orderItems.stream().map(this::mapToOrderItemResponseDTO)
+                .collect(Collectors.toList());
         dto.setOrderItems(itemDTOs);
 
         return dto;
@@ -168,5 +169,5 @@ public class OrderService {
         dto.setSubtotal(orderItem.getPriceAtCheckout().multiply(BigDecimal.valueOf(orderItem.getQuantity())));
         return dto;
     }
-  
+
 }

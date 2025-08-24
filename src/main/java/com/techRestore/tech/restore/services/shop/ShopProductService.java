@@ -24,13 +24,13 @@ import java.util.UUID;
 
 @Service
 public class ShopProductService extends BaseService<Product, UUID> {
-    
+
     private final ShopRepository shopRepository;
     private final CategoryRepository categoryRepository;
 
-    public ShopProductService(ProductRepository productRepository, 
-                             ShopRepository shopRepository, 
-                             CategoryRepository categoryRepository) {
+    public ShopProductService(ProductRepository productRepository,
+            ShopRepository shopRepository,
+            CategoryRepository categoryRepository) {
         super(productRepository);
         this.shopRepository = shopRepository;
         this.categoryRepository = categoryRepository;
@@ -43,7 +43,7 @@ public class ShopProductService extends BaseService<Product, UUID> {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         Shop shop = shopRepository.findByEmail(email)
-            .orElseThrow(() -> new NotFoundException("Shop not found with email: " + email));
+                .orElseThrow(() -> new NotFoundException("Shop not found with email: " + email));
         return shop.getId();
     }
 
@@ -55,7 +55,7 @@ public class ShopProductService extends BaseService<Product, UUID> {
 
     public ProductResponseDTO addProductToShop(CreateProductDto createProductDto) {
         UUID shopId = getCurrentShopId();
-        
+
         // Validate shop exists
         findByIdOrThrow(shopRepository, shopId, "Shop");
 
@@ -112,7 +112,7 @@ public class ShopProductService extends BaseService<Product, UUID> {
 
     public ProductResponseDTO updateProductStock(UUID productId, StockUpdateRequest stockUpdateRequest) {
         getCurrentShopId(); // Validate shop access
-        
+
         Product product = findByIdOrThrow(productId, "Product");
 
         if (stockUpdateRequest.newStock() < 0) {

@@ -31,14 +31,16 @@ public class AppConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.
-                sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .csrf(csrf -> csrf.disable())
                 .cors(corsConfig -> corsConfig.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/api/auth/create", "/api/auth/login", "/api/auth/refresh", "/api/auth/shops/**").permitAll()
+                        .requestMatchers("/api/auth/create", "/api/auth/login", "/api/auth/refresh",
+                                "/api/auth/shops/**")
+                        .permitAll()
                         .requestMatchers("/api/auth/home", "/api/auth/logout").authenticated()
-                        .requestMatchers("/api/shops/**", "/api/products/**", "/api/user/**", "/api/categories/**").permitAll()
+                        .requestMatchers("/api/shops/**", "/api/products/**", "/api/user/**", "/api/categories/**")
+                        .permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/user/**").hasAnyRole("GUEST")
                         .anyRequest().authenticated())
@@ -61,17 +63,18 @@ public class AppConfig {
         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
         corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
         corsConfiguration.setExposedHeaders(List.of("Authorization"));
-        corsConfiguration.setMaxAge(3600L); // Duration (in seconds) that the browser can cache the CORS preflight response (here: 1 hour)
+        corsConfiguration.setMaxAge(3600L); // Duration (in seconds) that the browser can cache the CORS preflight
+                                            // response (here: 1 hour)
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;
     }
+
     @Bean
     public CustomAuthenticationManager customAuthenticationManager() {
         return new CustomAuthenticationManager(
                 userDetailsService,
                 shopDetailsService,
-                passwordEncoder()
-        );
-}
+                passwordEncoder());
+    }
 }

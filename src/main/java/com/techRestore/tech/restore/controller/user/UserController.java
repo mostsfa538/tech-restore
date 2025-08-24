@@ -24,7 +24,6 @@ public class UserController extends BaseController {
 
     private final UserServices userServices;
 
-
     @GetMapping("/{shopId}/{categoryId}")
     public ResponseEntity<Page<ProductResponseDTO>> getProductsOfShopWithCategory(
             @PathVariable UUID shopId,
@@ -39,29 +38,29 @@ public class UserController extends BaseController {
         UserProfileDTO profile = userServices.getCurrentUserProfile();
         return successResponse(profile);
     }
-    
+
     @PutMapping("/profile")
     public ResponseEntity<UserProfileDTO> updateUserProfile(@RequestBody UserProfileUpdateDTO updateDTO) {
         UserProfileDTO updatedProfile = userServices.updateUserProfile(updateDTO);
         return updatedResponse(updatedProfile);
     }
-    
+
     @DeleteMapping("/profile")
     public ResponseEntity<Void> deleteUserAccount() {
         userServices.deleteUserAccount();
         return deletedResponse();
     }
-    
+
     @GetMapping("/repair-requests")
     public ResponseEntity<Page<RepairRequestDto>> getUserRepairRequests(Pageable pageable) {
         Page<RepairRequestDto> repairRequests = userServices.getUserRepairRequests(pageable);
         return successResponse(repairRequests);
     }
-    
+
     @GetMapping("/orders")
     public ResponseEntity<Page<OrderResponseDTO>> getUserOrders(Pageable pageable) {
         Page<OrderResponseDTO> orders = userServices.getUserOrders(pageable);
         return ResponseEntity.ok(orders);
     }
-    
+
 }

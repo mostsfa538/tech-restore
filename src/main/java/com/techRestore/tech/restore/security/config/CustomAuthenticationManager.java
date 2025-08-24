@@ -39,8 +39,7 @@ public class CustomAuthenticationManager implements AuthenticationManager {
                 return new UsernamePasswordAuthenticationToken(
                         userDetails,
                         password,
-                        userDetails.getAuthorities()
-                );
+                        userDetails.getAuthorities());
             }
         } catch (UsernameNotFoundException e) {
             // User not found, continue to shop authentication
@@ -52,8 +51,7 @@ public class CustomAuthenticationManager implements AuthenticationManager {
                 return new UsernamePasswordAuthenticationToken(
                         shopDetails,
                         password,
-                        shopDetails.getAuthorities()
-                );
+                        shopDetails.getAuthorities());
             }
         } catch (UsernameNotFoundException e) {
             // Shop not found either

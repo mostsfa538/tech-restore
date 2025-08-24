@@ -39,8 +39,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(
                 "VALIDATION_ERROR",
                 "Validation failed: " + errorMessage,
-                "VAL_001"
-        );
+                "VAL_001");
 
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
@@ -50,8 +49,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(
                 "RUNTIME_ERROR",
                 ex.getMessage(),
-                "RT_001"
-        );
+                "RT_001");
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -60,8 +58,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(
                 "SHOP_NOT_FOUND",
                 ex.getMessage(),
-                "SHOP_001"
-        );
+                "SHOP_001");
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
@@ -70,8 +67,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(
                 "EMAIL_EXISTS",
                 ex.getMessage(),
-                "SHOP_002"
-        );
+                "SHOP_002");
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
 
@@ -80,8 +76,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorResponse errorResponse = new ErrorResponse(
                 "INTERNAL_ERROR",
                 "An unexpected error occurred: " + ex.getMessage(),
-                "GEN_001"
-        );
+                "GEN_001");
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

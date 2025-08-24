@@ -14,6 +14,7 @@ import java.util.UUID;
 @Repository
 public interface ShopRepository extends JpaRepository<Shop, UUID> {
     Optional<Shop> findByEmail(String email);
+
     boolean existsByEmail(String email);
 
     @Query("SELECT s FROM Shop s WHERE s.name LIKE %:name%")

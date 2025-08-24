@@ -11,5 +11,6 @@ import com.techRestore.tech.restore.model.entities.Payment;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     List<Payment> findByUserIdAndType(UUID userId, String type);
+
     List<Payment> findByUserId(UUID userId);
 }

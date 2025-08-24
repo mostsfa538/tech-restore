@@ -42,7 +42,7 @@ public class UserAuthController {
             return ResponseEntity.badRequest().build();
         }
     }
-    
+
     @PostMapping("/refresh-token")
     public ResponseEntity<TokenResponse> refreshToken(@RequestBody RefreshTokenDto refreshTokenDto) {
         try {

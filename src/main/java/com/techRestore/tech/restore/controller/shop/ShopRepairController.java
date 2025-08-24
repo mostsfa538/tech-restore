@@ -41,18 +41,19 @@ public class ShopRepairController extends BaseController {
     public ResponseEntity<String> updateStatus(@PathVariable UUID requestId, @RequestBody RepairStatusDto statusDto) {
         shopRepairService.setStatus(requestId, statusDto);
         return updatedResponse("Updated Success");
-    }    
+    }
 
     @GetMapping("/status/{status}")
     public ResponseEntity<Page<RepairRequestDto>> getRepairsByStatus(
             @PathVariable RepairStatus status,
             Pageable pageable) {
-        Page<RepairRequestDto> repairs = shopRepairService.getRepairsByStatus(status,pageable);
+        Page<RepairRequestDto> repairs = shopRepairService.getRepairsByStatus(status, pageable);
         return successResponse(repairs);
     }
 
     @PutMapping("/{requestId}/price")
-    public ResponseEntity<String> setPrice(@PathVariable UUID requestId, @RequestBody RepairPriceUpdateDto repairPriceUpdateDto) {
+    public ResponseEntity<String> setPrice(@PathVariable UUID requestId,
+            @RequestBody RepairPriceUpdateDto repairPriceUpdateDto) {
         shopRepairService.setPrice(requestId, repairPriceUpdateDto);
         return updatedResponse("Price updated Successfully");
     }

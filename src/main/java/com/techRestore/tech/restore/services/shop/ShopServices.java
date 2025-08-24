@@ -24,7 +24,7 @@ import java.util.UUID;
 
 @Service
 public class ShopServices extends BaseService<Shop, UUID> {
-    
+
     private final ShopAddressRepository shopAddressRepository;
 
     public ShopServices(ShopRepository shopRepository, ShopAddressRepository shopAddressRepository) {
@@ -82,9 +82,9 @@ public class ShopServices extends BaseService<Shop, UUID> {
 
     public void updateAddress(UUID id, AddressUpdate addressUpdate) {
         getCurrentShop();
-        
+
         ShopAddress shopAddress = findByIdOrThrow(shopAddressRepository, id, "Address");
-        
+
         if (addressUpdate.state() != null) {
             shopAddress.setState(addressUpdate.state());
         }

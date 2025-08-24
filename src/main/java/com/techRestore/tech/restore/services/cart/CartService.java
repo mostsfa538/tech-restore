@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +28,7 @@ public class CartService {
 
     @Transactional(readOnly = true)
     public CartResponseDTO getCart(UUID userId, Pageable pageable) {
-        Page<CartItem> items = cartItemRepository.findByUserId(userId,pageable);
+        Page<CartItem> items = cartItemRepository.findByUserId(userId, pageable);
         List<CartItemResponseDTO> itemDTOs = items
                 .map(this::mapToCartItemResponseDTO)
                 .getContent();
@@ -51,7 +50,7 @@ public class CartService {
     }
 
     @Transactional
-    public CartResponseDTO addItemToCart(UUID userId, AddToCartRequestDTO request,Pageable pageable) {
+    public CartResponseDTO addItemToCart(UUID userId, AddToCartRequestDTO request, Pageable pageable) {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new NotFoundException("Product not found"));
 
@@ -67,14 +66,15 @@ public class CartService {
             newItem.setProductId(request.getProductId());
             newItem.setShopId(product.getShopId());
             newItem.setQuantity(request.getQuantity());
-            CartItem savedItem = cartItemRepository.save(newItem);
+            cartItemRepository.save(newItem);
         }
 
         return getCart(userId, pageable);
     }
 
     @Transactional
-    public CartResponseDTO updateCartItem(UUID userId, UUID itemId, UpdateCartItemRequestDTO request,Pageable pageable) {
+    public CartResponseDTO updateCartItem(UUID userId, UUID itemId, UpdateCartItemRequestDTO request,
+            Pageable pageable) {
         CartItem cartItem = cartItemRepository.findByIdAndUserId(itemId, userId)
                 .orElseThrow(() -> new NotFoundException("Cart item not found"));
 
@@ -101,23 +101,6 @@ public class CartService {
         cartItemRepository.deleteAll(items);
     }
 
-    private CartResponseDTO mapToCartResponseDTO(UUID userId, List<CartItem> cartItems) {
-        CartResponseDTO dto = new CartResponseDTO();
-        dto.setUserId(userId);
-
-        List<CartItemResponseDTO> itemDTOs = cartItems.stream()
-                .map(this::mapToCartItemResponseDTO)
-                .collect(Collectors.toList());
-
-        dto.setItems(itemDTOs);
-        dto.setTotalItems(itemDTOs.stream().mapToInt(CartItemResponseDTO::getQuantity).sum());
-        dto.setTotalPrice(itemDTOs.stream()
-                .map(CartItemResponseDTO::getSubtotal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add));
-
-        return dto;
-    }
-
     private CartItemResponseDTO mapToCartItemResponseDTO(CartItem cartItem) {
         CartItemResponseDTO dto = new CartItemResponseDTO();
         dto.setId(cartItem.getId());
@@ -134,4 +117,3 @@ public class CartService {
         return dto;
     }
 }
-

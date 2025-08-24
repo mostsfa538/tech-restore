@@ -39,8 +39,7 @@ public class PaymentController {
         }
 
         return user.getId();
-}
-
+    }
 
     @PostMapping("/process")
     public ResponseEntity<PaymentResponseDTO> processPayment(@RequestBody ProcessPaymentRequestDTO request) {
@@ -71,7 +70,8 @@ public class PaymentController {
     }
 
     @PostMapping("/methods")
-    public ResponseEntity<UserPaymentMethodResponseDTO> addPaymentMethod(@RequestBody UserPaymentMethodRequestDTO request) {
+    public ResponseEntity<UserPaymentMethodResponseDTO> addPaymentMethod(
+            @RequestBody UserPaymentMethodRequestDTO request) {
         UUID userId = getCurrentUserId();
         UserPaymentMethodResponseDTO response = paymentService.addPaymentMethod(userId, request);
         return ResponseEntity.ok(response);

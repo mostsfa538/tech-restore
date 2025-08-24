@@ -19,7 +19,7 @@ import java.util.UUID;
 
 @Service
 public class ProductServices extends BaseService<Product, UUID> {
-    
+
     @Autowired
     private CategoryRepository categoryRepository;
 
@@ -38,12 +38,13 @@ public class ProductServices extends BaseService<Product, UUID> {
 
     public Page<ProductResponseDTO> searchProducts(String keyword, Pageable pageable) {
         return ((ProductRepository) repository).searchByKeyword(keyword, pageable)
-            .map(DTOConverter::convertToProductDTO);
+                .map(DTOConverter::convertToProductDTO);
     }
 
-    public Page<ProductResponseDTO> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
+    public Page<ProductResponseDTO> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice,
+            Pageable pageable) {
         return ((ProductRepository) repository).findByPriceBetween(minPrice, maxPrice, pageable)
-        .map(DTOConverter::convertToProductDTO);
+                .map(DTOConverter::convertToProductDTO);
     }
 
     public Page<ProductResponseDTO> getProductsByCategory(UUID categoryId, Pageable pageable) {

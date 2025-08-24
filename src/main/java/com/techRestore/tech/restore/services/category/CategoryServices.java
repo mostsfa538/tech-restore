@@ -23,7 +23,7 @@ public class CategoryServices extends BaseService<Category, UUID> {
         return repository.findAll(pageable)
                 .map(DTOConverter::convertToCategoryDTO);
     }
-    
+
     public void addCategory(CategoryDTO categoryDTO) {
         Category category = new Category();
         category.setName(categoryDTO.name());

@@ -51,7 +51,6 @@ public class UserServices {
                 .map(DTOConverter::convertToProductDTO);
     }
 
-
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -65,7 +64,6 @@ public class UserServices {
         }
         return user;
     }
-
 
     private AddressResponseDTO convertToAddressDTO(Address address) {
         AddressResponseDTO dto = new AddressResponseDTO();
@@ -83,7 +81,7 @@ public class UserServices {
 
     public UserProfileDTO getCurrentUserProfile() {
         User user = getCurrentUser();
-        
+
         UserProfileDTO profileDTO = new UserProfileDTO();
         profileDTO.setId(user.getId());
         profileDTO.setFirst_name(user.getFirst_name());
@@ -94,7 +92,7 @@ public class UserServices {
         profileDTO.setRole(user.getRole());
         profileDTO.setCreatedAt(user.getCreatedAt());
         profileDTO.setUpdatedAt(user.getUpdatedAt());
-        
+
         if (user.getAddresses() != null) {
             List<AddressResponseDTO> addressDTOs = user.getAddresses().stream()
                     .map(this::convertToAddressDTO)
@@ -103,14 +101,14 @@ public class UserServices {
         } else {
             profileDTO.setAddresses(new ArrayList<>());
         }
-        
+
         return profileDTO;
     }
 
     @Transactional
     public UserProfileDTO updateUserProfile(UserProfileUpdateDTO updateDTO) {
         User user = getCurrentUser();
-        
+
         if (updateDTO.getFirst_name() != null) {
             user.setFirst_name(updateDTO.getFirst_name());
         }

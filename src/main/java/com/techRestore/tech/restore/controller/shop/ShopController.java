@@ -14,12 +14,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/shops")
-public class ShopController  extends BaseController {
+public class ShopController extends BaseController {
     @Autowired
     private ShopServices shopServices;
 

@@ -23,7 +23,7 @@ import com.techRestore.tech.restore.utils.DTOConverter;
 
 @Service
 public class ShopRepairService extends BaseService<RepairRequest, UUID> {
-    
+
     private final ShopRepository shopRepository;
 
     public ShopRepairService(RepairRequestRepository repairRequestRepository, ShopRepository shopRepository) {
@@ -38,7 +38,7 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         Shop shop = shopRepository.findByEmail(email)
-            .orElseThrow(() -> new NotFoundException("Shop not found with email: " + email));
+                .orElseThrow(() -> new NotFoundException("Shop not found with email: " + email));
         return shop.getId();
     }
 

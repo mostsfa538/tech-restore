@@ -64,26 +64,22 @@ public class AuthServices {
         }
     }
 
-
-    
     public TokenResponse login(LoginDto loginDto) {
         try {
             Authentication authentication = customAuthenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password())
-            );
-            
+                    new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password()));
+
             String accessToken = jwtService.generateAccessToken(authentication);
             String refreshToken = jwtService.generateRefreshToken(authentication);
-            
+
             refreshTokenService.saveRefreshToken(authentication.getName(), refreshToken);
-            
+
             return new TokenResponse(
-                accessToken,
-                refreshToken,
-                "Bearer",
-                15 * 60
-            );
-        } catch (Exception e)    {
+                    accessToken,
+                    refreshToken,
+                    "Bearer",
+                    15 * 60);
+        } catch (Exception e) {
             throw new RuntimeException("Invalid User");
         }
     }
@@ -93,13 +89,13 @@ public class AuthServices {
             if (jwtService.isTokenExpired(refreshToken) || !jwtService.isRefreshToken(refreshToken)) {
                 throw new RuntimeException("Invalid refresh token");
             }
-            
+
             String username = jwtService.extractClaim(refreshToken, claims -> claims.get("username", String.class));
-            
+
             if (!refreshTokenService.isValidRefreshToken(username, refreshToken)) {
                 throw new RuntimeException("Invalid refresh token");
             }
-            
+
             User user = userRepository.findByEmail(username);
             if (user == null) {
                 throw new RuntimeException("User not found");
@@ -107,19 +103,18 @@ public class AuthServices {
 
             Authentication authentication = new UsernamePasswordAuthenticationToken(
                     username, null,
-                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
-            );
-            
+                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + user.getRole().name())));
+
             String newAccessToken = jwtService.generateAccessToken(authentication);
             String newRefreshToken = jwtService.generateRefreshToken(authentication);
-            
+
             refreshTokenService.saveRefreshToken(username, newRefreshToken);
-            
+
             return new TokenResponse(
-                newAccessToken,
-                newRefreshToken,
-                "Bearer",
-                15 * 60 // rob3 sa3a
+                    newAccessToken,
+                    newRefreshToken,
+                    "Bearer",
+                    15 * 60 // rob3 sa3a
             );
         } catch (Exception e) {
             throw new RuntimeException("Invalid refresh token");

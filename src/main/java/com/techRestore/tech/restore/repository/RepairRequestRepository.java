@@ -12,8 +12,10 @@ import java.util.UUID;
 
 @Repository
 public interface RepairRequestRepository extends JpaRepository<RepairRequest, UUID> {
-    
+
     Page<RepairRequest> findByStatus(RepairStatus status, Pageable pageable);
+
     Page<RepairRequest> getAllRepairRequestByUserId(UUID userId, Pageable pageable);
+
     Page<RepairRequest> findAllByShopId(UUID shopId, Pageable pageable);
 }

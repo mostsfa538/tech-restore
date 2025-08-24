@@ -19,7 +19,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping(value = "/api/shops/products")
 @AllArgsConstructor
-public class ShopProductController  extends BaseController {
+public class ShopProductController extends BaseController {
 
     private ShopProductService shopProductService;
 

@@ -1,8 +1,6 @@
 package com.techRestore.tech.restore.services.adress;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,12 +21,11 @@ import lombok.RequiredArgsConstructor;
 public class AdressService {
     private final AddressRepository adressRepository;
 
-
     @Transactional
     public AddressResponseDTO addAdress(UUID userId, AddressRequestDTO request) {
-        if(request.isDefault()){
-            Address existingDefault=adressRepository.findByUserIdAndIsDefaultTrue(userId);
-            if(existingDefault != null) {
+        if (request.isDefault()) {
+            Address existingDefault = adressRepository.findByUserIdAndIsDefaultTrue(userId);
+            if (existingDefault != null) {
                 existingDefault.setDefault(false);
                 adressRepository.save(existingDefault);
             }
@@ -73,8 +70,6 @@ public class AdressService {
         return mapToAddressResponseDTO(address);
     }
 
-
-
     @Transactional
     public void deleteAddress(UUID userId, UUID addressId) {
         Address address = adressRepository.findById(addressId)
@@ -106,4 +101,3 @@ public class AdressService {
     }
 
 }
-

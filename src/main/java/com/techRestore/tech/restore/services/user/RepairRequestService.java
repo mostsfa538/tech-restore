@@ -25,15 +25,15 @@ import java.util.UUID;
 
 @Service
 public class RepairRequestService extends BaseService<RepairRequest, UUID> {
-    
+
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final AddressRepository addressRepository;
 
     public RepairRequestService(RepairRequestRepository repairRequestRepository,
-                               UserRepository userRepository,
-                               ShopRepository shopRepository,
-                               AddressRepository addressRepository) {
+            UserRepository userRepository,
+            ShopRepository shopRepository,
+            AddressRepository addressRepository) {
         super(repairRequestRepository);
         this.userRepository = userRepository;
         this.shopRepository = shopRepository;
@@ -47,11 +47,11 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         User user = userRepository.findByEmail(email);
-        
+
         if (user == null) {
             throw new NotFoundException("User not found with email: " + email);
         }
-        
+
         return user.getId();
     }
 
@@ -72,7 +72,7 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         UUID userId = getCurrentUserId();
 
         findByIdOrThrow(shopRepository, shopId, "Shop");
-        
+
         findByIdOrThrow(addressRepository, requestCreateDto.deliveryAddress(), "Address");
 
         RepairRequest repairRequest = new RepairRequest();
@@ -98,7 +98,7 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         UUID userId = getCurrentUserId();
 
         RepairRequest repairRequest = findByIdOrThrow(requestId, "Repair request");
-        
+
         findByIdOrThrow(shopRepository, shopId, "Shop");
 
         if (requestUpdateDto.deliveryAddressId() != null) {
@@ -108,7 +108,7 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
 
         repairRequest.setUserId(userId);
         repairRequest.setShopId(shopId);
-        
+
         if (requestUpdateDto.description() != null) {
             repairRequest.setDescription(requestUpdateDto.description());
         }
@@ -137,7 +137,7 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         if (repairStatusDto.status() == null) {
             throw new IllegalArgumentException("Repair status cannot be null");
         }
-        
+
         RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
         repairRequest.setStatus(repairStatusDto.status());
         repository.save(repairRequest);

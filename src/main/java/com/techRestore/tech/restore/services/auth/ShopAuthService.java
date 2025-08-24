@@ -68,8 +68,7 @@ public class ShopAuthService {
     public TokenResponse login(LoginDto loginDto) {
         try {
             Authentication authentication = customAuthenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password())
-            );
+                    new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password()));
 
             String accessToken = jwtService.generateAccessToken(authentication);
             String refreshToken = jwtService.generateRefreshToken(authentication);
@@ -80,8 +79,7 @@ public class ShopAuthService {
                     accessToken,
                     refreshToken,
                     "Bearer",
-                    15 * 60
-            );
+                    15 * 60);
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException("Invalid email or password");
         } catch (DisabledException e) {
@@ -91,4 +89,3 @@ public class ShopAuthService {
         }
     }
 }
-

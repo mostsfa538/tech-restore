@@ -76,7 +76,7 @@ public class PaymentService {
             case DEBIT_CARD:
                 processingDetails = paymentDetails != null
                         ? String.format("%s payment processed with details ending: %s",
-                        selectedMethod, maskDetails(paymentDetails))
+                                selectedMethod, maskDetails(paymentDetails))
                         : String.format("%s payment processed for order: %s", selectedMethod, order.getId());
                 payment.setPaymentStatus(PaymentStatus.COMPLETED);
                 payment.setPaidAt(LocalDateTime.now());
@@ -105,7 +105,6 @@ public class PaymentService {
 
         return mapToPaymentResponseDTO(payment, order.getId(), processingDetails);
     }
-
 
     @Transactional(readOnly = true)
     public PaymentResponseDTO getPaymentDetails(UUID userId, UUID paymentId) {
@@ -160,13 +159,11 @@ public class PaymentService {
         });
     }
 
- 
     @Transactional(readOnly = true)
     public List<UserPaymentMethodResponseDTO> getSavedPaymentMethods(UUID userId) {
         List<Payment> methods = paymentRepository.findByUserIdAndType(userId, "SAVED_METHOD");
         return methods.stream().map(this::mapToUserPaymentMethodResponseDTO).collect(Collectors.toList());
     }
-
 
     @Transactional
     public UserPaymentMethodResponseDTO addPaymentMethod(UUID userId, UserPaymentMethodRequestDTO request) {
@@ -181,7 +178,6 @@ public class PaymentService {
         return mapToUserPaymentMethodResponseDTO(method);
     }
 
-  
     @Transactional
     public void removePaymentMethod(UUID userId, UUID methodId) {
         Payment method = paymentRepository.findById(methodId)
@@ -191,8 +187,6 @@ public class PaymentService {
         }
         paymentRepository.delete(method);
     }
-
-
 
     private PaymentResponseDTO mapToPaymentResponseDTO(Payment payment, UUID orderId, String processingDetails) {
         PaymentResponseDTO dto = new PaymentResponseDTO();
@@ -219,7 +213,8 @@ public class PaymentService {
     }
 
     private String maskDetails(String details) {
-        if (details == null || details.length() < 4) return "****";
+        if (details == null || details.length() < 4)
+            return "****";
         return "****" + details.substring(details.length() - 4);
     }
 }

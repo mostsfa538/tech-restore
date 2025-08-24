@@ -1,6 +1,5 @@
 package com.techRestore.tech.restore.repository;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -13,6 +12,8 @@ import com.techRestore.tech.restore.model.entities.Review;
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
   Page<Review> findAllByShopId(UUID shopId, Pageable pageable);
+
   Page<Review> findAllByUserId(UUID userId, Pageable pageable);
+
   boolean existsByUserIdAndShopId(UUID userId, UUID shopId);
 }

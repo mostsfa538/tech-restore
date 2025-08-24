@@ -43,7 +43,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         }
 
         jwt = authHeader.substring(7);
-        
+
         try {
             // Check if token is expired first
             if (jwtService.isTokenExpired(jwt)) {
@@ -54,10 +54,10 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
             username = jwtService.extractClaim(jwt, claims -> claims.get("username", String.class));
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                
+
                 // Verify it's an access token and valid
                 if (jwtService.isAccessToken(jwt) && jwtService.isValidToken(jwt, username)) {
-                    
+
                     // Extract roles from token
                     String roles = jwtService.extractClaim(jwt, claims -> claims.get("roles", String.class));
                     List<SimpleGrantedAuthority> authorities = Arrays.stream(roles.split(","))
@@ -67,8 +67,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             username,
                             null,
-                            authorities
-                    );
+                            authorities);
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
                 } else {
@@ -87,26 +86,24 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
     private void handleExpiredToken(HttpServletResponse response) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        
+
         ErrorResponse errorResponse = new ErrorResponse(
-            "token_expired",
-            "Access token has expired",
-            "TOKEN_EXPIRED"
-        );
-        
+                "token_expired",
+                "Access token has expired",
+                "TOKEN_EXPIRED");
+
         response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
     }
 
     private void handleInvalidToken(HttpServletResponse response) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        
+
         ErrorResponse errorResponse = new ErrorResponse(
-            "invalid_token",
-            "Invalid access token",
-            "INVALID_TOKEN"
-        );
-        
+                "invalid_token",
+                "Invalid access token",
+                "INVALID_TOKEN");
+
         response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
     }
 

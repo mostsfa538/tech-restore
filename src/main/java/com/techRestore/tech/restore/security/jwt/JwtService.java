@@ -4,7 +4,8 @@ import com.techRestore.tech.restore.security.userdetails.ShopPrincipal;
 import com.techRestore.tech.restore.security.userdetails.UserPrincipal;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;import org.springframework.beans.factory.annotation.Value;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
@@ -17,7 +18,7 @@ public class JwtService {
 
     private final String jwtSecretKey;
     private final long accessTokenExpiration = 60 * 60 * 1000; // rob3 sa3a
-    private final long refreshTokenExpiration = 7 * 24 * 60 * 60 * 1000; //7 ayam
+    private final long refreshTokenExpiration = 7 * 24 * 60 * 60 * 1000; // 7 ayam
 
     public JwtService(@Value("${jwt.secret}") String jwtSecretKey) {
         this.jwtSecretKey = jwtSecretKey;
@@ -35,7 +36,7 @@ public class JwtService {
         SecretKey secret = Keys.hmacShaKeyFor(jwtSecretKey.getBytes(StandardCharsets.UTF_8));
 
         String currentRole = "GUEST";
-        Object principal =  authentication.getPrincipal();
+        Object principal = authentication.getPrincipal();
         if (principal instanceof UserPrincipal userPrincipal) {
             currentRole = userPrincipal.getAuthorities().iterator().next()
                     .getAuthority().replace("ROLE_", "");

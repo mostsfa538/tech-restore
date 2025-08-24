@@ -1,6 +1,5 @@
 package com.techRestore.tech.restore.controller.adress;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -30,7 +29,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/users/addresses")
 @RequiredArgsConstructor
 public class AdressController extends BaseController {
-    
+
     private final AdressService addressService;
     private final UserRepository userRepository;
 
@@ -50,16 +49,16 @@ public class AdressController extends BaseController {
         return user.getId();
     }
 
-
     @PostMapping
     public ResponseEntity<AddressResponseDTO> addAddress(@RequestBody AddressRequestDTO request) {
         UUID userId = getCurrentUserId();
         AddressResponseDTO response = addressService.addAdress(userId, request);
-        return createdResponse(response); 
+        return createdResponse(response);
     }
 
     @PutMapping("/{addressId}")
-    public ResponseEntity<AddressResponseDTO> updateAddress(@PathVariable UUID addressId, @RequestBody AddressRequestDTO request) {
+    public ResponseEntity<AddressResponseDTO> updateAddress(@PathVariable UUID addressId,
+            @RequestBody AddressRequestDTO request) {
         UUID userId = getCurrentUserId();
         AddressResponseDTO response = addressService.updateAddress(userId, addressId, request);
         return updatedResponse(response);

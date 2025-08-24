@@ -64,7 +64,7 @@ public class AdminServices extends BaseService<User, UUID> {
                 .map(DTOConverter::convertToShopyDTO);
     }
 
-    public ShopResponseDto getShopById(UUID shopId){
+    public ShopResponseDto getShopById(UUID shopId) {
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new NotFoundException("Shop not Found"));
 
@@ -111,7 +111,6 @@ public class AdminServices extends BaseService<User, UUID> {
                 user.getFirst_name(),
                 user.getEmail(),
                 user.getPhone(),
-                user.getRole()
-        );
+                user.getRole());
     }
 }

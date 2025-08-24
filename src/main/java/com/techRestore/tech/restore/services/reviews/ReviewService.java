@@ -1,9 +1,7 @@
 package com.techRestore.tech.restore.services.reviews;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import com.techRestore.tech.restore.exception.NotFoundException;
 import org.springframework.data.domain.Page;
@@ -28,22 +26,11 @@ public class ReviewService {
   private final ReviewRepository reviewRepository;
   private final UserRepository userRepository;
 
-
-  /*
-    #### methods ####
-    - getAllReviews
-    - createReview
-    - getReviewById
-    - updateReview
-    - deleteReview
-    - getReviewsByShopId
-  */
-
   @PreAuthorize("hasRole('ADMIN')")
   public Page<ReviewResponseDTO> getAllReviews(int page, int size) {
     Pageable pageable = PageRequest.of(page, size);
     return reviewRepository.findAll(pageable)
-            .map(this::toResponseDTO);
+        .map(this::toResponseDTO);
   }
 
   @PreAuthorize("hasRole('GUEST')")
@@ -72,14 +59,14 @@ public class ReviewService {
 
   public ReviewResponseDTO getReviewById(UUID id) {
     Review review = reviewRepository.findById(id)
-            .orElseThrow(() -> new NotFoundException("Review not found with id: " + id));
+        .orElseThrow(() -> new NotFoundException("Review not found with id: " + id));
     return toResponseDTO(review);
   }
 
   @PreAuthorize("hasRole('GUEST')")
   public ReviewResponseDTO updateReview(UUID reviewId, ReviewRequestDTO reviewRequestDTO) {
     Review review = reviewRepository.findById(reviewId)
-            .orElseThrow(() -> new NotFoundException("Review not found with id: " + reviewId));
+        .orElseThrow(() -> new NotFoundException("Review not found with id: " + reviewId));
 
     Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
     String email = authentication.getName();
@@ -97,14 +84,14 @@ public class ReviewService {
 
   public void deleteReview(UUID id) {
     Review review = reviewRepository.findById(id)
-            .orElseThrow(() -> new NotFoundException("Review not found with id: " + id));
+        .orElseThrow(() -> new NotFoundException("Review not found with id: " + id));
     reviewRepository.delete(review);
   }
 
   public Page<ReviewResponseDTO> getReviewsByShopId(UUID shopId, int page, int size) {
     Pageable pageable = PageRequest.of(page, size);
     return reviewRepository.findAllByShopId(shopId, pageable)
-            .map(this::toResponseDTO);
+        .map(this::toResponseDTO);
   }
 
   private ReviewResponseDTO toResponseDTO(Review review) {
