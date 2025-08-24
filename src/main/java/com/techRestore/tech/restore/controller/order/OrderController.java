@@ -3,16 +3,11 @@ package com.techRestore.tech.restore.controller.order;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.techRestore.tech.restore.dto.order.OrderRequestDTO;
 import com.techRestore.tech.restore.dto.order.OrderResponseDTO;
@@ -34,13 +29,20 @@ public class OrderController {
 
     private UUID getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new RuntimeException("No authenticated user found");
+        }
+
         String email = authentication.getName();
         User user = userRepository.findByEmail(email);
-        if (user == null) {
-            throw new NotFoundException("User not found with email: " + email);
+
+        if (user == null || !user.isActivate()) {
+            throw new RuntimeException("User account is deactivated or not found: " + email);
         }
+
         return user.getId();
     }
+
 
     @PostMapping
     public ResponseEntity<OrderResponseDTO> createOrder(@RequestBody OrderRequestDTO request) {
@@ -50,11 +52,14 @@ public class OrderController {
     }
 
     @GetMapping
-    public ResponseEntity<List<OrderResponseDTO>> getOrders() {
+    public ResponseEntity<Page<OrderResponseDTO>> getOrders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
         UUID userId = getCurrentUserId();
-        List<OrderResponseDTO> orders = orderService.getUserOrders(userId);
+        Page<OrderResponseDTO> orders = orderService.getUserOrders(userId, page, size);
         return ResponseEntity.ok(orders);
     }
+
 
     @GetMapping("/{orderId}")
     public ResponseEntity<OrderResponseDTO> getOrderDetails(@PathVariable UUID orderId) {

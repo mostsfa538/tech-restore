@@ -13,4 +13,8 @@ public class CartResponseDTO {
     private List<CartItemResponseDTO> items;
     private BigDecimal totalPrice;
     private Integer totalItems;
+    private int page;
+    private int size;
+    private long totalElements;
+    private int totalPages;
 }

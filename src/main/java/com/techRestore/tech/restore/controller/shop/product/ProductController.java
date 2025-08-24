@@ -1,4 +1,4 @@
-package com.techRestore.tech.restore.controller.product;
+package com.techRestore.tech.restore.controller.shop.product;
 
 import com.techRestore.tech.restore.controller.BaseController;
 import com.techRestore.tech.restore.dto.product.ProductResponseDTO;

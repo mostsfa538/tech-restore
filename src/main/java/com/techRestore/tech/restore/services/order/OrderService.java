@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -93,9 +96,10 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public List<OrderResponseDTO> getUserOrders(UUID userId) {
-        List<Order> orders = orderRepository.findByUserId(userId);
-        return orders.stream().map(this::mapToOrderResponseDTO).collect(Collectors.toList());
+    public Page<OrderResponseDTO> getUserOrders(UUID userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Order> ordersPage = orderRepository.findByUserId(userId, pageable);
+        return ordersPage.map(this::mapToOrderResponseDTO);
     }
 
     @Transactional(readOnly = true)
