@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserAuthController {
     private final AuthServices authServices;
 
-    @PostMapping("/create")
+    @PostMapping("/register")
     public ResponseEntity<String> create(@RequestBody UserRegistration userRegistration) {
         try {
             String id = authServices.register(userRegistration);

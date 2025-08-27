@@ -24,14 +24,16 @@ public class UserController extends BaseController {
 
     private final UserServices userServices;
 
-    @GetMapping("/{shopId}/{categoryId}")
-    public ResponseEntity<Page<ProductResponseDTO>> getProductsOfShopWithCategory(
-            @PathVariable UUID shopId,
-            @PathVariable UUID categoryId,
-            Pageable pageable) {
-        Page<ProductResponseDTO> products = userServices.getProductsByCategory(shopId, categoryId, pageable);
-        return successResponse(products);
-    }
+    // @GetMapping("/{shopId}/{categoryId}")
+    // public ResponseEntity<Page<ProductResponseDTO>>
+    // getProductsOfShopWithCategory(
+    // @PathVariable UUID shopId,
+    // @PathVariable UUID categoryId,
+    // Pageable pageable) {
+    // Page<ProductResponseDTO> products =
+    // userServices.getProductsByCategory(shopId, categoryId, pageable);
+    // return successResponse(products);
+    // }
 
     @GetMapping("/profile")
     public ResponseEntity<UserProfileDTO> getUserProfile() {
@@ -51,11 +53,13 @@ public class UserController extends BaseController {
         return deletedResponse();
     }
 
-    @GetMapping("/repair-requests")
-    public ResponseEntity<Page<RepairRequestDto>> getUserRepairRequests(Pageable pageable) {
-        Page<RepairRequestDto> repairRequests = userServices.getUserRepairRequests(pageable);
-        return successResponse(repairRequests);
-    }
+    // @GetMapping("/repair-requests")
+    // public ResponseEntity<Page<RepairRequestDto>> getUserRepairRequests(Pageable
+    // pageable) {
+    // Page<RepairRequestDto> repairRequests =
+    // userServices.getUserRepairRequests(pageable);
+    // return successResponse(repairRequests);
+    // }
 
     @GetMapping("/orders")
     public ResponseEntity<Page<OrderResponseDTO>> getUserOrders(Pageable pageable) {

@@ -2,6 +2,8 @@ package com.techRestore.tech.restore.model.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.techRestore.tech.restore.model.enums.ContractType;
+import com.techRestore.tech.restore.model.enums.ShopType;
+
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -45,8 +47,15 @@ public class Shop {
     @Enumerated(EnumType.STRING)
     private ContractType contractType;
 
-    @Column(name = "revenue_percentage", precision = 10, scale = 2)
-    private BigDecimal revenuePercentage;
+    @Column(name = "shop_type")
+    @Enumerated(EnumType.STRING)
+    private ShopType shopType;
+
+    @Column(name = "repair_revenue_percentage", precision = 10, scale = 2)
+    private BigDecimal repairRevenuePercentage;
+
+    @Column(name = "product_revenue_percentage", precision = 10, scale = 2)
+    private BigDecimal productRevenuePercentage;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

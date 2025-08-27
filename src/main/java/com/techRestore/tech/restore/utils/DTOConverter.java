@@ -54,6 +54,7 @@ public class DTOConverter {
         dto.setRating(shop.getRating());
         dto.setCreatedAt(shop.getCreatedAt());
         dto.setUpdatedAt(shop.getUpdatedAt());
+        dto.setShopType(shop.getShopType().toString());
         return dto;
     }
 

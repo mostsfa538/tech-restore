@@ -18,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -58,11 +59,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                 // Verify it's an access token and valid
                 if (jwtService.isAccessToken(jwt) && jwtService.isValidToken(jwt, username)) {
 
-                    // Extract roles from token
-                    String roles = jwtService.extractClaim(jwt, claims -> claims.get("roles", String.class));
-                    List<SimpleGrantedAuthority> authorities = Arrays.stream(roles.split(","))
-                            .map(SimpleGrantedAuthority::new)
-                            .collect(Collectors.toList());
+                    List<SimpleGrantedAuthority> authorities = extractAuthoritiesFromToken(jwt);
 
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             username,
@@ -81,6 +78,31 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private List<SimpleGrantedAuthority> extractAuthoritiesFromToken(String jwt) {
+        return jwtService.extractClaim(jwt, claims -> {
+            Object rolesObj = claims.get("roles");
+            List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+
+            if (rolesObj instanceof List<?> rolesList) {
+                // Handle array of roles
+                authorities = rolesList.stream()
+                        .filter(role -> role instanceof String)
+                        .map(role -> new SimpleGrantedAuthority((String) role))
+                        .collect(Collectors.toList());
+            } else if (rolesObj instanceof String rolesString) {
+                String[] roleArray = rolesString.contains(",")
+                        ? rolesString.split(",")
+                        : new String[] { rolesString };
+                authorities = Arrays.stream(roleArray)
+                        .map(String::trim)
+                        .map(SimpleGrantedAuthority::new)
+                        .collect(Collectors.toList());
+            }
+
+            return authorities;
+        });
     }
 
     private void handleExpiredToken(HttpServletResponse response) throws IOException {

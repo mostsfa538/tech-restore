@@ -35,15 +35,14 @@ public class AppConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(corsConfig -> corsConfig.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(requests -> requests
-                        .requestMatchers("/api/auth/create", "/api/auth/login", "/api/auth/refresh",
+                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh",
                                 "/api/auth/shops/**")
                         .permitAll()
                         .requestMatchers("/api/auth/home", "/api/auth/logout").authenticated()
-                        .requestMatchers("/api/shops/**", "/api/products/**", "/api/user/**", "/api/categories/**")
-                        .permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/user/**").hasAnyRole("GUEST")
-                        .anyRequest().authenticated())
+                        .requestMatchers("/api/admin/**").hasAnyRole("ADMIN")
+                        .requestMatchers("/api/shops/products").hasAnyRole("SELLER")
+                        .requestMatchers("/api/shops/repair-request/**").hasAnyRole("REPAIRER")
+                        .requestMatchers("/api/users/**", "/api/products/**").hasAnyRole("GUEST"))
                 .authenticationManager(customAuthenticationManager())
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

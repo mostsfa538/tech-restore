@@ -21,4 +21,5 @@ public class ShopResponseDto {
     private ShopAddress shopAddress;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private String shopType;
 }

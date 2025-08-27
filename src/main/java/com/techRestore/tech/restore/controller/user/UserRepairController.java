@@ -23,7 +23,7 @@ import com.techRestore.tech.restore.dto.repair.RepairStatusDto;
 import com.techRestore.tech.restore.services.user.RepairRequestService;
 
 @RestController
-@RequestMapping("/api/user/repair-request")
+@RequestMapping("/api/users/repair-request")
 public class UserRepairController extends BaseController {
     @Autowired
     private RepairRequestService repairRequestService;

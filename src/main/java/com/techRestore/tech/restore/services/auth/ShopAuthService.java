@@ -46,6 +46,7 @@ public class ShopAuthService {
             shop.setPhone(shopRegistrationRequest.phone());
             shop.setDescription(shopRegistrationRequest.description());
             shop.setVerified(shopRegistrationRequest.verified());
+            shop.setShopType(shopRegistrationRequest.shopType());
 
             ShopAddress address = new ShopAddress();
             address.setState(shopRegistrationRequest.shopAddress().state());

@@ -7,11 +7,15 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
+import java.util.stream.Collectors;
 
 @Service
 public class JwtService {
@@ -35,21 +39,25 @@ public class JwtService {
     private String generateToken(Authentication authentication, long expiration, String tokenType) {
         SecretKey secret = Keys.hmacShaKeyFor(jwtSecretKey.getBytes(StandardCharsets.UTF_8));
 
-        String currentRole = "GUEST";
+        Collection<String> roles = new ArrayList<>();
         Object principal = authentication.getPrincipal();
         if (principal instanceof UserPrincipal userPrincipal) {
-            currentRole = userPrincipal.getAuthorities().iterator().next()
-                    .getAuthority().replace("ROLE_", "");
+            roles = userPrincipal.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList());
         } else if (principal instanceof ShopPrincipal shopPrincipal) {
-            currentRole = shopPrincipal.getAuthorities().iterator().next()
-                    .getAuthority().replace("ROLE_", "");
+            roles = shopPrincipal.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList());
+        } else {
+            roles.add("ROLE_GUEST");
         }
 
         return Jwts.builder()
                 .issuer("Tech Restore")
                 .subject("JWT Token")
                 .claim("username", authentication.getName())
-                .claim("roles", "ROLE_" + currentRole)
+                .claim("roles", roles)
                 .claim("tokenType", tokenType)
                 .expiration(new Date(System.currentTimeMillis() + expiration))
                 .issuedAt(new Date())

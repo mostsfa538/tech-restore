@@ -61,7 +61,7 @@ public class OrderController {
 		return ResponseEntity.ok(order);
 	}
 
-	@PutMapping("/{orderId}/cancel")
+	@DeleteMapping("/{orderId}/cancel")
 	public ResponseEntity<Void> cancelOrder(@PathVariable UUID orderId) {
 		UUID userId = getCurrentUserId();
 		orderService.cancelOrder(userId, orderId);
