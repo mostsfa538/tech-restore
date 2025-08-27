@@ -42,7 +42,9 @@ public class AppConfig {
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN")
                         .requestMatchers("/api/shops/products").hasAnyRole("SELLER")
                         .requestMatchers("/api/shops/repair-request/**").hasAnyRole("REPAIRER")
-                        .requestMatchers("/api/users/**", "/api/products/**").hasAnyRole("GUEST"))
+                        .requestMatchers("/api/users/**", "/api/products/**").hasAnyRole("GUEST")
+                        .requestMatchers("/api/reviews/**").hasAnyRole("GUEST", "SHOP_OWNER"))
+
                 .authenticationManager(customAuthenticationManager())
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

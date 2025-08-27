@@ -5,7 +5,6 @@ import java.util.UUID;
 
 import com.techRestore.tech.restore.exception.NotFoundException;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,8 +26,7 @@ public class ReviewService {
   private final UserRepository userRepository;
 
   @PreAuthorize("hasRole('ADMIN')")
-  public Page<ReviewResponseDTO> getAllReviews(int page, int size) {
-    Pageable pageable = PageRequest.of(page, size);
+  public Page<ReviewResponseDTO> getAllReviews(Pageable pageable) {
     return reviewRepository.findAll(pageable)
         .map(this::toResponseDTO);
   }
@@ -88,8 +86,7 @@ public class ReviewService {
     reviewRepository.delete(review);
   }
 
-  public Page<ReviewResponseDTO> getReviewsByShopId(UUID shopId, int page, int size) {
-    Pageable pageable = PageRequest.of(page, size);
+  public Page<ReviewResponseDTO> getReviewsByShopId(UUID shopId, Pageable pageable) {
     return reviewRepository.findAllByShopId(shopId, pageable)
         .map(this::toResponseDTO);
   }
