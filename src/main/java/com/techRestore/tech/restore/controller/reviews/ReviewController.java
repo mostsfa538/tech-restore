@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,10 +51,16 @@ public class ReviewController {
     return ResponseEntity.ok(reviewService.updateReview(id, reviewRequestDTO));
   }
 
-  @GetMapping("/{shopId}")
+  @GetMapping("/shops/{shopId}")
   public ResponseEntity<Page<ReviewResponseDTO>> getReviewsByShopId(
       @PathVariable UUID shopId,
       Pageable pageable) {
     return ResponseEntity.ok(reviewService.getReviewsByShopId(shopId, pageable));
   }
+
+  @DeleteMapping("/cancel/{id}")
+    public ResponseEntity<Void> deleteReview(@PathVariable UUID id) {
+        reviewService.deleteReview(id);
+        return ResponseEntity.noContent().build();
+    }
 }

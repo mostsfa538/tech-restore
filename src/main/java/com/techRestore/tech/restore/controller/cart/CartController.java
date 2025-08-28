@@ -52,11 +52,10 @@ public class CartController {
 
     @GetMapping
     public ResponseEntity<CartResponseDTO> getCart(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            Pageable pageable) {
 
         UUID userId = getCurrentUserId();
-        Pageable pageable = PageRequest.of(page, size);
+        // Pageable pageable = PageRequest.of(page, size);
         CartResponseDTO cart = cartService.getCart(userId, pageable);
         return ResponseEntity.ok(cart);
     }
@@ -64,11 +63,10 @@ public class CartController {
     @PostMapping("/items")
     public ResponseEntity<CartResponseDTO> addItemToCart(
             @RequestBody AddToCartRequestDTO request,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            Pageable pageable) {
 
         UUID userId = getCurrentUserId();
-        Pageable pageable = PageRequest.of(page, size);
+        // Pageable pageable = PageRequest.of(page, size);
         CartResponseDTO cart = cartService.addItemToCart(userId, request, pageable);
         return ResponseEntity.ok(cart);
     }
@@ -77,11 +75,10 @@ public class CartController {
     public ResponseEntity<CartResponseDTO> updateCartItem(
             @PathVariable UUID itemId,
             @RequestBody UpdateCartItemRequestDTO request,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            Pageable pageable) {
 
         UUID userId = getCurrentUserId();
-        Pageable pageable = PageRequest.of(page, size);
+        // Pageable pageable = PageRequest.of(page, size);
         CartResponseDTO cart = cartService.updateCartItem(userId, itemId, request, pageable);
         return ResponseEntity.ok(cart);
     }
