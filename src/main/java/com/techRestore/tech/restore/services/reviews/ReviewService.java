@@ -80,7 +80,22 @@ public class ReviewService {
     return toResponseDTO(review);
   }
 
-  public void deleteReview(UUID id) {
+  @PreAuthorize("hasRole('GUEST')")
+  public void deleteGuestReview(UUID id) {
+    Review review = reviewRepository.findById(id)
+        .orElseThrow(() -> new NotFoundException("Review not found with id: " + id));
+    
+    Authentication authentication=SecurityContextHolder.getContext().getAuthentication();
+    String email=authentication.getName();
+    User user=userRepository.findByEmail(email);
+    if(!review.getUserId().equals(user.getId())){
+      throw new RuntimeException("You can only delete your own reviews.");
+    }
+    reviewRepository.delete(review);
+  }
+
+  @PreAuthorize("hasRole('ADMIN')")
+  public void deleteReviewByAdmin(UUID id) {
     Review review = reviewRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Review not found with id: " + id));
     reviewRepository.delete(review);
