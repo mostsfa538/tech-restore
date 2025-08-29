@@ -60,7 +60,7 @@ public class ReviewController {
 
   @DeleteMapping("/cancel/{id}")
     public ResponseEntity<Void> deleteReview(@PathVariable UUID id) {
-        reviewService.deleteReview(id);
+        reviewService.deleteGuestReview(id);
         return ResponseEntity.noContent().build();
     }
 }

@@ -28,7 +28,7 @@ public class AdminReviewController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReview(@PathVariable UUID id) {
-        reviewService.deleteReview(id);
+        reviewService.deleteReviewByAdmin(id);
         return ResponseEntity.noContent().build();
     }
 }
