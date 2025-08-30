@@ -38,6 +38,7 @@ public class AppConfig {
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh",
                                 "/api/auth/shops/**")
                         .permitAll()
+                        .requestMatchers("/api/shops/orders/control/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/cart/**").hasAnyRole("GUEST")
                         .requestMatchers("/api/auth/home", "/api/auth/logout").authenticated()
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN")

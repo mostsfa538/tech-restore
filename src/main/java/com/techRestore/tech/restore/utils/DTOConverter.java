@@ -131,4 +131,24 @@ public class DTOConverter {
 
         return dto;
     }
+
+    public static OrderResponseDTO convertToOrderResponseDTO(Order order, List<OrderItem> orderItems) {
+        OrderResponseDTO dto = new OrderResponseDTO();
+        dto.setId(order.getId());
+        dto.setUserId(order.getUserId());
+        dto.setDeliveryAddressId(order.getDeliveryAddressId());
+        dto.setTotalPrice(order.getTotalPrice());
+        dto.setStatus(order.getStatus());
+        dto.setPaymentMethod(order.getPaymentMethod());
+        dto.setCreatedAt(order.getCreatedAt());
+        dto.setPaymentId(order.getPaymentId());
+
+        List<OrderItemResponseDTO> itemDTOs = orderItems.stream()
+                .map(DTOConverter::convertToOrderItemResponseDTO)
+                .collect(Collectors.toList());
+        dto.setOrderItems(itemDTOs);
+
+        return dto;
+    }
+
 }
