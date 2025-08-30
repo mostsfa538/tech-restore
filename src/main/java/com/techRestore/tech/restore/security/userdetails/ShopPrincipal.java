@@ -20,6 +20,7 @@ public class ShopPrincipal implements UserDetails {
         this.shop_type = shop.getShopType();
     }
 
+    
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<>();
@@ -34,6 +35,7 @@ public class ShopPrincipal implements UserDetails {
         authorities.add(new SimpleGrantedAuthority("ROLE_SHOP_OWNER"));
         return authorities;
     }
+
 
     @Override
     public String getPassword() {

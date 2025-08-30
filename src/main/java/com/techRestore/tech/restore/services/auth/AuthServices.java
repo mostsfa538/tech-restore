@@ -78,7 +78,7 @@ public class AuthServices {
                     accessToken,
                     refreshToken,
                     "Bearer",
-                    15 * 60);
+                    60 * 60);
         } catch (Exception e) {
             throw new RuntimeException("Invalid User");
         }
@@ -114,7 +114,7 @@ public class AuthServices {
                     newAccessToken,
                     newRefreshToken,
                     "Bearer",
-                    15 * 60 // rob3 sa3a
+                    60 * 60 // sa3a
             );
         } catch (Exception e) {
             throw new RuntimeException("Invalid refresh token");
