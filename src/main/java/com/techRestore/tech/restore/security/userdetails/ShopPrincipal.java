@@ -22,17 +22,17 @@ public class ShopPrincipal implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<GrantedAuthority> authoritie = new ArrayList<>();
-        if (shop_type.equals("REPAIRER")) {
-            authoritie.add(new SimpleGrantedAuthority("ROLE_REPAIRER"));
-        } else if (shop_type.equals("SELLER")) {
-            authoritie.add(new SimpleGrantedAuthority("ROLE_SELLER"));
-        } else if (shop_type.equals("BOTH")) {
-            authoritie.add(new SimpleGrantedAuthority("ROLE_REPAIRER"));
-            authoritie.add(new SimpleGrantedAuthority("ROLE_SELLER"));
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        if (shop_type == ShopType.REPAIRER) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_REPAIRER"));
+        } else if (shop_type == ShopType.SELLER) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_SELLER"));
+        } else if (shop_type == ShopType.BOTH) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_REPAIRER"));
+            authorities.add(new SimpleGrantedAuthority("ROLE_SELLER"));
         }
-        authoritie.add(new SimpleGrantedAuthority("ROLE_SHOP_OWNER"));
-        return authoritie;
+        authorities.add(new SimpleGrantedAuthority("ROLE_SHOP_OWNER"));
+        return authorities;
     }
 
     @Override
