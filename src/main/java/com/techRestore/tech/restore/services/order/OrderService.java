@@ -3,6 +3,7 @@ package com.techRestore.tech.restore.services.order;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -29,6 +30,7 @@ import com.techRestore.tech.restore.repository.OrderItemRepository;
 import com.techRestore.tech.restore.repository.OrderPaymentRepository;
 import com.techRestore.tech.restore.repository.OrderRepository;
 import com.techRestore.tech.restore.repository.ProductRepository;
+import com.techRestore.tech.restore.services.notification.NotificationService;
 
 import lombok.AllArgsConstructor;
 
@@ -40,6 +42,7 @@ public class OrderService {
     private final OrderPaymentRepository orderPaymentRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private final NotificationService notificationService;
 
     @Transactional
     public OrderResponseDTO createOrder(UUID userId, OrderRequestDTO request) {
@@ -89,6 +92,13 @@ public class OrderService {
 
         order.setPaymentId(payment.getId());
         orderRepository.save(order);
+        Set<UUID> uniqueShopIds = orderItems.stream()
+            .map(OrderItem::getShopId)
+            .collect(Collectors.toSet());
+
+        for (UUID shopId : uniqueShopIds) {
+            notificationService.sendToShop(shopId, "New order received: Order ID " + order.getId());
+        }
 
         cartItemRepository.deleteAll(cartItems);
 

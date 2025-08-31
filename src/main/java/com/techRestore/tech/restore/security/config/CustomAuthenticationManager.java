@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.security.config;
 
+import com.techRestore.tech.restore.security.userdetails.DeliveryDetailsServiceImpl;
 import com.techRestore.tech.restore.security.userdetails.ShopDetailsServiceImpl;
 import com.techRestore.tech.restore.security.userdetails.UserDetailsServiceImpl;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -17,15 +18,18 @@ public class CustomAuthenticationManager implements AuthenticationManager {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final ShopDetailsServiceImpl shopDetailsService;
+    private final DeliveryDetailsServiceImpl deliveryDetailsService;
     private final PasswordEncoder passwordEncoder;
 
     public CustomAuthenticationManager(
             UserDetailsServiceImpl userDetailsService,
             ShopDetailsServiceImpl shopDetailsService,
+            DeliveryDetailsServiceImpl deliveryDetailsService,
             PasswordEncoder passwordEncoder) {
         this.userDetailsService = userDetailsService;
         this.shopDetailsService = shopDetailsService;
         this.passwordEncoder = passwordEncoder;
+        this.deliveryDetailsService = deliveryDetailsService;
     }
 
     @Override
@@ -56,7 +60,15 @@ public class CustomAuthenticationManager implements AuthenticationManager {
         } catch (UsernameNotFoundException e) {
             // Shop not found either
         }
-
+        try {
+            UserDetails deliveryDetails = deliveryDetailsService.loadUserByUsername(username);
+            if (deliveryDetails != null && passwordEncoder.matches(password, deliveryDetails.getPassword())) {
+                return new UsernamePasswordAuthenticationToken(
+                        deliveryDetails,
+                        null,
+                        deliveryDetails.getAuthorities());
+            }
+        } catch (UsernameNotFoundException e) {}
         throw new BadCredentialsException("Invalid username or password");
     }
 }

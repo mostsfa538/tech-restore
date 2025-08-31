@@ -51,6 +51,9 @@ public class Shop {
     @Enumerated(EnumType.STRING)
     private ShopType shopType;
 
+    @Column(columnDefinition = "TEXT")
+    private String notificationHistory = "[]";
+
     @Column(name = "repair_revenue_percentage", precision = 10, scale = 2)
     private BigDecimal repairRevenuePercentage;
 

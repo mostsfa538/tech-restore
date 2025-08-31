@@ -23,6 +23,12 @@ public class Order {
     @Column(name = "user_id")
     private UUID userId;
 
+    @Column(name = "shop_id")
+    private UUID shopId;
+
+    @Column(name = "delivery_id")
+    private UUID deliveryId;
+
     @Column(name = "delivery_address_id")
     private UUID deliveryAddressId;
 
