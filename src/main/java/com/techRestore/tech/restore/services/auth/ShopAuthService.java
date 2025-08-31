@@ -10,6 +10,8 @@ import com.techRestore.tech.restore.repository.UserRepository;
 import com.techRestore.tech.restore.security.config.CustomAuthenticationManager;
 import com.techRestore.tech.restore.security.jwt.JwtService;
 import com.techRestore.tech.restore.security.jwt.RefreshTokenService;
+import com.techRestore.tech.restore.services.EmailService;
+import com.techRestore.tech.restore.utils.EmailVerificationUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -32,6 +34,8 @@ public class ShopAuthService {
     private final RefreshTokenService refreshTokenService;
 
     private final UserRepository userRepository;
+    
+    private final EmailService emailService;
 
     public String register(ShopRegistrationRequest shopRegistrationRequest) {
         if (shopRepository.existsByEmail(shopRegistrationRequest.email())
@@ -47,6 +51,12 @@ public class ShopAuthService {
             shop.setDescription(shopRegistrationRequest.description());
             shop.setVerified(shopRegistrationRequest.verified());
             shop.setShopType(shopRegistrationRequest.shopType());
+            
+            // Set email verification fields
+            String verificationToken = EmailVerificationUtils.generateVerificationToken();
+            shop.setEmailVerificationToken(verificationToken);
+            shop.setEmailTokenExpiry(EmailVerificationUtils.getTokenExpiry());
+            shop.setEmailVerified(false);
 
             ShopAddress address = new ShopAddress();
             address.setState(shopRegistrationRequest.shopAddress().state());
@@ -58,8 +68,16 @@ public class ShopAuthService {
 
             address.setShop(shop);
             shopRepository.save(shop);
+            
+            // Send verification email
+            try {
+                emailService.sendVerificationEmail(shop.getEmail(), verificationToken, "shops");
+            } catch (Exception emailException) {
+                System.err.println("Failed to send verification email: " + emailException.getMessage());
+                // Continue registration even if email fails
+            }
 
-            return "Registration successfully, wait for acceptance";
+            return "Shop registered successfully. Please check your email to verify your account before logging in.";
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -68,6 +86,12 @@ public class ShopAuthService {
 
     public TokenResponse login(LoginDto loginDto) {
         try {
+            // Check if shop exists and email is verified
+            Shop shop = shopRepository.findByEmail(loginDto.email()).orElse(null);
+            if (shop != null && !shop.isEmailVerified()) {
+                throw new RuntimeException("Please verify your email before logging in. Check your inbox for the verification link.");
+            }
+
             Authentication authentication = customAuthenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password()));
 
@@ -88,5 +112,52 @@ public class ShopAuthService {
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage());
         }
+    }
+
+    public String verifyEmail(String token) {
+        Shop shop = shopRepository.findByEmailVerificationToken(token);
+        if (shop == null) {
+            throw new RuntimeException("Invalid verification token");
+        }
+
+        if (EmailVerificationUtils.isTokenExpired(shop.getEmailTokenExpiry())) {
+            throw new RuntimeException("Verification token has expired");
+        }
+
+        shop.setEmailVerified(true);
+        shop.setEmailVerificationToken(null);
+        shop.setEmailTokenExpiry(null);
+        shopRepository.save(shop);
+
+        // Send welcome email
+        try {
+            emailService.sendWelcomeEmail(shop.getEmail(), shop.getName());
+        } catch (Exception e) {
+            System.err.println("Failed to send welcome email: " + e.getMessage());
+        }
+
+        return "Email verified successfully! You can now log in.";
+    }
+
+    public String resendVerificationEmail(String email) {
+        Shop shop = shopRepository.findByEmail(email).orElse(null);
+        if (shop == null) {
+            throw new RuntimeException("Shop not found");
+        }
+
+        if (shop.isEmailVerified()) {
+            throw new RuntimeException("Email is already verified");
+        }
+
+        // Generate new verification token
+        String verificationToken = EmailVerificationUtils.generateVerificationToken();
+        shop.setEmailVerificationToken(verificationToken);
+        shop.setEmailTokenExpiry(EmailVerificationUtils.getTokenExpiry());
+        shopRepository.save(shop);
+
+        // Send verification email
+        emailService.sendVerificationEmail(shop.getEmail(), verificationToken, "shops");
+
+        return "Verification email sent successfully";
     }
 }

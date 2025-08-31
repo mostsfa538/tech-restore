@@ -16,6 +16,8 @@ public interface ShopRepository extends JpaRepository<Shop, UUID> {
     Optional<Shop> findByEmail(String email);
 
     boolean existsByEmail(String email);
+    
+    Shop findByEmailVerificationToken(String token);
 
     @Query("SELECT s FROM Shop s WHERE s.name LIKE %:name%")
     Page<Shop> findByName(String name, Pageable pageable);

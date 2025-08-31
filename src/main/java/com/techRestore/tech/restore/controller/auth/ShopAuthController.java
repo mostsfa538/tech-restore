@@ -33,4 +33,24 @@ public class ShopAuthController {
             throw new RuntimeException(e);
         }
     }
+
+    @GetMapping("/verify-email")
+    public ResponseEntity<String> verifyEmail(@RequestParam String token) {
+        try {
+            String message = shopAuthService.verifyEmail(token);
+            return ResponseEntity.ok(message);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/resend-verification")
+    public ResponseEntity<String> resendVerification(@RequestParam String email) {
+        try {
+            String message = shopAuthService.resendVerificationEmail(email);
+            return ResponseEntity.ok(message);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 }

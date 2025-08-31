@@ -7,6 +7,8 @@ import com.techRestore.tech.restore.model.enums.Role;
 import com.techRestore.tech.restore.security.config.CustomAuthenticationManager;
 import com.techRestore.tech.restore.security.jwt.JwtService;
 import com.techRestore.tech.restore.security.jwt.RefreshTokenService;
+import com.techRestore.tech.restore.services.EmailService;
+import com.techRestore.tech.restore.utils.EmailVerificationUtils;
 import com.techRestore.tech.restore.model.entities.User;
 import com.techRestore.tech.restore.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class AuthServices {
     private final CustomAuthenticationManager customAuthenticationManager;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final EmailService emailService;
 
     public String register(UserRegistration userRegistration) {
         if (userRegistration == null) {
@@ -55,9 +58,24 @@ public class AuthServices {
             user.setPassword(passwordEncoder.encode(userRegistration.password()));
             user.setPhone(userRegistration.phone());
             user.setCreatedAt(LocalDateTime.now());
+            
+            // Set email verification fields
+            String verificationToken = EmailVerificationUtils.generateVerificationToken();
+            user.setEmailVerificationToken(verificationToken);
+            user.setEmailTokenExpiry(EmailVerificationUtils.getTokenExpiry());
+            user.setEmailVerified(false);
 
             User savedUser = userRepository.save(user);
-            return savedUser.getId().toString();
+            
+            // Send verification email
+            try {
+                emailService.sendVerificationEmail(user.getEmail(), verificationToken, "users");
+            } catch (Exception emailException) {
+                System.err.println("Failed to send verification email: " + emailException.getMessage());
+                // Continue registration even if email fails
+            }
+            
+            return "User registered successfully. Please check your email to verify your account.";
         } catch (Exception e) {
             System.err.println("Error saving user: " + e.getMessage());
             throw new RuntimeException("Failed to create user: " + e.getMessage());
@@ -66,6 +84,12 @@ public class AuthServices {
 
     public TokenResponse login(LoginDto loginDto) {
         try {
+            // Check if user exists and email is verified
+            User user = userRepository.findByEmail(loginDto.email());
+            if (user != null && !user.isEmailVerified()) {
+                throw new RuntimeException("Please verify your email before logging in. Check your inbox for the verification link.");
+            }
+
             Authentication authentication = customAuthenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password()));
 
@@ -127,5 +151,52 @@ public class AuthServices {
             refreshTokenService.deleteRefreshToken(username);
         } catch (Exception e) {
         }
+    }
+
+    public String verifyEmail(String token) {
+        User user = userRepository.findByEmailVerificationToken(token);
+        if (user == null) {
+            throw new RuntimeException("Invalid verification token");
+        }
+
+        if (EmailVerificationUtils.isTokenExpired(user.getEmailTokenExpiry())) {
+            throw new RuntimeException("Verification token has expired");
+        }
+
+        user.setEmailVerified(true);
+        user.setEmailVerificationToken(null);
+        user.setEmailTokenExpiry(null);
+        userRepository.save(user);
+
+        // Send welcome email
+        try {
+            emailService.sendWelcomeEmail(user.getEmail(), user.getFirst_name());
+        } catch (Exception e) {
+            System.err.println("Failed to send welcome email: " + e.getMessage());
+        }
+
+        return "Email verified successfully! You can now log in.";
+    }
+
+    public String resendVerificationEmail(String email) {
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        if (user.isEmailVerified()) {
+            throw new RuntimeException("Email is already verified");
+        }
+
+        // Generate new verification token
+        String verificationToken = EmailVerificationUtils.generateVerificationToken();
+        user.setEmailVerificationToken(verificationToken);
+        user.setEmailTokenExpiry(EmailVerificationUtils.getTokenExpiry());
+        userRepository.save(user);
+
+        // Send verification email
+        emailService.sendVerificationEmail(user.getEmail(), verificationToken, "users");
+
+        return "Verification email sent successfully";
     }
 }

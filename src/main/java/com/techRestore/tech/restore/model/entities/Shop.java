@@ -37,6 +37,15 @@ public class Shop {
     @Column(nullable = false)
     private Boolean verified = false;
 
+    @Column(name = "email_verified")
+    private boolean emailVerified = false;
+
+    @Column(name = "email_verification_token")
+    private String emailVerificationToken;
+
+    @Column(name = "email_token_expiry")
+    private LocalDateTime emailTokenExpiry;
+
     @Column(name = "phone", length = 20)
     private String phone;
 

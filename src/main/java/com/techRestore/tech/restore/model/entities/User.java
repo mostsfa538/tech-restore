@@ -38,6 +38,15 @@ public class User {
     @Column(name = "activate")
     private boolean activate = true;
 
+    @Column(name = "email_verified")
+    private boolean emailVerified = false;
+
+    @Column(name = "email_verification_token")
+    private String emailVerificationToken;
+
+    @Column(name = "email_token_expiry")
+    private LocalDateTime emailTokenExpiry;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Chat> chats;
 
