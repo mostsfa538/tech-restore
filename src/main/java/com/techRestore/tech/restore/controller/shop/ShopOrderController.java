@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,7 +19,10 @@ import org.springframework.web.bind.annotation.RestController;
 import com.techRestore.tech.restore.controller.BaseController;
 import com.techRestore.tech.restore.dto.order.OrderResponseDTO;
 import com.techRestore.tech.restore.dto.order.OrderStatusUpdateDTO;
+import com.techRestore.tech.restore.exception.NotFoundException;
+import com.techRestore.tech.restore.model.entities.Shop;
 import com.techRestore.tech.restore.model.enums.OrderStatus;
+import com.techRestore.tech.restore.repository.ShopRepository;
 import com.techRestore.tech.restore.services.shop.ShopOrderService;
 
 import lombok.RequiredArgsConstructor;
@@ -28,6 +33,7 @@ import lombok.RequiredArgsConstructor;
 public class ShopOrderController extends BaseController {
 
     private final ShopOrderService shopOrderService;
+    private final ShopRepository shopRepository;
 
     @GetMapping
     public ResponseEntity<Page<OrderResponseDTO>> getAllShopOrders(Pageable pageable) {
@@ -62,5 +68,14 @@ public class ShopOrderController extends BaseController {
     public ResponseEntity<Page<OrderResponseDTO>> getOrdersByStatus(@PathVariable OrderStatus status, 
                                                                   Pageable pageable) {
         return successResponse(shopOrderService.getOrdersByStatus(status, pageable));
+    }
+
+    @GetMapping("/notifications")
+    public ResponseEntity<String> getNotificationHistory() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
+        Shop shop = shopRepository.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("Shop not found with email: " + email));
+        return successResponse(shop.getNotificationHistory());
     }
 }

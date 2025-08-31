@@ -1,6 +1,7 @@
 package com.techRestore.tech.restore.security.config;
 
 import com.techRestore.tech.restore.security.filter.JWTAuthenticationFilter;
+import com.techRestore.tech.restore.security.userdetails.DeliveryDetailsServiceImpl;
 import com.techRestore.tech.restore.security.userdetails.ShopDetailsServiceImpl;
 import com.techRestore.tech.restore.security.userdetails.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ public class AppConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
     private final ShopDetailsServiceImpl shopDetailsService;
+    private final DeliveryDetailsServiceImpl deliveryDetailsService;
     private final JWTAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
@@ -38,6 +40,12 @@ public class AppConfig {
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh",
                                 "/api/auth/shops/**")
                         .permitAll()
+                        .requestMatchers(
+                            "/api/auth/delivery/register",
+                            "/api/auth/delivery/login",      
+                            "/api/auth/delivery/refresh"     
+                        ).permitAll()
+                        .requestMatchers("/api/delivery/**").permitAll()
                         .requestMatchers("/api/shops/orders/control/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/cart/**").hasAnyRole("GUEST")
                         .requestMatchers("/api/auth/home", "/api/auth/logout").authenticated()
@@ -78,6 +86,7 @@ public class AppConfig {
         return new CustomAuthenticationManager(
                 userDetailsService,
                 shopDetailsService,
+                deliveryDetailsService,
                 passwordEncoder());
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.techRestore.tech.restore.dto.order.OrderResponseDTO;
 import com.techRestore.tech.restore.dto.order.OrderStatusUpdateDTO;
@@ -23,6 +24,7 @@ import com.techRestore.tech.restore.repository.OrderRepository;
 import com.techRestore.tech.restore.repository.ProductRepository;
 import com.techRestore.tech.restore.repository.ShopRepository;
 import com.techRestore.tech.restore.services.BaseService;
+import com.techRestore.tech.restore.services.notification.NotificationService;
 import com.techRestore.tech.restore.utils.DTOConverter;
 
 
@@ -33,14 +35,17 @@ public class ShopOrderService extends BaseService<Order, UUID> {
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
     private final OrderRepository orderRepository;
+    private final NotificationService notificationService;
 
     public ShopOrderService(OrderRepository orderRepository, ShopRepository shopRepository, 
-                           OrderItemRepository orderItemRepository,ProductRepository productRepository) {
+                           OrderItemRepository orderItemRepository,ProductRepository productRepository,
+                           NotificationService notificationService) {
         super(orderRepository);
         this.shopRepository = shopRepository;
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
         this.orderRepository = orderRepository;
+        this.notificationService = notificationService;
     }
 
     private UUID getCurrentShopId() {
@@ -64,7 +69,6 @@ public class ShopOrderService extends BaseService<Order, UUID> {
         return mapToOrderResponseDTO(order);
     }
 
-    @PreAuthorize("hasRole('SHOP_OWNER')")
     public void acceptOrder(UUID orderId) {
         UUID shopId = getCurrentShopId();
         Order order = ((OrderRepository) repository).findByIdAndShopId(orderId, shopId)
@@ -90,11 +94,11 @@ public class ShopOrderService extends BaseService<Order, UUID> {
             }
 
             product.setStock(currentStock - orderedQuantity);
+            order.setShopId(shopId);
+            order.setStatus(OrderStatus.CONFIRMED);
+            repository.save(order);
             productRepository.save(product);
         }
-
-        order.setStatus(OrderStatus.CONFIRMED);
-        repository.save(order);
     }
 
     @PreAuthorize("hasRole('SHOP_OWNER')")
@@ -105,28 +109,44 @@ public class ShopOrderService extends BaseService<Order, UUID> {
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new IllegalStateException("Only PENDING orders can be rejected");
         }
+
+        order.setShopId(shopId);
         order.setStatus(OrderStatus.CANCELLED);
         repository.save(order);
+        notificationService.sendToUser(order.getUserId(), "Your order " + orderId + " has been rejected by the shop");
     }
 
     @PreAuthorize("hasRole('SHOP_OWNER')")
+    @Transactional
     public void setStatus(UUID orderId, OrderStatusUpdateDTO statusDto) {
+
         UUID shopId = getCurrentShopId();
         Order order = ((OrderRepository) repository).findByIdAndShopId(orderId, shopId)
                 .orElseThrow(() -> new NotFoundException("Order not found for shop"));
-
+        
         if (order.getStatus() == OrderStatus.PENDING && statusDto.getStatus() != OrderStatus.CONFIRMED) {
             throw new IllegalStateException("PENDING orders can only transition to CONFIRMED");
         }
         if (order.getStatus() == OrderStatus.CONFIRMED && statusDto.getStatus() != OrderStatus.PROCESSING) {
             throw new IllegalStateException("CONFIRMED orders can only transition to PROCESSING");
         }
+        if (order.getStatus() == OrderStatus.PROCESSING && statusDto.getStatus() != OrderStatus.FINISHPROCESSING) {
+            throw new IllegalStateException("PROCESSING orders can only transition to FINISHPROCESSING");
+        }
         if (order.getStatus() == OrderStatus.CANCELLED) {
             throw new IllegalStateException("CANCELLED orders cannot be updated");
         }
 
+        order.setShopId(shopId);
         order.setStatus(statusDto.getStatus());
         repository.save(order);
+
+        if (statusDto.getStatus() == OrderStatus.PROCESSING) {
+            notificationService.sendToUser(order.getUserId(), "Your order " + orderId + " is now being processed by the shop");
+        } 
+        else if (statusDto.getStatus() == OrderStatus.FINISHPROCESSING) {
+            notificationService.sendToAllDelivery("Order " + orderId + " has finished processing and is ready for delivery");
+        }
     }
 
     public Page<OrderResponseDTO> getOrdersByStatus(OrderStatus status, Pageable pageable) {
