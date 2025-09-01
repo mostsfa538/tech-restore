@@ -18,8 +18,8 @@ public class UserAuthController {
     @PostMapping("/register")
     public ResponseEntity<String> create(@RequestBody UserRegistration userRegistration) {
         try {
-            String id = authServices.register(userRegistration);
-            return ResponseEntity.ok("User created successfully with ID: " + id);
+            authServices.register(userRegistration);
+            return ResponseEntity.ok("please verify your email to complete the registration");
         } catch (RuntimeException e) {
             if (e.getMessage().contains("Email already exists")) {
                 return ResponseEntity.badRequest().body("Email already exists");

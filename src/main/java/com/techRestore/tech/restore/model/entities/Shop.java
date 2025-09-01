@@ -66,6 +66,12 @@ public class Shop {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "opt_code", length = 6)
+    private String optCode = "";
+
+    @Column(name = "opt_code_expiry")
+    private LocalDateTime OtpExpiry;
+
     @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Product> products;
 

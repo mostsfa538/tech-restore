@@ -57,6 +57,15 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String notificationHistory = "[]";
 
+    @Column(name = "opt_code", length = 6)
+    private String optCode = "";
+
+    @Column(name = "opt_code_expiry")
+    private LocalDateTime OtpExpiry;
+
+    @Column(name = "email_verified")
+    private boolean emailVerified = false;
+
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Address> addresses;
 
