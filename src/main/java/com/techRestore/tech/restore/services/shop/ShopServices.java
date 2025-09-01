@@ -13,6 +13,8 @@ import com.techRestore.tech.restore.repository.ShopRepository;
 import com.techRestore.tech.restore.services.BaseService;
 import com.techRestore.tech.restore.utils.DTOConverter;
 
+import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -26,10 +28,12 @@ import java.util.UUID;
 public class ShopServices extends BaseService<Shop, UUID> {
 
     private final ShopAddressRepository shopAddressRepository;
+    private final ShopRepository Shoprepository;
 
     public ShopServices(ShopRepository shopRepository, ShopAddressRepository shopAddressRepository) {
         super(shopRepository);
         this.shopAddressRepository = shopAddressRepository;
+        this.Shoprepository = shopRepository;
     }
 
     /**
@@ -39,6 +43,11 @@ public class ShopServices extends BaseService<Shop, UUID> {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return ((ShopRepository) repository).findByEmail(authentication.getName())
                 .orElseThrow(() -> new NotFoundException("Shop not found"));
+    }
+
+    public Page<ShopResponseDto> getAllShops(Pageable pageable) {
+        Page<Shop> shops = Shoprepository.findAll(pageable);
+        return shops.map(DTOConverter::convertToShopyDTO);
     }
 
     public Page<AddressResponse> getAllAddresses(Pageable pageable) {
