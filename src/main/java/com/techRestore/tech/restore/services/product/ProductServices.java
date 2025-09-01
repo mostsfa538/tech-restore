@@ -23,6 +23,7 @@ public class ProductServices extends BaseService<Product, UUID> {
     @Autowired
     private CategoryRepository categoryRepository;
 
+
     public ProductServices(ProductRepository productRepository) {
         super(productRepository);
     }
@@ -38,6 +39,11 @@ public class ProductServices extends BaseService<Product, UUID> {
 
     public Page<ProductResponseDTO> searchProducts(String keyword, Pageable pageable) {
         return ((ProductRepository) repository).searchByKeyword(keyword, pageable)
+                .map(DTOConverter::convertToProductDTO);
+    }
+
+    public Page<ProductResponseDTO>getProductByShopId(UUID shopId, Pageable pageable) {
+        return ((ProductRepository) repository).findByShopId(shopId, pageable)
                 .map(DTOConverter::convertToProductDTO);
     }
 

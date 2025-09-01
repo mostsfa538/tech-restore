@@ -29,6 +29,12 @@ public class ProductController extends BaseController {
         return successResponse(productServices.getProductById(id));
     }
 
+    @GetMapping("/shop/{shopId}")
+    public ResponseEntity<Page<ProductResponseDTO>> getProductByShopId(@PathVariable UUID shopId, Pageable pageable) {
+        Page<ProductResponseDTO> products = productServices.getProductByShopId(shopId, pageable);
+        return ResponseEntity.ok(products);
+    }
+
     @GetMapping("/search")
     public ResponseEntity<Page<ProductResponseDTO>> searchProducts(@RequestParam String keyword, Pageable pageable) {
         Page<ProductResponseDTO> products = productServices.searchProducts(keyword, pageable);
