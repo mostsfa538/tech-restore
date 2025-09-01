@@ -7,6 +7,7 @@ import com.techRestore.tech.restore.model.enums.Role;
 import com.techRestore.tech.restore.security.config.CustomAuthenticationManager;
 import com.techRestore.tech.restore.security.jwt.JwtService;
 import com.techRestore.tech.restore.security.jwt.RefreshTokenService;
+import com.techRestore.tech.restore.services.emailVerification.EmailServices;
 import com.techRestore.tech.restore.model.entities.User;
 import com.techRestore.tech.restore.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -27,8 +29,9 @@ public class AuthServices {
     private final CustomAuthenticationManager customAuthenticationManager;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final EmailServices emailService;
 
-    public String register(UserRegistration userRegistration) {
+    public void register(UserRegistration userRegistration) {
         if (userRegistration == null) {
             throw new RuntimeException("User data cannot be null");
         }
@@ -56,8 +59,13 @@ public class AuthServices {
             user.setPhone(userRegistration.phone());
             user.setCreatedAt(LocalDateTime.now());
 
-            User savedUser = userRepository.save(user);
-            return savedUser.getId().toString();
+            String otp = String.valueOf(new Random().nextInt(900000) + 100000);
+            user.setOptCode(otp);
+            user.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
+
+            userRepository.save(user);
+            emailService.sendOtpEmail(user);
+
         } catch (Exception e) {
             System.err.println("Error saving user: " + e.getMessage());
             throw new RuntimeException("Failed to create user: " + e.getMessage());

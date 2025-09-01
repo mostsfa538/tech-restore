@@ -38,13 +38,14 @@ public class AppConfig {
                 .cors(corsConfig -> corsConfig.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh",
+                                "/api/auth/verify-email", "/api/auth/resend-otp",
                                 "/api/auth/shops/**")
                         .permitAll()
                         .requestMatchers(
-                            "/api/auth/delivery/register",
-                            "/api/auth/delivery/login",      
-                            "/api/auth/delivery/refresh"     
-                        ).permitAll()
+                                "/api/auth/delivery/register",
+                                "/api/auth/delivery/login",
+                                "/api/auth/delivery/refresh")
+                        .permitAll()
                         .requestMatchers("/api/AllShops").authenticated()
                         .requestMatchers("/api/delivery/**").hasAnyRole("DELIVERY")
                         .requestMatchers("/api/shops/orders/control/**").hasAnyRole("SELLER", "BOTH")

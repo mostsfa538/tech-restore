@@ -1,6 +1,5 @@
 package com.techRestore.tech.restore.security.userdetails;
 
-import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.entities.Delivery;
 import com.techRestore.tech.restore.repository.DeliveryRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +18,7 @@ public class DeliveryDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         Delivery delivery = deliveryRepository.findByEmail(email)
-                .orElseThrow(() -> new NotFoundException("Delivery not found with email: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("Delivery not found with email: " + email));
         return User.builder()
                 .username(delivery.getEmail())
                 .password(delivery.getPassword())

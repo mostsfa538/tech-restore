@@ -65,10 +65,11 @@ public class CustomAuthenticationManager implements AuthenticationManager {
             if (deliveryDetails != null && passwordEncoder.matches(password, deliveryDetails.getPassword())) {
                 return new UsernamePasswordAuthenticationToken(
                         deliveryDetails,
-                        null,
+                        password,
                         deliveryDetails.getAuthorities());
             }
-        } catch (UsernameNotFoundException e) {}
+        } catch (UsernameNotFoundException e) {
+        }
         throw new BadCredentialsException("Invalid username or password");
     }
 }

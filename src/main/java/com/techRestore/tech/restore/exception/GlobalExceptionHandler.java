@@ -79,4 +79,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "GEN_001");
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+    @ExceptionHandler(InvalidOtpException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidOtp(InvalidOtpException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "OTP_EXPIRED",
+                ex.getMessage(),
+                "OTP_001");
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(ExpiredOtpException.class)
+    public ResponseEntity<ErrorResponse> handleExpiredOtp(ExpiredOtpException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "OTP_EXPIRED",
+                ex.getMessage(),
+                "OTP_001");
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
 }
