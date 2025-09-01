@@ -1,6 +1,6 @@
 package com.techRestore.tech.restore.dto.user;
 
-import com.techRestore.tech.restore.dto.adress.AddressResponseDTO;
+import com.techRestore.tech.restore.dto.common.address.AddressResponse;
 import com.techRestore.tech.restore.model.enums.Role;
 import lombok.Data;
 
@@ -19,5 +19,5 @@ public class UserProfileDTO {
     private Role role;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private List<AddressResponseDTO> addresses;
+    private List<AddressResponse> addresses;
 }

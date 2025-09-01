@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.techRestore.tech.restore.controller.BaseController;
-import com.techRestore.tech.restore.dto.adress.AddressRequestDTO;
-import com.techRestore.tech.restore.dto.adress.AddressResponseDTO;
+import com.techRestore.tech.restore.dto.common.address.AddressRequest;
+import com.techRestore.tech.restore.dto.common.address.AddressResponse;
 import com.techRestore.tech.restore.model.entities.User;
 import com.techRestore.tech.restore.repository.UserRepository;
 import com.techRestore.tech.restore.services.adress.AdressService;
@@ -50,17 +50,17 @@ public class AdressController extends BaseController {
     }
 
     @PostMapping
-    public ResponseEntity<AddressResponseDTO> addAddress(@RequestBody AddressRequestDTO request) {
+    public ResponseEntity<AddressResponse> addAddress(@RequestBody AddressRequest request) {
         UUID userId = getCurrentUserId();
-        AddressResponseDTO response = addressService.addAdress(userId, request);
+        AddressResponse response = addressService.addAdress(userId, request);
         return createdResponse(response);
     }
 
     @PutMapping("/{addressId}")
-    public ResponseEntity<AddressResponseDTO> updateAddress(@PathVariable UUID addressId,
-            @RequestBody AddressRequestDTO request) {
+    public ResponseEntity<AddressResponse> updateAddress(@PathVariable UUID addressId,
+            @RequestBody AddressRequest request) {
         UUID userId = getCurrentUserId();
-        AddressResponseDTO response = addressService.updateAddress(userId, addressId, request);
+        AddressResponse response = addressService.updateAddress(userId, addressId, request);
         return updatedResponse(response);
     }
 
@@ -72,9 +72,9 @@ public class AdressController extends BaseController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<AddressResponseDTO>> getAddresses(Pageable pageable) {
+    public ResponseEntity<Page<AddressResponse>> getAddresses(Pageable pageable) {
         UUID userId = getCurrentUserId();
-        Page<AddressResponseDTO> addresses = addressService.getUserAddresses(userId, pageable);
+        Page<AddressResponse> addresses = addressService.getUserAddresses(userId, pageable);
         return successResponse(addresses);
     }
 

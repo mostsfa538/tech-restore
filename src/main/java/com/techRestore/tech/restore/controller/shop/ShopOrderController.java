@@ -2,7 +2,6 @@ package com.techRestore.tech.restore.controller.shop;
 
 import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -58,15 +57,15 @@ public class ShopOrderController extends BaseController {
     }
 
     @PutMapping("/{orderId}/status")
-    public ResponseEntity<String> updateStatus(@PathVariable UUID orderId, 
-                                             @RequestBody OrderStatusUpdateDTO statusDto) {
+    public ResponseEntity<String> updateStatus(@PathVariable UUID orderId,
+            @RequestBody OrderStatusUpdateDTO statusDto) {
         shopOrderService.setStatus(orderId, statusDto);
         return updatedResponse("Order status updated successfully");
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<Page<OrderResponseDTO>> getOrdersByStatus(@PathVariable OrderStatus status, 
-                                                                  Pageable pageable) {
+    public ResponseEntity<Page<OrderResponseDTO>> getOrdersByStatus(@PathVariable OrderStatus status,
+            Pageable pageable) {
         return successResponse(shopOrderService.getOrdersByStatus(status, pageable));
     }
 

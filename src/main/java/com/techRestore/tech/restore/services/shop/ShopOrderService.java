@@ -27,24 +27,21 @@ import com.techRestore.tech.restore.services.BaseService;
 import com.techRestore.tech.restore.services.notification.NotificationService;
 import com.techRestore.tech.restore.utils.DTOConverter;
 
-
 @Service
 public class ShopOrderService extends BaseService<Order, UUID> {
 
     private final ShopRepository shopRepository;
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
-    private final OrderRepository orderRepository;
     private final NotificationService notificationService;
 
-    public ShopOrderService(OrderRepository orderRepository, ShopRepository shopRepository, 
-                           OrderItemRepository orderItemRepository,ProductRepository productRepository,
-                           NotificationService notificationService) {
+    public ShopOrderService(OrderRepository orderRepository, ShopRepository shopRepository,
+            OrderItemRepository orderItemRepository, ProductRepository productRepository,
+            NotificationService notificationService) {
         super(orderRepository);
         this.shopRepository = shopRepository;
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
-        this.orderRepository = orderRepository;
         this.notificationService = notificationService;
     }
 
@@ -85,7 +82,7 @@ public class ShopOrderService extends BaseService<Order, UUID> {
         for (OrderItem orderItem : orderItems) {
             Product product = productRepository.findById(orderItem.getProductId())
                     .orElseThrow(() -> new NotFoundException("Product not found: " + orderItem.getProductId()));
-            
+
             int currentStock = product.getStock();
             int orderedQuantity = orderItem.getQuantity();
             if (currentStock < orderedQuantity) {
@@ -123,7 +120,7 @@ public class ShopOrderService extends BaseService<Order, UUID> {
         UUID shopId = getCurrentShopId();
         Order order = ((OrderRepository) repository).findByIdAndShopId(orderId, shopId)
                 .orElseThrow(() -> new NotFoundException("Order not found for shop"));
-        
+
         if (order.getStatus() == OrderStatus.PENDING && statusDto.getStatus() != OrderStatus.CONFIRMED) {
             throw new IllegalStateException("PENDING orders can only transition to CONFIRMED");
         }
@@ -142,10 +139,11 @@ public class ShopOrderService extends BaseService<Order, UUID> {
         repository.save(order);
 
         if (statusDto.getStatus() == OrderStatus.PROCESSING) {
-            notificationService.sendToUser(order.getUserId(), "Your order " + orderId + " is now being processed by the shop");
-        } 
-        else if (statusDto.getStatus() == OrderStatus.FINISHPROCESSING) {
-            notificationService.sendToAllDelivery("Order " + orderId + " has finished processing and is ready for delivery");
+            notificationService.sendToUser(order.getUserId(),
+                    "Your order " + orderId + " is now being processed by the shop");
+        } else if (statusDto.getStatus() == OrderStatus.FINISHPROCESSING) {
+            notificationService
+                    .sendToAllDelivery("Order " + orderId + " has finished processing and is ready for delivery");
         }
     }
 
