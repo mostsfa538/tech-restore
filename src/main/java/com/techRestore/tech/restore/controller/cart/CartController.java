@@ -2,7 +2,6 @@ package com.techRestore.tech.restore.controller.cart;
 
 import java.util.UUID;
 
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.techRestore.tech.restore.dto.cart.AddToCartRequestDTO;
@@ -55,7 +53,6 @@ public class CartController {
             Pageable pageable) {
 
         UUID userId = getCurrentUserId();
-        // Pageable pageable = PageRequest.of(page, size);
         CartResponseDTO cart = cartService.getCart(userId, pageable);
         return ResponseEntity.ok(cart);
     }
@@ -66,7 +63,6 @@ public class CartController {
             Pageable pageable) {
 
         UUID userId = getCurrentUserId();
-        // Pageable pageable = PageRequest.of(page, size);
         CartResponseDTO cart = cartService.addItemToCart(userId, request, pageable);
         return ResponseEntity.ok(cart);
     }
@@ -78,7 +74,6 @@ public class CartController {
             Pageable pageable) {
 
         UUID userId = getCurrentUserId();
-        // Pageable pageable = PageRequest.of(page, size);
         CartResponseDTO cart = cartService.updateCartItem(userId, itemId, request, pageable);
         return ResponseEntity.ok(cart);
     }

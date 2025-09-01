@@ -54,18 +54,22 @@ public class DTOConverter {
         dto.setRating(shop.getRating());
         dto.setCreatedAt(shop.getCreatedAt());
         dto.setUpdatedAt(shop.getUpdatedAt());
-         dto.setShopType(shop.getShopType() != null ? shop.getShopType().toString() : null);
+        dto.setShopType(shop.getShopType() != null ? shop.getShopType().toString() : null);
         return dto;
     }
 
     public static AddressResponse convertToAddressDTO(ShopAddress address) {
-        return new AddressResponse(
-                address.getState(),
-                address.getCity(),
-                address.getStreet(),
-                address.getBuilding(),
-                address.getNotes(),
-                address.isDefault());
+        AddressResponse dto = new AddressResponse();
+        dto.setId(address.getId());
+        dto.setState(address.getState());
+        dto.setCity(address.getCity());
+        dto.setStreet(address.getStreet());
+        dto.setBuilding(address.getBuilding());
+        dto.setNotes(address.getNotes());
+        dto.setDefault(address.isDefault());
+        dto.setUserId(address.getShop().getId());
+        dto.setCreatedAt(address.getCreatedAt());
+        return dto;
     }
 
     public static RepairRequestDto convertToRepairRequestDTO(RepairRequest repairRequest) {

@@ -13,8 +13,6 @@ import com.techRestore.tech.restore.repository.ShopRepository;
 import com.techRestore.tech.restore.services.BaseService;
 import com.techRestore.tech.restore.utils.DTOConverter;
 
-import lombok.RequiredArgsConstructor;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;

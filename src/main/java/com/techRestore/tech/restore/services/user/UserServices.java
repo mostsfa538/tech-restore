@@ -1,6 +1,6 @@
 package com.techRestore.tech.restore.services.user;
 
-import com.techRestore.tech.restore.dto.adress.AddressResponseDTO;
+import com.techRestore.tech.restore.dto.common.address.AddressResponse;
 import com.techRestore.tech.restore.dto.order.OrderResponseDTO;
 import com.techRestore.tech.restore.dto.product.ProductResponseDTO;
 import com.techRestore.tech.restore.dto.repair.RepairRequestDto;
@@ -65,8 +65,8 @@ public class UserServices {
         return user;
     }
 
-    private AddressResponseDTO convertToAddressDTO(Address address) {
-        AddressResponseDTO dto = new AddressResponseDTO();
+    private AddressResponse convertToAddressDTO(Address address) {
+        AddressResponse dto = new AddressResponse();
         dto.setId(address.getId());
         dto.setState(address.getState());
         dto.setCity(address.getCity());
@@ -94,7 +94,7 @@ public class UserServices {
         profileDTO.setUpdatedAt(user.getUpdatedAt());
 
         if (user.getAddresses() != null) {
-            List<AddressResponseDTO> addressDTOs = user.getAddresses().stream()
+            List<AddressResponse> addressDTOs = user.getAddresses().stream()
                     .map(this::convertToAddressDTO)
                     .collect(Collectors.toList());
             profileDTO.setAddresses(addressDTOs);

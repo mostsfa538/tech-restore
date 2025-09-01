@@ -7,8 +7,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.techRestore.tech.restore.dto.adress.AddressRequestDTO;
-import com.techRestore.tech.restore.dto.adress.AddressResponseDTO;
+import com.techRestore.tech.restore.dto.common.address.AddressRequest;
+import com.techRestore.tech.restore.dto.common.address.AddressResponse;
 import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.entities.Address;
 import com.techRestore.tech.restore.model.entities.User;
@@ -22,7 +22,7 @@ public class AdressService {
     private final AddressRepository adressRepository;
 
     @Transactional
-    public AddressResponseDTO addAdress(UUID userId, AddressRequestDTO request) {
+    public AddressResponse addAdress(UUID userId, AddressRequest request) {
         if (request.isDefault()) {
             Address existingDefault = adressRepository.findByUserIdAndIsDefaultTrue(userId);
             if (existingDefault != null) {
@@ -33,18 +33,18 @@ public class AdressService {
         Address address = new Address();
         address.setUser(new User());
         address.getUser().setId(userId);
-        address.setState(request.getState());
-        address.setCity(request.getCity());
-        address.setStreet(request.getStreet());
-        address.setBuilding(request.getBuilding());
-        address.setNotes(request.getNotes());
+        address.setState(request.state());
+        address.setCity(request.city());
+        address.setStreet(request.street());
+        address.setBuilding(request.building());
+        address.setNotes(request.notes());
         address.setDefault(request.isDefault());
         adressRepository.save(address);
         return mapToAddressResponseDTO(address);
     }
 
     @Transactional
-    public AddressResponseDTO updateAddress(UUID userId, UUID addressId, AddressRequestDTO request) {
+    public AddressResponse updateAddress(UUID userId, UUID addressId, AddressRequest request) {
         Address address = adressRepository.findById(addressId)
                 .orElseThrow(() -> new NotFoundException("Address not found"));
         if (!address.getUser().getId().equals(userId)) {
@@ -59,11 +59,11 @@ public class AdressService {
             }
         }
 
-        address.setState(request.getState());
-        address.setCity(request.getCity());
-        address.setStreet(request.getStreet());
-        address.setBuilding(request.getBuilding());
-        address.setNotes(request.getNotes());
+        address.setState(request.state());
+        address.setCity(request.city());
+        address.setStreet(request.street());
+        address.setBuilding(request.building());
+        address.setNotes(request.notes());
         address.setDefault(request.isDefault());
         adressRepository.save(address);
 
@@ -81,13 +81,13 @@ public class AdressService {
     }
 
     @Transactional(readOnly = true)
-    public Page<AddressResponseDTO> getUserAddresses(UUID userId, Pageable pageable) {
+    public Page<AddressResponse> getUserAddresses(UUID userId, Pageable pageable) {
         Page<Address> addresses = adressRepository.findByUserId(userId, pageable);
         return addresses.map(this::mapToAddressResponseDTO);
     }
 
-    private AddressResponseDTO mapToAddressResponseDTO(Address address) {
-        AddressResponseDTO dto = new AddressResponseDTO();
+    private AddressResponse mapToAddressResponseDTO(Address address) {
+        AddressResponse dto = new AddressResponse();
         dto.setId(address.getId());
         dto.setState(address.getState());
         dto.setCity(address.getCity());

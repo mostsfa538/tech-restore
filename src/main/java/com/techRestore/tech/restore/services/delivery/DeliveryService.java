@@ -75,12 +75,13 @@ public class DeliveryService {
         order.setDeliveryId(deliveryId);
         order.setStatus(OrderStatus.SHIPPED);
         orderRepository.save(order);
-        notificationService.sendToUser(order.getUserId(), "Your order " + orderId + " has been accepted for delivery and is now shipped");
+        notificationService.sendToUser(order.getUserId(),
+                "Your order " + orderId + " has been accepted for delivery and is now shipped");
     }
 
     @Transactional
     public void rejectDelivery(UUID orderId) {
-        UUID deliveryId = getCurrentDeliveryId();
+        getCurrentDeliveryId();
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
         if (order.getStatus() != OrderStatus.FINISHPROCESSING || order.getDeliveryId() != null) {
@@ -103,20 +104,21 @@ public class DeliveryService {
         order.setStatus(stateUpdate.getStatus());
         orderRepository.save(order);
         if (stateUpdate.getStatus() == OrderStatus.DELIVERED) {
-            notificationService.sendToUser(order.getUserId(), "Your order " + orderId + " status updated to " + stateUpdate.getStatus());
+            notificationService.sendToUser(order.getUserId(),
+                    "Your order " + orderId + " status updated to " + stateUpdate.getStatus());
             notificationService.sendToShop(order.getShopId(), "Order " + orderId + " has been delivered");
         }
     }
 
     private OrderDeliveryDto convertToDeliveryDTO(Order order) {
-    OrderDeliveryDto dto = new OrderDeliveryDto();
-    dto.setId(order.getId());
-    dto.setUserId(order.getUserId());
-    dto.setShopId(order.getShopId());
-    dto.setDeliveryId(order.getDeliveryId());
-    dto.setStatus(order.getStatus());
-    dto.setTotalPrice(order.getTotalPrice());
-    dto.setCreatedAt(order.getCreatedAt());
-    return dto;
-}
+        OrderDeliveryDto dto = new OrderDeliveryDto();
+        dto.setId(order.getId());
+        dto.setUserId(order.getUserId());
+        dto.setShopId(order.getShopId());
+        dto.setDeliveryId(order.getDeliveryId());
+        dto.setStatus(order.getStatus());
+        dto.setTotalPrice(order.getTotalPrice());
+        dto.setCreatedAt(order.getCreatedAt());
+        return dto;
+    }
 }
