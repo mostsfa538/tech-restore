@@ -45,7 +45,7 @@ public class AppConfig {
                             "/api/auth/delivery/login",      
                             "/api/auth/delivery/refresh"     
                         ).permitAll()
-                        .requestMatchers("/api/AllShops").permitAll()
+                        .requestMatchers("/api/AllShops").authenticated()
                         .requestMatchers("/api/delivery/**").hasAnyRole("DELIVERY")
                         .requestMatchers("/api/shops/orders/control/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/cart/**").hasAnyRole("GUEST")
