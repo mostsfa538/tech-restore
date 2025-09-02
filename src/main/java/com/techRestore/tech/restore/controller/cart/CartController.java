@@ -30,30 +30,12 @@ import lombok.RequiredArgsConstructor;
 public class CartController {
 
     private final CartService cartService;
-    private final UserRepository userRepository;
-
-    private UUID getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new RuntimeException("No authenticated user found");
-        }
-
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
-
-        if (user == null || !user.isActivate()) {
-            throw new RuntimeException("User account is deactivated or not found: " + email);
-        }
-
-        return user.getId();
-    }
 
     @GetMapping
     public ResponseEntity<CartResponseDTO> getCart(
             Pageable pageable) {
 
-        UUID userId = getCurrentUserId();
-        CartResponseDTO cart = cartService.getCart(userId, pageable);
+        CartResponseDTO cart = cartService.getCart(pageable);
         return ResponseEntity.ok(cart);
     }
 
@@ -61,9 +43,7 @@ public class CartController {
     public ResponseEntity<CartResponseDTO> addItemToCart(
             @RequestBody AddToCartRequestDTO request,
             Pageable pageable) {
-
-        UUID userId = getCurrentUserId();
-        CartResponseDTO cart = cartService.addItemToCart(userId, request, pageable);
+        CartResponseDTO cart = cartService.addItemToCart(request, pageable);
         return ResponseEntity.ok(cart);
     }
 
@@ -73,22 +53,19 @@ public class CartController {
             @RequestBody UpdateCartItemRequestDTO request,
             Pageable pageable) {
 
-        UUID userId = getCurrentUserId();
-        CartResponseDTO cart = cartService.updateCartItem(userId, itemId, request, pageable);
+        CartResponseDTO cart = cartService.updateCartItem(itemId, request, pageable);
         return ResponseEntity.ok(cart);
     }
 
     @DeleteMapping("/items/{itemId}")
     public ResponseEntity<Void> removeCartItem(@PathVariable UUID itemId) {
-        UUID userId = getCurrentUserId();
-        cartService.removeCartItem(userId, itemId);
+        cartService.removeCartItem(itemId);
         return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping
     public ResponseEntity<Void> clearCart() {
-        UUID userId = getCurrentUserId();
-        cartService.clearCart(userId);
+        cartService.clearCart();
         return ResponseEntity.noContent().build();
     }
 }

@@ -86,7 +86,7 @@ public class ShopOrderService extends BaseService<Order, UUID> {
             int currentStock = product.getStock();
             int orderedQuantity = orderItem.getQuantity();
             if (currentStock < orderedQuantity) {
-                throw new RuntimeException("Insufficient stock for product: " + product.getName() +
+                throw new IllegalArgumentException("Insufficient stock for product: " + product.getName() +
                         ". Available: " + currentStock + ", Requested: " + orderedQuantity);
             }
 

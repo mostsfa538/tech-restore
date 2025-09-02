@@ -4,16 +4,23 @@ import com.techRestore.tech.restore.dto.cart.AddToCartRequestDTO;
 import com.techRestore.tech.restore.dto.cart.CartItemResponseDTO;
 import com.techRestore.tech.restore.dto.cart.CartResponseDTO;
 import com.techRestore.tech.restore.dto.cart.UpdateCartItemRequestDTO;
+import com.techRestore.tech.restore.exception.ActivationException;
 import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.entities.CartItem;
 import com.techRestore.tech.restore.model.entities.Product;
+import com.techRestore.tech.restore.model.entities.User;
 import com.techRestore.tech.restore.repository.CartItemRepository;
 import com.techRestore.tech.restore.repository.ProductRepository;
+import com.techRestore.tech.restore.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -25,9 +32,31 @@ public class CartService {
 
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
+    private  final UserRepository userRepository;
+
+    private UUID getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No authenticated user found");
+        }
+
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email);
+
+        if (user == null) {
+            throw new NotFoundException("User not found: " + email);
+        }
+        if (!user.isActivate()) {
+            throw new ActivationException("User account is deactivated: " + email);
+        }
+
+
+        return user.getId();
+    }
 
     @Transactional(readOnly = true)
-    public CartResponseDTO getCart(UUID userId, Pageable pageable) {
+    public CartResponseDTO getCart(Pageable pageable) {
+        UUID userId = getCurrentUserId();
         Page<CartItem> items = cartItemRepository.findByUserId(userId, pageable);
         List<CartItemResponseDTO> itemDTOs = items
                 .map(this::mapToCartItemResponseDTO)
@@ -50,7 +79,8 @@ public class CartService {
     }
 
     @Transactional
-    public CartResponseDTO addItemToCart(UUID userId, AddToCartRequestDTO request, Pageable pageable) {
+    public CartResponseDTO addItemToCart(AddToCartRequestDTO request, Pageable pageable) {
+        UUID userId = getCurrentUserId();
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new NotFoundException("Product not found"));
 
@@ -69,12 +99,13 @@ public class CartService {
             cartItemRepository.save(newItem);
         }
 
-        return getCart(userId, pageable);
+        return getCart(pageable);
     }
 
     @Transactional
-    public CartResponseDTO updateCartItem(UUID userId, UUID itemId, UpdateCartItemRequestDTO request,
+    public CartResponseDTO updateCartItem(UUID itemId, UpdateCartItemRequestDTO request,
             Pageable pageable) {
+        UUID userId = getCurrentUserId();
         CartItem cartItem = cartItemRepository.findByIdAndUserId(itemId, userId)
                 .orElseThrow(() -> new NotFoundException("Cart item not found"));
 
@@ -85,11 +116,13 @@ public class CartService {
             cartItemRepository.save(cartItem);
         }
 
-        return getCart(userId, pageable);
+        return getCart(pageable);
     }
 
     @Transactional
-    public void removeCartItem(UUID userId, UUID itemId) {
+    public void removeCartItem(UUID itemId) {
+        UUID userId = getCurrentUserId();
+
         CartItem cartItem = cartItemRepository.findByIdAndUserId(itemId, userId)
                 .orElseThrow(() -> new NotFoundException("Cart item not found"));
         cartItemRepository.delete(cartItem);

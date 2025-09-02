@@ -41,7 +41,7 @@ public class ReviewService {
     }
 
     if (reviewRepository.existsByUserIdAndShopId(user.getId(), shopId)) {
-      throw new RuntimeException("You have already submitted a review for this shop.");
+      throw new IllegalArgumentException("You have already submitted a review for this shop.");
     }
 
     Review review = new Review();
@@ -71,7 +71,7 @@ public class ReviewService {
     User user = userRepository.findByEmail(email);
 
     if (!review.getUserId().equals(user.getId())) {
-      throw new RuntimeException("You can only update your own reviews.");
+      throw new IllegalArgumentException("You can only update your own reviews.");
     }
 
     review.setRating(reviewRequestDTO.getRating());
@@ -89,7 +89,7 @@ public class ReviewService {
     String email=authentication.getName();
     User user=userRepository.findByEmail(email);
     if(!review.getUserId().equals(user.getId())){
-      throw new RuntimeException("You can only delete your own reviews.");
+      throw new IllegalArgumentException("You can only delete your own reviews.");
     }
     reviewRepository.delete(review);
   }
