@@ -3,6 +3,8 @@ package com.techRestore.tech.restore.services.auth;
 import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.ShopRegistrationRequest;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
+import com.techRestore.tech.restore.exception.EmailAlreadyExistsException;
+import com.techRestore.tech.restore.exception.IllegalArgumentException;
 import com.techRestore.tech.restore.model.entities.Shop;
 import com.techRestore.tech.restore.model.entities.ShopAddress;
 import com.techRestore.tech.restore.repository.ShopRepository;
@@ -36,7 +38,7 @@ public class ShopAuthService {
     public String register(ShopRegistrationRequest shopRegistrationRequest) {
         if (shopRepository.existsByEmail(shopRegistrationRequest.email())
                 && userRepository.existsByEmail(shopRegistrationRequest.email()))
-            throw new RuntimeException("Emails is already exists");
+            throw new EmailAlreadyExistsException("Emails is already exists");
 
         try {
             Shop shop = new Shop();
@@ -62,7 +64,7 @@ public class ShopAuthService {
             return "Registration successfully, wait for acceptance";
 
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException(e.getMessage());
         }
     }
 
@@ -86,7 +88,7 @@ public class ShopAuthService {
         } catch (DisabledException e) {
             throw new DisabledException("Account is disabled");
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            throw new IllegalArgumentException(e.getMessage());
         }
     }
 }

@@ -4,6 +4,8 @@ import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.dto.delivery.DeliveryRegistration;
 import com.techRestore.tech.restore.exception.EmailAlreadyExistsException;
+import com.techRestore.tech.restore.exception.IllegalArgumentException;
+import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.enums.Role;
 import com.techRestore.tech.restore.security.config.CustomAuthenticationManager;
 import com.techRestore.tech.restore.security.jwt.JwtService;
@@ -30,26 +32,6 @@ public class DeliveryAuthServices {
     private final RefreshTokenService refreshTokenService;
 
     public String register(DeliveryRegistration deliveryRegistration) {
-        if (deliveryRegistration == null) {
-            throw new RuntimeException("Delivery data cannot be null");
-        }
-        if (deliveryRegistration.getEmail() == null || deliveryRegistration.getEmail().trim().isEmpty()) {
-            throw new RuntimeException("Email cannot be empty");
-        }
-        if (deliveryRegistration.getPassword() == null || deliveryRegistration.getPassword().trim().isEmpty()) {
-            throw new RuntimeException("Password cannot be empty");
-        }
-        if (deliveryRegistration.getName() == null || deliveryRegistration.getName().trim().isEmpty()) {
-            throw new RuntimeException("Name cannot be empty");
-        }
-        if (deliveryRegistration.getAddress() == null || deliveryRegistration.getAddress().trim().isEmpty()) {
-            throw new RuntimeException("Address cannot be empty");
-        }
-
-        if (deliveryRepository.existsByEmail(deliveryRegistration.getEmail())) {
-            throw new EmailAlreadyExistsException("Email already exists");
-        }
-
         try {
             Delivery delivery = new Delivery();
             delivery.setEmail(deliveryRegistration.getEmail());
@@ -64,7 +46,7 @@ public class DeliveryAuthServices {
             return savedDelivery.getId().toString();
         } catch (Exception e) {
             System.err.println("Error saving delivery: " + e.getMessage());
-            throw new RuntimeException("Failed to create delivery: " + e.getMessage());
+            throw new IllegalArgumentException("Failed to create delivery: " + e.getMessage());
         }
     }
 
@@ -84,24 +66,24 @@ public class DeliveryAuthServices {
                     "Bearer",
                     60 * 60);
         } catch (Exception e) {
-            throw new RuntimeException("Invalid Delivery");
+            throw new IllegalArgumentException("Invalid Delivery");
         }
     }
 
     public TokenResponse refreshToken(String refreshToken) {
         try {
             if (jwtService.isTokenExpired(refreshToken) || !jwtService.isRefreshToken(refreshToken)) {
-                throw new RuntimeException("Invalid refresh token");
+                throw new IllegalArgumentException("Invalid refresh token");
             }
 
             String username = jwtService.extractClaim(refreshToken, claims -> claims.get("username", String.class));
 
             if (!refreshTokenService.isValidRefreshToken(username, refreshToken)) {
-                throw new RuntimeException("Invalid refresh token");
+                throw new IllegalArgumentException("Invalid refresh token");
             }
 
             Delivery delivery = deliveryRepository.findByEmail(username)
-                    .orElseThrow(() -> new RuntimeException("Delivery not found"));
+                    .orElseThrow(() -> new NotFoundException("Delivery not found"));
 
             Authentication authentication = new UsernamePasswordAuthenticationToken(
                     username, null,
@@ -119,7 +101,7 @@ public class DeliveryAuthServices {
                     60 * 60 // sa3a
             );
         } catch (Exception e) {
-            throw new RuntimeException("Invalid refresh token");
+            throw new IllegalArgumentException("Invalid refresh token");
         }
     }
 
@@ -127,7 +109,7 @@ public class DeliveryAuthServices {
         try {
             String username = jwtService.extractClaim(refreshToken, claims -> claims.get("username", String.class));
             refreshTokenService.deleteRefreshToken(username);
-        } catch (Exception e) {
+        } catch (Exception ignore) {
         }
     }
 }

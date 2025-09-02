@@ -3,8 +3,7 @@ package com.techRestore.tech.restore.services.auth;
 import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.dto.auth.UserRegistration;
-import com.techRestore.tech.restore.exception.ActivationException;
-import com.techRestore.tech.restore.exception.EmailAlreadyExistsException;
+import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.enums.Role;
 import com.techRestore.tech.restore.security.config.CustomAuthenticationManager;
 import com.techRestore.tech.restore.security.jwt.JwtService;
@@ -13,16 +12,11 @@ import com.techRestore.tech.restore.services.emailVerification.EmailServices;
 import com.techRestore.tech.restore.model.entities.User;
 import com.techRestore.tech.restore.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -39,23 +33,6 @@ public class AuthServices {
     private final EmailServices emailService;
 
     public void register(UserRegistration userRegistration) {
-        if (userRegistration == null) {
-            throw new RuntimeException("User data cannot be null");
-        }
-        if (userRegistration.email() == null || userRegistration.email().trim().isEmpty()) {
-            throw new RuntimeException("Email cannot be empty");
-        }
-        if (userRegistration.password() == null || userRegistration.password().trim().isEmpty()) {
-            throw new RuntimeException("Password cannot be empty");
-        }
-        if (userRegistration.first_name() == null || userRegistration.first_name().trim().isEmpty()) {
-            throw new RuntimeException("Name cannot be empty");
-        }
-
-        if (userRepository.existsByEmail(userRegistration.email())) {
-            throw new EmailAlreadyExistsException("Email already exists");
-        }
-
         try {
             User user = new User();
             user.setFirst_name(userRegistration.first_name());
@@ -75,7 +52,7 @@ public class AuthServices {
 
         } catch (Exception e) {
             System.err.println("Error saving user: " + e.getMessage());
-            throw new RuntimeException("Failed to create user: " + e.getMessage());
+            throw new IllegalArgumentException("Failed to create user: " + e.getMessage());
         }
     }
 
@@ -98,18 +75,18 @@ public class AuthServices {
     public TokenResponse refreshToken(String refreshToken) {
         try {
             if (jwtService.isTokenExpired(refreshToken) || !jwtService.isRefreshToken(refreshToken)) {
-                throw new RuntimeException("Invalid refresh token");
+                throw new IllegalArgumentException("Invalid refresh token");
             }
 
             String username = jwtService.extractClaim(refreshToken, claims -> claims.get("username", String.class));
 
             if (!refreshTokenService.isValidRefreshToken(username, refreshToken)) {
-                throw new RuntimeException("Invalid refresh token");
+                throw new IllegalArgumentException("Invalid refresh token");
             }
 
             User user = userRepository.findByEmail(username);
             if (user == null) {
-                throw new RuntimeException("User not found");
+                throw new NotFoundException("User not found");
             }
 
             Authentication authentication = new UsernamePasswordAuthenticationToken(
@@ -128,7 +105,7 @@ public class AuthServices {
                     60 * 60 // sa3a
             );
         } catch (Exception e) {
-            throw new RuntimeException("Invalid refresh token");
+            throw new IllegalArgumentException("Invalid refresh token");
         }
     }
 
@@ -136,7 +113,7 @@ public class AuthServices {
         try {
             String username = jwtService.extractClaim(refreshToken, claims -> claims.get("username", String.class));
             refreshTokenService.deleteRefreshToken(username);
-        } catch (Exception e) {
+        } catch (Exception ignored) {
         }
     }
 }

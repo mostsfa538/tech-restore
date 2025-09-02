@@ -7,9 +7,16 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.techRestore.tech.restore.exception.ActivationException;
+import com.techRestore.tech.restore.model.entities.*;
+import com.techRestore.tech.restore.repository.*;
+import com.techRestore.tech.restore.utils.DTOConverter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,21 +25,12 @@ import com.techRestore.tech.restore.dto.order.OrderItemResponseDTO;
 import com.techRestore.tech.restore.dto.order.OrderResponseDTO;
 import com.techRestore.tech.restore.dto.order.TrackingResponseDTO;
 import com.techRestore.tech.restore.exception.NotFoundException;
-import com.techRestore.tech.restore.model.entities.CartItem;
-import com.techRestore.tech.restore.model.entities.Order;
-import com.techRestore.tech.restore.model.entities.OrderItem;
-import com.techRestore.tech.restore.model.entities.OrderPayment;
-import com.techRestore.tech.restore.model.entities.Product;
 import com.techRestore.tech.restore.model.enums.OrderStatus;
 import com.techRestore.tech.restore.model.enums.PaymentStatus;
-import com.techRestore.tech.restore.repository.CartItemRepository;
-import com.techRestore.tech.restore.repository.OrderItemRepository;
-import com.techRestore.tech.restore.repository.OrderPaymentRepository;
-import com.techRestore.tech.restore.repository.OrderRepository;
-import com.techRestore.tech.restore.repository.ProductRepository;
 import com.techRestore.tech.restore.services.notification.NotificationService;
 
 import lombok.AllArgsConstructor;
+import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @AllArgsConstructor
@@ -43,12 +41,34 @@ public class OrderService {
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
     private final NotificationService notificationService;
+    private final UserRepository userRepository;
+
+    private UUID getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No authenticated user found");
+        }
+
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email);
+
+        if (user == null) {
+            throw new NotFoundException("User not found: " + email);
+        }
+        if (!user.isActivate()) {
+            throw new ActivationException("User account is deactivated: " + email);
+        }
+
+
+        return user.getId();
+    }
 
     @Transactional
-    public OrderResponseDTO createOrder(UUID userId, OrderRequestDTO request) {
+    public OrderResponseDTO createOrder(OrderRequestDTO request) {
+        UUID userId = getCurrentUserId();
         List<CartItem> cartItems = cartItemRepository.findByUserId(userId);
         if (cartItems.isEmpty()) {
-            throw new RuntimeException("Cart is empty");
+            throw new IllegalArgumentException("Cart is empty");
         }
 
         BigDecimal totalPrice = BigDecimal.ZERO;
@@ -102,29 +122,34 @@ public class OrderService {
 
         cartItemRepository.deleteAll(cartItems);
 
-        return mapToOrderResponseDTO(order, orderItems);
+        return DTOConverter.convertToOrderResponseDTO(order, orderItems);
     }
 
     @Transactional(readOnly = true)
-    public Page<OrderResponseDTO> getUserOrders(UUID userId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+    public Page<OrderResponseDTO> getUserOrders(Pageable pageable) {
+        UUID userId = getCurrentUserId();
         Page<Order> ordersPage = orderRepository.findByUserId(userId, pageable);
-        return ordersPage.map(this::mapToOrderResponseDTO);
+        return ordersPage.map(order -> {
+            List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+            return DTOConverter.convertToOrderResponseDTO(order, items);
+        });
     }
 
     @Transactional(readOnly = true)
-    public OrderResponseDTO getOrderDetails(UUID userId, UUID orderId) {
+    public OrderResponseDTO getOrderDetails(UUID orderId) {
+        UUID userId = getCurrentUserId();
         Order order = orderRepository.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
-        return mapToOrderResponseDTO(order);
+        return DTOConverter.convertToOrderResponseDTO(order);
     }
 
     @Transactional
-    public void cancelOrder(UUID userId, UUID orderId) {
+    public void cancelOrder(UUID orderId) {
+        UUID userId = getCurrentUserId();
         Order order = orderRepository.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new RuntimeException("Order cannot be cancelled");
+            throw new IllegalArgumentException("Order cannot be cancelled");
         }
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
@@ -136,47 +161,14 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public TrackingResponseDTO trackOrder(UUID userId, UUID orderId) {
+    public TrackingResponseDTO trackOrder(UUID orderId) {
+        UUID userId = getCurrentUserId();
         Order order = orderRepository.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
 
         TrackingResponseDTO dto = new TrackingResponseDTO();
         dto.setStatus(order.getStatus());
         dto.setOrderId(order.getId());
-        return dto;
-    }
-
-    private OrderResponseDTO mapToOrderResponseDTO(Order order) {
-        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
-        return mapToOrderResponseDTO(order, orderItems);
-    }
-
-    private OrderResponseDTO mapToOrderResponseDTO(Order order, List<OrderItem> orderItems) {
-        OrderResponseDTO dto = new OrderResponseDTO();
-        dto.setId(order.getId());
-        dto.setUserId(order.getUserId());
-        dto.setDeliveryAddressId(order.getDeliveryAddressId());
-        dto.setTotalPrice(order.getTotalPrice());
-        dto.setStatus(order.getStatus());
-        dto.setPaymentMethod(order.getPaymentMethod());
-        dto.setCreatedAt(order.getCreatedAt());
-        dto.setPaymentId(order.getPaymentId());
-
-        List<OrderItemResponseDTO> itemDTOs = orderItems.stream().map(this::mapToOrderItemResponseDTO)
-                .collect(Collectors.toList());
-        dto.setOrderItems(itemDTOs);
-
-        return dto;
-    }
-
-    private OrderItemResponseDTO mapToOrderItemResponseDTO(OrderItem orderItem) {
-        OrderItemResponseDTO dto = new OrderItemResponseDTO();
-        dto.setId(orderItem.getId());
-        dto.setProductId(orderItem.getProductId());
-        dto.setQuantity(orderItem.getQuantity());
-        dto.setPriceAtCheckout(orderItem.getPriceAtCheckout());
-        dto.setShopId(orderItem.getShopId());
-        dto.setSubtotal(orderItem.getPriceAtCheckout().multiply(BigDecimal.valueOf(orderItem.getQuantity())));
         return dto;
     }
 
