@@ -2,6 +2,7 @@ package com.techRestore.tech.restore.controller.adress;
 
 import java.util.UUID;
 
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -30,14 +31,14 @@ public class AddressController extends BaseController {
     private final AddressService addressService;
 
     @PostMapping
-    public ResponseEntity<AddressResponse> addAddress(@RequestBody AddressRequest request) {
+    public ResponseEntity<AddressResponse> addAddress(@RequestBody @Valid AddressRequest request) {
         AddressResponse response = addressService.addAddress(request);
         return createdResponse(response);
     }
 
     @PutMapping("/{addressId}")
     public ResponseEntity<AddressResponse> updateAddress(@PathVariable UUID addressId,
-            @RequestBody AddressRequest request) {
+            @RequestBody @Valid AddressRequest request) {
         AddressResponse response = addressService.updateAddress(addressId, request);
         return updatedResponse(response);
     }

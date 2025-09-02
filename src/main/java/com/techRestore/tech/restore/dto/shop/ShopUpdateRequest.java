@@ -1,7 +1,10 @@
 package com.techRestore.tech.restore.dto.shop;
 
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
+
 public record ShopUpdateRequest(
-                String name,
-                String description,
-                String phone) {
+        @Size(min = 2, max = 50) String name,
+        @Size(max = 500) String description,
+        @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Invalid phone number format") String phone) {
 }
