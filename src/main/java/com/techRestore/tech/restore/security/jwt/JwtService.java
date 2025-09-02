@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.security.jwt;
 
+import com.techRestore.tech.restore.security.userdetails.DeliveryPrincipal;
 import com.techRestore.tech.restore.security.userdetails.ShopPrincipal;
 import com.techRestore.tech.restore.security.userdetails.UserPrincipal;
 import io.jsonwebtoken.Claims;
@@ -49,7 +50,11 @@ public class JwtService {
             roles = shopPrincipal.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.toList());
-        } else {
+        } else if(principal instanceof DeliveryPrincipal deliveryPrincipal) {
+            roles = deliveryPrincipal.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList());
+        }else {
             roles.add("ROLE_GUEST");
         }
 
