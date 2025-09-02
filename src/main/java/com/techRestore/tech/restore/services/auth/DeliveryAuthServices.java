@@ -3,6 +3,7 @@ package com.techRestore.tech.restore.services.auth;
 import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.dto.delivery.DeliveryRegistration;
+import com.techRestore.tech.restore.exception.EmailAlreadyExistsException;
 import com.techRestore.tech.restore.model.enums.Role;
 import com.techRestore.tech.restore.security.config.CustomAuthenticationManager;
 import com.techRestore.tech.restore.security.jwt.JwtService;
@@ -46,7 +47,7 @@ public class DeliveryAuthServices {
         }
 
         if (deliveryRepository.existsByEmail(deliveryRegistration.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new EmailAlreadyExistsException("Email already exists");
         }
 
         try {

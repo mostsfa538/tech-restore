@@ -1,4 +1,4 @@
-package com.techRestore.tech.restore.websocket;
+package com.techRestore.tech.restore.security.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;

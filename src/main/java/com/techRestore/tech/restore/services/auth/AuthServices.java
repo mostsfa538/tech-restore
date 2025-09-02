@@ -3,6 +3,8 @@ package com.techRestore.tech.restore.services.auth;
 import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.dto.auth.UserRegistration;
+import com.techRestore.tech.restore.exception.ActivationException;
+import com.techRestore.tech.restore.exception.EmailAlreadyExistsException;
 import com.techRestore.tech.restore.model.enums.Role;
 import com.techRestore.tech.restore.security.config.CustomAuthenticationManager;
 import com.techRestore.tech.restore.security.jwt.JwtService;
@@ -11,11 +13,16 @@ import com.techRestore.tech.restore.services.emailVerification.EmailServices;
 import com.techRestore.tech.restore.model.entities.User;
 import com.techRestore.tech.restore.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -46,7 +53,7 @@ public class AuthServices {
         }
 
         if (userRepository.existsByEmail(userRegistration.email())) {
-            throw new RuntimeException("Email already exists");
+            throw new EmailAlreadyExistsException("Email already exists");
         }
 
         try {
@@ -64,7 +71,7 @@ public class AuthServices {
             user.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
 
             userRepository.save(user);
-            emailService.sendOtpEmail(user);
+            emailService.sendOtpEmail(user.getEmail());
 
         } catch (Exception e) {
             System.err.println("Error saving user: " + e.getMessage());
@@ -73,7 +80,6 @@ public class AuthServices {
     }
 
     public TokenResponse login(LoginDto loginDto) {
-        try {
             Authentication authentication = customAuthenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password()));
 
@@ -87,9 +93,6 @@ public class AuthServices {
                     refreshToken,
                     "Bearer",
                     60 * 60);
-        } catch (Exception e) {
-            throw new RuntimeException("Invalid User");
-        }
     }
 
     public TokenResponse refreshToken(String refreshToken) {

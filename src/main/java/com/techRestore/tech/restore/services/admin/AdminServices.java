@@ -107,6 +107,7 @@ public class AdminServices extends BaseService<User, UUID> {
 
     public ResponseUsersDto convertDto(User user) {
         return new ResponseUsersDto(
+                user.getId(),
                 user.getFirst_name(),
                 user.getFirst_name(),
                 user.getEmail(),

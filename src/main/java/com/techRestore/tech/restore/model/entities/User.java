@@ -36,7 +36,7 @@ public class User {
     private String phone;
 
     @Column(name = "activate")
-    private boolean activate = true;
+    private boolean activate = false;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Chat> chats;
@@ -62,9 +62,6 @@ public class User {
 
     @Column(name = "opt_code_expiry")
     private LocalDateTime OtpExpiry;
-
-    @Column(name = "email_verified")
-    private boolean emailVerified = false;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Address> addresses;

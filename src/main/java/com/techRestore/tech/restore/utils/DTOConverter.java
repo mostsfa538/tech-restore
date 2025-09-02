@@ -40,7 +40,7 @@ public class DTOConverter {
     }
 
     public static CategoryDTO convertToCategoryDTO(Category category) {
-        return new CategoryDTO(category.getName());
+        return new CategoryDTO(category.getId(), category.getName());
     }
 
     public static ShopResponseDto convertToShopyDTO(Shop shop) {
