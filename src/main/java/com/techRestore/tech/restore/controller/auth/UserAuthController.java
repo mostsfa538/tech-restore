@@ -5,6 +5,7 @@ import com.techRestore.tech.restore.dto.auth.RefreshTokenDto;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.dto.auth.UserRegistration;
 import com.techRestore.tech.restore.services.auth.AuthServices;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,19 +17,19 @@ public class UserAuthController {
     private final AuthServices authServices;
 
     @PostMapping("/register")
-    public ResponseEntity<String> create(@RequestBody UserRegistration userRegistration) {
+    public ResponseEntity<String> create(@RequestBody @Valid UserRegistration userRegistration) {
             authServices.register(userRegistration);
             return ResponseEntity.ok("please verify your email to complete the registration");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@RequestBody LoginDto loginDto) {
+    public ResponseEntity<TokenResponse> login(@RequestBody @Valid LoginDto loginDto) {
         TokenResponse tokens = authServices.login(loginDto);
         return ResponseEntity.ok(tokens);
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<TokenResponse> refreshToken(@RequestBody RefreshTokenDto refreshTokenDto) {
+    public ResponseEntity<TokenResponse> refreshToken(@RequestBody @Valid RefreshTokenDto refreshTokenDto) {
             TokenResponse tokens = authServices.refreshToken(refreshTokenDto.refreshToken());
             return ResponseEntity.ok(tokens);
     }

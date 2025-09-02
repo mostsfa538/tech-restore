@@ -129,7 +129,8 @@ public class CartService {
     }
 
     @Transactional
-    public void clearCart(UUID userId) {
+    public void clearCart() {
+        UUID userId = getCurrentUserId();
         List<CartItem> items = cartItemRepository.findByUserId(userId);
         cartItemRepository.deleteAll(items);
     }

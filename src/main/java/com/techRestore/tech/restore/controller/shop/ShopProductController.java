@@ -7,6 +7,7 @@ import com.techRestore.tech.restore.dto.product.UpdateProductDto;
 import com.techRestore.tech.restore.dto.shop.StockUpdateRequest;
 import com.techRestore.tech.restore.services.shop.ShopProductService;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
 import org.springframework.data.domain.Page;
@@ -31,7 +32,7 @@ public class ShopProductController extends BaseController {
 
     @PostMapping
     public ResponseEntity<ProductResponseDTO> addProductToShop(
-            @RequestBody CreateProductDto createProductDto) {
+            @RequestBody @Valid CreateProductDto createProductDto) {
         ProductResponseDTO product = shopProductService.addProductToShop(createProductDto);
         return createdResponse(product);
     }
@@ -39,7 +40,7 @@ public class ShopProductController extends BaseController {
     @PutMapping("/{productId}")
     public ResponseEntity<ProductResponseDTO> updateProduct(
             @PathVariable UUID productId,
-            @RequestBody UpdateProductDto updateProductDto) {
+            @RequestBody @Valid UpdateProductDto updateProductDto) {
         return updatedResponse(shopProductService.updateProduct(productId, updateProductDto));
     }
 
@@ -52,7 +53,7 @@ public class ShopProductController extends BaseController {
     @PatchMapping("/{productId}/stock")
     public ResponseEntity<ProductResponseDTO> updateProductStock(
             @PathVariable UUID productId,
-            @RequestBody StockUpdateRequest request) {
+            @RequestBody @Valid StockUpdateRequest request) {
         return updatedResponse(shopProductService.updateProductStock(productId, request));
     }
 

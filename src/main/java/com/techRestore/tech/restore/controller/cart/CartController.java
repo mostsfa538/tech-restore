@@ -2,10 +2,9 @@ package com.techRestore.tech.restore.controller.cart;
 
 import java.util.UUID;
 
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,8 +17,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.techRestore.tech.restore.dto.cart.AddToCartRequestDTO;
 import com.techRestore.tech.restore.dto.cart.CartResponseDTO;
 import com.techRestore.tech.restore.dto.cart.UpdateCartItemRequestDTO;
-import com.techRestore.tech.restore.model.entities.User;
-import com.techRestore.tech.restore.repository.UserRepository;
 import com.techRestore.tech.restore.services.cart.CartService;
 
 import lombok.RequiredArgsConstructor;
@@ -41,7 +38,7 @@ public class CartController {
 
     @PostMapping("/items")
     public ResponseEntity<CartResponseDTO> addItemToCart(
-            @RequestBody AddToCartRequestDTO request,
+            @RequestBody @Valid AddToCartRequestDTO request,
             Pageable pageable) {
         CartResponseDTO cart = cartService.addItemToCart(request, pageable);
         return ResponseEntity.ok(cart);
@@ -50,7 +47,7 @@ public class CartController {
     @PutMapping("/items/{itemId}")
     public ResponseEntity<CartResponseDTO> updateCartItem(
             @PathVariable UUID itemId,
-            @RequestBody UpdateCartItemRequestDTO request,
+            @RequestBody @Valid UpdateCartItemRequestDTO request,
             Pageable pageable) {
 
         CartResponseDTO cart = cartService.updateCartItem(itemId, request, pageable);

@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.controller.reviews;
 
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -32,7 +33,7 @@ public class ReviewController {
   @PostMapping("/{shopId}")
   @PreAuthorize("hasRole('GUEST')")
   public ResponseEntity<ReviewResponseDTO> createReview(
-      @RequestBody ReviewRequestDTO reviewRequestDTO,
+      @RequestBody @Valid ReviewRequestDTO reviewRequestDTO,
       @PathVariable UUID shopId) {
     return ResponseEntity.ok(reviewService.createReview(shopId, reviewRequestDTO));
   }
@@ -47,7 +48,7 @@ public class ReviewController {
   @PreAuthorize("hasRole('GUEST')")
   public ResponseEntity<ReviewResponseDTO> updateReview(
       @PathVariable UUID id,
-      @RequestBody ReviewRequestDTO reviewRequestDTO) {
+      @RequestBody @Valid ReviewRequestDTO reviewRequestDTO) {
     return ResponseEntity.ok(reviewService.updateReview(id, reviewRequestDTO));
   }
 

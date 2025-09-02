@@ -5,6 +5,8 @@ import com.techRestore.tech.restore.dto.order.OrderResponseDTO;
 import com.techRestore.tech.restore.dto.order.TrackingResponseDTO;
 import com.techRestore.tech.restore.services.order.OrderService;
 import java.util.UUID;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,7 +21,7 @@ public class OrderController {
 	private final OrderService orderService;
 
 	@PostMapping
-	public ResponseEntity<OrderResponseDTO> createOrder(@RequestBody OrderRequestDTO request) {
+	public ResponseEntity<OrderResponseDTO> createOrder(@RequestBody @Valid OrderRequestDTO request) {
 		OrderResponseDTO order = orderService.createOrder(request);
 		return ResponseEntity.ok(order);
 	}

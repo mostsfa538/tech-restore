@@ -5,10 +5,13 @@ import java.util.UUID;
 import com.techRestore.tech.restore.model.enums.PaymentMethod;
 
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
 public class OrderRequestDTO {
-   private UUID deliveryAddressId;
-   private PaymentMethod paymentMethod;
+    @NotNull
+    private UUID deliveryAddressId;
+    @NotNull
+    private PaymentMethod paymentMethod;
 }
