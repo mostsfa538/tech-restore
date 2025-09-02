@@ -17,40 +17,20 @@ public class UserAuthController {
 
     @PostMapping("/register")
     public ResponseEntity<String> create(@RequestBody UserRegistration userRegistration) {
-        try {
             authServices.register(userRegistration);
             return ResponseEntity.ok("please verify your email to complete the registration");
-        } catch (RuntimeException e) {
-            if (e.getMessage().contains("Email already exists")) {
-                return ResponseEntity.badRequest().body("Email already exists");
-            }
-            return ResponseEntity.badRequest().body("Registration failed: " + e.getMessage());
-        } catch (Exception e) {
-            System.err.println("Unexpected error during registration: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().body("An unexpected error occurred");
-        }
     }
 
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@RequestBody LoginDto loginDto) {
-        try {
-            TokenResponse tokens = authServices.login(loginDto);
-            return ResponseEntity.ok(tokens);
-        } catch (RuntimeException e) {
-            System.out.println(e.getMessage());
-            return ResponseEntity.badRequest().build();
-        }
+        TokenResponse tokens = authServices.login(loginDto);
+        return ResponseEntity.ok(tokens);
     }
 
     @PostMapping("/refresh-token")
     public ResponseEntity<TokenResponse> refreshToken(@RequestBody RefreshTokenDto refreshTokenDto) {
-        try {
             TokenResponse tokens = authServices.refreshToken(refreshTokenDto.refreshToken());
             return ResponseEntity.ok(tokens);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
     }
 
     @PostMapping("/logout")
@@ -58,5 +38,4 @@ public class UserAuthController {
         authServices.logout(refreshTokenDto.refreshToken());
         return ResponseEntity.ok("Logged out successfully");
     }
-
 }

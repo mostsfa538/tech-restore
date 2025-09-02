@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.security.config;
 
+import com.techRestore.tech.restore.exception.ActivationException;
 import com.techRestore.tech.restore.security.userdetails.DeliveryDetailsServiceImpl;
 import com.techRestore.tech.restore.security.userdetails.ShopDetailsServiceImpl;
 import com.techRestore.tech.restore.security.userdetails.UserDetailsServiceImpl;
@@ -32,6 +33,7 @@ public class CustomAuthenticationManager implements AuthenticationManager {
         this.deliveryDetailsService = deliveryDetailsService;
     }
 
+
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         String username = authentication.getName();
@@ -39,7 +41,16 @@ public class CustomAuthenticationManager implements AuthenticationManager {
 
         try {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-            if (userDetails != null && passwordEncoder.matches(password, userDetails.getPassword())) {
+
+            if (userDetails != null) {
+                if (!passwordEncoder.matches(password, userDetails.getPassword())) {
+                    throw new BadCredentialsException("Invalid username or password");
+                }
+
+                if (!userDetails.isEnabled()) {
+                    throw new ActivationException("Account is not activated. Please check your email for activation instructions");
+                }
+
                 return new UsernamePasswordAuthenticationToken(
                         userDetails,
                         password,

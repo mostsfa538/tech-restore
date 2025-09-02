@@ -1,4 +1,6 @@
 package com.techRestore.tech.restore.dto.category;
 
-public record CategoryDTO(String name) {
+import java.util.UUID;
+
+public record CategoryDTO(UUID id, String name) {
 }
