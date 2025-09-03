@@ -5,7 +5,6 @@ import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.dto.delivery.DeliveryRegistration;
 import com.techRestore.tech.restore.services.auth.DeliveryAuthServices;
-
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -22,7 +21,7 @@ public class DeliveryAuthController extends BaseController {
     private final DeliveryAuthServices deliveryAuthServices;
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody DeliveryRegistration deliveryRegistration) {
+    public ResponseEntity<String> register(@RequestBody @Valid DeliveryRegistration deliveryRegistration) {
         String deliveryId = deliveryAuthServices.register(deliveryRegistration);
         return createdResponse("Delivery registered successfully with ID: " + deliveryId);
     }
@@ -30,7 +29,6 @@ public class DeliveryAuthController extends BaseController {
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody @Valid LoginDto loginDto) {
         return ResponseEntity.ok(deliveryAuthServices.login(loginDto));
-    }
 
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponse> refreshToken(@RequestBody String refreshToken) {

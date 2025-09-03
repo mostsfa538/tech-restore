@@ -95,6 +95,7 @@ public class ShopOrderService extends BaseService<Order, UUID> {
             order.setStatus(OrderStatus.CONFIRMED);
             repository.save(order);
             productRepository.save(product);
+            notificationService.sendToUser(order.getUserId(), "Your order " + orderId + " has been accepted by the shop");
         }
     }
 

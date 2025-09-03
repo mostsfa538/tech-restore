@@ -21,7 +21,7 @@ public class UserAuthController {
     private final AuthServices authServices;
 
     @PostMapping("/register")
-    public ResponseEntity<String> create(@RequestBody UserRegistration userRegistration) {
+    public ResponseEntity<String> create(@RequestBody @Valid UserRegistration userRegistration) {
             authServices.register(userRegistration);
             return ResponseEntity.ok("please verify your email to complete the registration");
     }
@@ -32,7 +32,7 @@ public class UserAuthController {
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<TokenResponse> refreshToken(@RequestBody RefreshTokenDto refreshTokenDto) {
+    public ResponseEntity<TokenResponse> refreshToken(@RequestBody @Valid RefreshTokenDto refreshTokenDto) {
             TokenResponse tokens = authServices.refreshToken(refreshTokenDto.refreshToken());
             return ResponseEntity.ok(tokens);
     }
