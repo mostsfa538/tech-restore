@@ -4,7 +4,9 @@ import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.ShopRegistrationRequest;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.services.auth.ShopAuthService;
+
 import jakarta.validation.Valid;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,12 +18,14 @@ public class ShopAuthController {
     private ShopAuthService shopAuthService;
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@RequestBody @Valid LoginDto loginDto) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody @Valid LoginDto loginDto) {
         try {
-            TokenResponse token = shopAuthService.login(loginDto);
-            return ResponseEntity.ok().body(token);
+            Map<String, Object> response = shopAuthService.login(loginDto);
+            return ResponseEntity.ok().body(response);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(e.getMessage());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Login failed: " + e.getMessage());
         }
     }
 

@@ -5,8 +5,12 @@ import com.techRestore.tech.restore.dto.auth.RefreshTokenDto;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.dto.auth.UserRegistration;
 import com.techRestore.tech.restore.services.auth.AuthServices;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,9 +27,8 @@ public class UserAuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@RequestBody @Valid LoginDto loginDto) {
-        TokenResponse tokens = authServices.login(loginDto);
-        return ResponseEntity.ok(tokens);
+    public ResponseEntity<Map<String, Object>> login(@RequestBody @Valid LoginDto loginDto) {
+        return ResponseEntity.ok(authServices.login(loginDto));
     }
 
     @PostMapping("/refresh-token")

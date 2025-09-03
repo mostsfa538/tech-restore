@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface RepairPaymentRepository extends JpaRepository<RepairPayment, UUID> {
     List<RepairPayment> findByUserId(UUID userId);
     Optional<RepairPayment> findByRepairRequestId(UUID repairRequestId);
+    Optional<RepairPayment> findByPaymentReference(String orderIdStr);
 }
