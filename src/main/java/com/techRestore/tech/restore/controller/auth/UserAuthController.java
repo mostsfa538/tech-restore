@@ -5,6 +5,8 @@ import com.techRestore.tech.restore.dto.auth.RefreshTokenDto;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.dto.auth.UserRegistration;
 import com.techRestore.tech.restore.services.auth.AuthServices;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
@@ -25,7 +27,7 @@ public class UserAuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginDto loginDto) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody @Valid LoginDto loginDto) {
         return ResponseEntity.ok(authServices.login(loginDto));
     }
 

@@ -5,6 +5,8 @@ import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.dto.delivery.DeliveryRegistration;
 import com.techRestore.tech.restore.services.auth.DeliveryAuthServices;
+
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
@@ -26,7 +28,7 @@ public class DeliveryAuthController extends BaseController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginDto loginDto) {
+    public ResponseEntity<Map<String, Object>> login(@RequestBody @Valid LoginDto loginDto) {
         return ResponseEntity.ok(deliveryAuthServices.login(loginDto));
     }
 
