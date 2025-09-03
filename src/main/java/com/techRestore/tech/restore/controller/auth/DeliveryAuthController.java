@@ -29,7 +29,7 @@ public class DeliveryAuthController extends BaseController {
     @PostMapping("/login")
     public ResponseEntity<Map<String, Object>> login(@RequestBody @Valid LoginDto loginDto) {
         return ResponseEntity.ok(deliveryAuthServices.login(loginDto));
-
+    }
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponse> refreshToken(@RequestBody String refreshToken) {
         return successResponse(deliveryAuthServices.refreshToken(refreshToken));
