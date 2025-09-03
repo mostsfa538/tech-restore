@@ -6,6 +6,9 @@ import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.dto.auth.UserRegistration;
 import com.techRestore.tech.restore.services.auth.AuthServices;
 import lombok.RequiredArgsConstructor;
+
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,9 +25,8 @@ public class UserAuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@RequestBody LoginDto loginDto) {
-        TokenResponse tokens = authServices.login(loginDto);
-        return ResponseEntity.ok(tokens);
+    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginDto loginDto) {
+        return ResponseEntity.ok(authServices.login(loginDto));
     }
 
     @PostMapping("/refresh-token")

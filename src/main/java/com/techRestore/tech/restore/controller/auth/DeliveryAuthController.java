@@ -6,6 +6,9 @@ import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.dto.delivery.DeliveryRegistration;
 import com.techRestore.tech.restore.services.auth.DeliveryAuthServices;
 import lombok.RequiredArgsConstructor;
+
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,8 +26,8 @@ public class DeliveryAuthController extends BaseController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@RequestBody LoginDto loginDto) {
-        return successResponse(deliveryAuthServices.login(loginDto));
+    public ResponseEntity<Map<String, Object>> login(@RequestBody LoginDto loginDto) {
+        return ResponseEntity.ok(deliveryAuthServices.login(loginDto));
     }
 
     @PostMapping("/refresh")

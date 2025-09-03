@@ -13,6 +13,10 @@ import com.techRestore.tech.restore.security.config.CustomAuthenticationManager;
 import com.techRestore.tech.restore.security.jwt.JwtService;
 import com.techRestore.tech.restore.security.jwt.RefreshTokenService;
 import lombok.RequiredArgsConstructor;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -68,7 +72,7 @@ public class ShopAuthService {
         }
     }
 
-    public TokenResponse login(LoginDto loginDto) {
+    public Map<String, Object> login(LoginDto loginDto) {
         try {
             Authentication authentication = customAuthenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password()));
@@ -78,11 +82,17 @@ public class ShopAuthService {
 
             refreshTokenService.saveRefreshToken(authentication.getName(), refreshToken);
 
-            return new TokenResponse(
-                    accessToken,
-                    refreshToken,
-                    "Bearer",
-                    15 * 60);
+            Shop shop = shopRepository.findByEmail(authentication.getName())
+                    .orElseThrow(() -> new IllegalArgumentException("Shop not found"));
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("access_token", accessToken);
+            response.put("refresh_token", refreshToken);
+            response.put("token_type", "Bearer");
+            response.put("expires_in", 15 * 60);
+            response.put("Shop_id", shop.getId());
+
+            return response;
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException("Invalid email or password");
         } catch (DisabledException e) {

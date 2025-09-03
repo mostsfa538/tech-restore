@@ -57,4 +57,14 @@ public class OrderPayment {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
     }
+
+    public void setTransactionId(String id2) {
+      // TODO Auto-generated method stub
+      throw new UnsupportedOperationException("Unimplemented method 'setTransactionId'");
+    }
+
+    public String getTransactionId() {
+      // TODO Auto-generated method stub
+      throw new UnsupportedOperationException("Unimplemented method 'getTransactionId'");
+    }
 }

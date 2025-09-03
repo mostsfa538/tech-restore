@@ -21,6 +21,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -50,7 +52,7 @@ public class DeliveryAuthServices {
         }
     }
 
-    public TokenResponse login(LoginDto loginDto) {
+    public Map<String, Object> login(LoginDto loginDto) {
         try {
             Authentication authentication = customAuthenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password()));
@@ -60,11 +62,17 @@ public class DeliveryAuthServices {
 
             refreshTokenService.saveRefreshToken(authentication.getName(), refreshToken);
 
-            return new TokenResponse(
-                    accessToken,
-                    refreshToken,
-                    "Bearer",
-                    60 * 60);
+            Delivery delivery = deliveryRepository.findByEmail(authentication.getName())
+                    .orElseThrow(() -> new IllegalArgumentException("Delivery not found"));
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("access_token", accessToken);
+            response.put("refresh_token", refreshToken);
+            response.put("token_type", "Bearer");
+            response.put("expires_in", 60 * 60);
+            response.put("Delivery_id", delivery.getId());
+
+            return response;
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid Delivery");
         }

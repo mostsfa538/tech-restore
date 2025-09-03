@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 @Service
@@ -56,7 +58,8 @@ public class AuthServices {
         }
     }
 
-    public TokenResponse login(LoginDto loginDto) {
+    public Map<String, Object> login(LoginDto loginDto) {
+        try {
             Authentication authentication = customAuthenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password()));
 
@@ -65,11 +68,23 @@ public class AuthServices {
 
             refreshTokenService.saveRefreshToken(authentication.getName(), refreshToken);
 
-            return new TokenResponse(
-                    accessToken,
-                    refreshToken,
-                    "Bearer",
-                    60 * 60);
+            User user = userRepository.findByEmail(authentication.getName());
+            if (user == null) {
+                throw new IllegalArgumentException("User not found");
+            }
+
+            // Create a map to hold the response
+            Map<String, Object> response = new HashMap<>();
+            response.put("access_token", accessToken);
+            response.put("refresh_token", refreshToken);
+            response.put("token_type", "Bearer");
+            response.put("expires_in", 60 * 60);
+            response.put("user_id", user.getId()); // Include the user's UUID
+
+            return response;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid User");
+        }
     }
 
     public TokenResponse refreshToken(String refreshToken) {

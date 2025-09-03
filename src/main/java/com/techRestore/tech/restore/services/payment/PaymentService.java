@@ -1,220 +1,263 @@
 package com.techRestore.tech.restore.services.payment;
 
-import com.techRestore.tech.restore.dto.payment.PaymentResponseDTO;
-import com.techRestore.tech.restore.dto.payment.ProcessPaymentRequestDTO;
-import com.techRestore.tech.restore.dto.payment.RefundRequestDTO;
-import com.techRestore.tech.restore.dto.payment.UserPaymentMethodRequestDTO;
-import com.techRestore.tech.restore.dto.payment.UserPaymentMethodResponseDTO;
-import com.techRestore.tech.restore.exception.NotFoundException;
-import com.techRestore.tech.restore.model.entities.Order;
-import com.techRestore.tech.restore.model.entities.Payment;
-import com.techRestore.tech.restore.model.enums.OrderStatus;
+import com.techRestore.tech.restore.dto.payment.PaymentDetailsResponse;
+import com.techRestore.tech.restore.dto.payment.PaymentProcessRequest;
+import com.techRestore.tech.restore.dto.payment.PaymentProcessResponse;
+import com.techRestore.tech.restore.dto.payment.PaymobOrderResponse;
+import com.techRestore.tech.restore.dto.payment.RefundRequest;
+import com.techRestore.tech.restore.model.entities.OrderPayment;
+import com.techRestore.tech.restore.model.entities.RepairPayment;
 import com.techRestore.tech.restore.model.enums.PaymentMethod;
 import com.techRestore.tech.restore.model.enums.PaymentStatus;
-import com.techRestore.tech.restore.repository.OrderRepository;
-import com.techRestore.tech.restore.repository.PaymentRepository;
+import com.techRestore.tech.restore.repository.OrderPaymentRepository;
+import com.techRestore.tech.restore.repository.RepairPaymentRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
+import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PaymentService {
 
-    private final OrderRepository orderRepository;
-    private final PaymentRepository paymentRepository;
+    private final PaymobService paymobService;
+    private final OrderPaymentRepository orderPaymentRepository;
+    private final RepairPaymentRepository repairPaymentRepository;
+    private final PaymentValidationService paymentValidationService;
+    private final PaymentEventPublisher paymentEventPublisher;
 
     @Transactional
-    public PaymentResponseDTO processPayment(UUID userId, ProcessPaymentRequestDTO request) {
-        Order order = orderRepository.findByIdAndUserId(request.getOrderId(), userId)
-                .orElseThrow(() -> new NotFoundException("Order not found"));
+    public PaymentProcessResponse processPayment(PaymentProcessRequest request) {
+        try {
+            log.info("Processing payment request: {}", request);
+            paymentValidationService.validatePaymentRequest(request);
 
-        if (order.getStatus() != OrderStatus.PENDING) {
-            throw new RuntimeException("Order not in payable state");
-        }
-
-        Payment payment = new Payment();
-        payment.setUserId(userId);
-        payment.setAmount(order.getTotalPrice());
-        payment.setType("ORDER_PAYMENT");
-
-        PaymentMethod selectedMethod;
-        String paymentDetails = null;
-        String processingDetails;
-
-        // Choose payment method
-        if (request.getPaymentMethodId() != null) {
-            Payment savedMethod = paymentRepository.findById(request.getPaymentMethodId())
-                    .orElseThrow(() -> new NotFoundException("Payment method not found"));
-            if (!savedMethod.getUserId().equals(userId) || !"SAVED_METHOD".equals(savedMethod.getType())) {
-                throw new RuntimeException("Unauthorized");
+            if (request.getPaymentMethod() == PaymentMethod.CREDIT_CARD) {
+                return processCreditCardPayment(request);
+            } else {
+                return processCashPayment(request);
             }
-            selectedMethod = savedMethod.getPaymentMethod();
-            paymentDetails = savedMethod.getDetails();
-        } else if (request.getPaymentMethod() != null) {
-            selectedMethod = request.getPaymentMethod();
+        } catch (Exception e) {
+            log.error("Error processing payment: {}", e.getMessage(), e);
+            return PaymentProcessResponse.builder()
+                    .status(PaymentStatus.FAILED)
+                    .message("Payment processing failed: " + e.getMessage())
+                    .build();
+        }
+    }
+
+    private PaymentProcessResponse processCreditCardPayment(PaymentProcessRequest request) {
+        try {
+            String authToken = paymobService.authenticateAndGetToken();
+            String merchantOrderId = generateMerchantOrderId(request);
+            log.info("Generated merchantOrderId: {}", merchantOrderId);
+
+            PaymobOrderResponse paymobOrder = paymobService.createOrder(authToken, request.getAmount(), merchantOrderId);
+            log.info("Paymob order created with ID: {}", paymobOrder.getId());
+
+            String paymentToken = paymobService.generatePaymentKey(
+                    authToken,
+                    request.getAmount(),
+                    paymobOrder.getId(), // Use Long directly
+                    request.getCustomerEmail(),
+                    request.getCustomerPhone(),
+                    request.getCustomerName()
+            );
+
+            String paymentUrl = paymobService.generatePaymentIframeUrl(paymentToken);
+            UUID paymentId = savePaymentRecord(request, String.valueOf(paymobOrder.getId()));
+
+            log.info("Credit card payment initiated successfully for payment ID: {}", paymentId);
+
+            return PaymentProcessResponse.builder()
+                    .paymentId(paymentId)
+                    .status(PaymentStatus.PENDING)
+                    .paymentUrl(paymentUrl)
+                    .paymentReference(String.valueOf(paymobOrder.getId()))
+                    .message("Payment initiated successfully. Please complete payment using the provided URL.")
+                    .build();
+        } catch (Exception e) {
+            log.error("Error processing credit card payment: {}", e.getMessage(), e);
+            throw new RuntimeException("Credit card payment processing failed", e);
+        }
+    }
+
+    private PaymentProcessResponse processCashPayment(PaymentProcessRequest request) {
+        UUID paymentId = savePaymentRecord(request, null);
+        log.info("Cash payment registered for payment ID: {}", paymentId);
+
+        return PaymentProcessResponse.builder()
+                .paymentId(paymentId)
+                .status(PaymentStatus.PENDING)
+                .message("Cash payment registered. Payment will be completed upon delivery/service completion.")
+                .build();
+    }
+
+    private UUID savePaymentRecord(PaymentProcessRequest request, String paymentReference) {
+        if (request.getOrderId() != null) {
+            return saveOrderPayment(request, paymentReference);
+        } else if (request.getRepairRequestId() != null) {
+            return saveRepairPayment(request, paymentReference);
         } else {
-            throw new RuntimeException("No payment method provided");
+            throw new IllegalArgumentException("Either orderId or repairRequestId must be provided");
+        }
+    }
+
+    private UUID saveOrderPayment(PaymentProcessRequest request, String paymentReference) {
+        OrderPayment payment = new OrderPayment();
+        payment.setOrderId(request.getOrderId());
+        payment.setAmount(request.getAmount());
+        payment.setPaymentMethod(request.getPaymentMethod());
+        payment.setPaymentStatus(PaymentStatus.PENDING);
+        payment.setPaymentReference(paymentReference);
+        payment.setCreatedAt(LocalDateTime.now());
+
+        OrderPayment savedPayment = orderPaymentRepository.save(payment);
+        log.info("Saved order payment with ID: {}", savedPayment.getId());
+        return savedPayment.getId();
+    }
+
+    private UUID saveRepairPayment(PaymentProcessRequest request, String paymentReference) {
+        RepairPayment payment = new RepairPayment();
+        payment.setRepairRequestId(request.getRepairRequestId());
+        payment.setAmount(request.getAmount());
+        payment.setPaymentMethod(request.getPaymentMethod());
+        payment.setPaymentStatus(PaymentStatus.PENDING);
+        payment.setPaymentReference(paymentReference);
+        payment.setCreatedAt(LocalDateTime.now());
+
+        RepairPayment savedPayment = repairPaymentRepository.save(payment);
+        log.info("Saved repair payment with ID: {}", savedPayment.getId());
+        return savedPayment.getId();
+    }
+
+    private String generateMerchantOrderId(PaymentProcessRequest request) {
+        String prefix = request.getOrderId() != null ? "ORDER_" : "REPAIR_";
+        String id = request.getOrderId() != null ? 
+                request.getOrderId().toString() : 
+                request.getRepairRequestId().toString();
+        return prefix + id + "_" + System.currentTimeMillis();
+    }
+
+    public PaymentDetailsResponse getPaymentDetails(UUID paymentId) {
+        Optional<OrderPayment> orderPayment = orderPaymentRepository.findById(paymentId);
+        if (orderPayment.isPresent()) {
+            OrderPayment payment = orderPayment.get();
+            return PaymentDetailsResponse.builder()
+                    .paymentId(payment.getId())
+                    .orderId(payment.getOrderId())
+                    .amount(payment.getAmount())
+                    .paymentMethod(payment.getPaymentMethod())
+                    .paymentStatus(payment.getPaymentStatus())
+                    .paymentReference(payment.getPaymentReference())
+                    .transactionId(payment.getTransactionId())
+                    .createdAt(payment.getCreatedAt())
+                    .paidAt(payment.getPaidAt())
+                    .build();
         }
 
-        payment.setPaymentMethod(selectedMethod);
+        Optional<RepairPayment> repairPayment = repairPaymentRepository.findById(paymentId);
+        if (repairPayment.isPresent()) {
+            RepairPayment payment = repairPayment.get();
+            return PaymentDetailsResponse.builder()
+                    .paymentId(payment.getId())
+                    .repairRequestId(payment.getRepairRequestId())
+                    .amount(payment.getAmount())
+                    .paymentMethod(payment.getPaymentMethod())
+                    .paymentStatus(payment.getPaymentStatus())
+                    .paymentReference(payment.getPaymentReference())
+                    .transactionId(payment.getTransactionId())
+                    .createdAt(payment.getCreatedAt())
+                    .build();
+        }
 
-        // Process by method
-        switch (selectedMethod) {
-            case CASH:
-                payment.setPaymentStatus(PaymentStatus.PENDING);
-                order.setStatus(OrderStatus.PROCESSING);
-                processingDetails = "Cash payment pending until order delivery for order: " + order.getId();
-                break;
+        throw new RuntimeException("Payment not found with ID: " + paymentId);
+    }
 
-            case CREDIT_CARD:
-            case DEBIT_CARD:
-                processingDetails = paymentDetails != null
-                        ? String.format("%s payment processed with details ending: %s",
-                                selectedMethod, maskDetails(paymentDetails))
-                        : String.format("%s payment processed for order: %s", selectedMethod, order.getId());
-                payment.setPaymentStatus(PaymentStatus.COMPLETED);
+    public PaymentDetailsResponse getOrderPaymentDetails(UUID orderId) {
+        OrderPayment payment = orderPaymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new RuntimeException("Payment not found for order: " + orderId));
+        return PaymentDetailsResponse.builder()
+                .paymentId(payment.getId())
+                .orderId(payment.getOrderId())
+                .amount(payment.getAmount())
+                .paymentMethod(payment.getPaymentMethod())
+                .paymentStatus(payment.getPaymentStatus())
+                .paymentReference(payment.getPaymentReference())
+                .transactionId(payment.getTransactionId())
+                .createdAt(payment.getCreatedAt())
+                .paidAt(payment.getPaidAt())
+                .build();
+    }
+
+    public PaymentDetailsResponse getRepairPaymentDetails(UUID repairRequestId) {
+        RepairPayment payment = repairPaymentRepository.findByRepairRequestId(repairRequestId)
+                .orElseThrow(() -> new RuntimeException("Payment not found for repair request: " + repairRequestId));
+        return PaymentDetailsResponse.builder()
+                .paymentId(payment.getId())
+                .repairRequestId(payment.getRepairRequestId())
+                .amount(payment.getAmount())
+                .paymentMethod(payment.getPaymentMethod())
+                .paymentStatus(payment.getPaymentStatus())
+                .paymentReference(payment.getPaymentReference())
+                .transactionId(payment.getTransactionId())
+                .createdAt(payment.getCreatedAt())
+                .build();
+    }
+
+    @Transactional
+    public void processRefund(RefundRequest request) {
+        PaymentDetailsResponse paymentDetails = getPaymentDetails(request.getPaymentId());
+        BigDecimal refundAmount = request.getRefundAmount() != null ? request.getRefundAmount() : paymentDetails.getAmount();
+
+        if (refundAmount.compareTo(paymentDetails.getAmount()) > 0) {
+            throw new IllegalArgumentException("Refund amount cannot exceed original payment amount");
+        }
+
+        if (paymentDetails.getPaymentMethod() == PaymentMethod.CREDIT_CARD) {
+            if (paymentDetails.getTransactionId() == null) {
+                throw new IllegalStateException("No transaction ID available for refund");
+            }
+            String authToken = paymobService.authenticateAndGetToken();
+            paymobService.refundTransaction(authToken, paymentDetails.getTransactionId(), refundAmount);
+        }
+
+        boolean isOrderPayment = paymentDetails.getOrderId() != null;
+        updatePaymentStatus(request.getPaymentId(), PaymentStatus.REFUNDED, isOrderPayment);
+
+        log.info("Refund processed for payment ID: {} with amount: {}", 
+                request.getPaymentId(), refundAmount);
+    }
+
+    @Transactional
+    public void updatePaymentStatus(UUID paymentId, PaymentStatus newStatus, boolean isOrderPayment) {
+        if (isOrderPayment) {
+            OrderPayment payment = orderPaymentRepository.findById(paymentId)
+                    .orElseThrow(() -> new RuntimeException("Order payment not found"));
+            PaymentStatus oldStatus = payment.getPaymentStatus();
+            payment.setPaymentStatus(newStatus);
+            if (newStatus == PaymentStatus.COMPLETED) {
                 payment.setPaidAt(LocalDateTime.now());
-                order.setStatus(OrderStatus.CONFIRMED);
-                break;
+            }
+            orderPaymentRepository.save(payment);
 
-            case MOBILE_WALLET:
-                processingDetails = "Mobile wallet payment processed for order: " + order.getId();
-                payment.setPaymentStatus(PaymentStatus.COMPLETED);
-                payment.setPaidAt(LocalDateTime.now());
-                order.setStatus(OrderStatus.CONFIRMED);
-                break;
+            paymentEventPublisher.publishPaymentStatusChanged(paymentId, oldStatus, newStatus, payment.getAmount());
+        } else {
+            RepairPayment payment = repairPaymentRepository.findById(paymentId)
+                    .orElseThrow(() -> new RuntimeException("Repair payment not found"));
+            PaymentStatus oldStatus = payment.getPaymentStatus();
+            payment.setPaymentStatus(newStatus);
+            repairPaymentRepository.save(payment);
 
-            case BANK_TRANSFER:
-                payment.setPaymentStatus(PaymentStatus.PENDING);
-                order.setStatus(OrderStatus.PENDING);
-                processingDetails = "Bank transfer initiated for order: " + order.getId() + ", awaiting confirmation";
-                break;
-
-            default:
-                throw new RuntimeException("Unsupported payment method: " + selectedMethod);
+            paymentEventPublisher.publishPaymentStatusChanged(paymentId, oldStatus, newStatus, payment.getAmount());
         }
 
-        paymentRepository.save(payment);
-        orderRepository.save(order);
-
-        return mapToPaymentResponseDTO(payment, order.getId(), processingDetails);
-    }
-
-    @Transactional(readOnly = true)
-    public PaymentResponseDTO getPaymentDetails(UUID userId, UUID paymentId) {
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new NotFoundException("Payment not found"));
-
-        if (!payment.getUserId().equals(userId)) {
-            throw new RuntimeException("Unauthorized");
-        }
-
-        return mapToPaymentResponseDTO(payment, null, null);
-    }
-
-    @Transactional
-    public void processRefund(UUID userId, RefundRequestDTO request) {
-        Payment payment = paymentRepository.findById(request.getPaymentId())
-                .orElseThrow(() -> new NotFoundException("Payment not found"));
-
-        if (!payment.getUserId().equals(userId)) {
-            throw new RuntimeException("Unauthorized");
-        }
-        if (payment.getPaymentStatus() != PaymentStatus.COMPLETED) {
-            throw new RuntimeException("Payment not refundable");
-        }
-
-        String processingDetails;
-        switch (payment.getPaymentMethod()) {
-            case CASH:
-                processingDetails = "Cash refund processed for payment: " + payment.getId();
-                break;
-            case CREDIT_CARD:
-            case DEBIT_CARD:
-            case MOBILE_WALLET:
-                processingDetails = String.format("%s refund processed for payment: %s",
-                        payment.getPaymentMethod(), payment.getId());
-                break;
-            case BANK_TRANSFER:
-                processingDetails = "Bank transfer refund initiated for payment: " + payment.getId();
-                break;
-            default:
-                throw new RuntimeException("Unsupported refund method: " + payment.getPaymentMethod());
-        }
-
-        payment.setPaymentStatus(PaymentStatus.REFUNDED);
-        payment.setType("REFUND");
-        paymentRepository.save(payment);
-
-        // Optional: update order status if linked
-        orderRepository.findById(payment.getId()).ifPresent(order -> {
-            order.setStatus(OrderStatus.CANCELLED);
-            orderRepository.save(order);
-        });
-    }
-
-    @Transactional(readOnly = true)
-    public List<UserPaymentMethodResponseDTO> getSavedPaymentMethods(UUID userId) {
-        List<Payment> methods = paymentRepository.findByUserIdAndType(userId, "SAVED_METHOD");
-        return methods.stream().map(this::mapToUserPaymentMethodResponseDTO).collect(Collectors.toList());
-    }
-
-    @Transactional
-    public UserPaymentMethodResponseDTO addPaymentMethod(UUID userId, UserPaymentMethodRequestDTO request) {
-        Payment method = new Payment();
-        method.setUserId(userId);
-        method.setPaymentMethod(request.getPaymentMethod());
-        method.setDetails(request.getDetails());
-        method.setDefault(request.isDefault());
-        method.setType("SAVED_METHOD");
-        method.setPaymentStatus(PaymentStatus.PENDING);
-        paymentRepository.save(method);
-        return mapToUserPaymentMethodResponseDTO(method);
-    }
-
-    @Transactional
-    public void removePaymentMethod(UUID userId, UUID methodId) {
-        Payment method = paymentRepository.findById(methodId)
-                .orElseThrow(() -> new NotFoundException("Payment method not found"));
-        if (!method.getUserId().equals(userId) || !"SAVED_METHOD".equals(method.getType())) {
-            throw new RuntimeException("Unauthorized");
-        }
-        paymentRepository.delete(method);
-    }
-
-    private PaymentResponseDTO mapToPaymentResponseDTO(Payment payment, UUID orderId, String processingDetails) {
-        PaymentResponseDTO dto = new PaymentResponseDTO();
-        dto.setId(payment.getId());
-        dto.setAmount(payment.getAmount());
-        dto.setPaymentMethod(payment.getPaymentMethod());
-        dto.setPaymentStatus(payment.getPaymentStatus());
-        dto.setPaymentReference(payment.getPaymentReference());
-        dto.setCreatedAt(payment.getCreatedAt());
-        dto.setPaidAt(payment.getPaidAt());
-        dto.setOrderId(orderId);
-        dto.setProcessingDetails(processingDetails);
-        return dto;
-    }
-
-    private UserPaymentMethodResponseDTO mapToUserPaymentMethodResponseDTO(Payment method) {
-        UserPaymentMethodResponseDTO dto = new UserPaymentMethodResponseDTO();
-        dto.setId(method.getId());
-        dto.setPaymentMethod(method.getPaymentMethod());
-        dto.setDetails(maskDetails(method.getDetails()));
-        dto.setDefault(method.isDefault());
-        dto.setCreatedAt(method.getCreatedAt());
-        return dto;
-    }
-
-    private String maskDetails(String details) {
-        if (details == null || details.length() < 4)
-            return "****";
-        return "****" + details.substring(details.length() - 4);
+        log.info("Payment status updated to {} for payment ID: {}", newStatus, paymentId);
     }
 }
