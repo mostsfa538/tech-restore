@@ -39,6 +39,9 @@ public class OrderPayment {
     @Column(name = "payment_reference")
     private String paymentReference;
 
+    @Column(name = "payment_id", nullable = true, unique = true)
+    private String paymentId;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -58,13 +61,4 @@ public class OrderPayment {
         createdAt = LocalDateTime.now();
     }
 
-    public void setTransactionId(String id2) {
-      // TODO Auto-generated method stub
-      throw new UnsupportedOperationException("Unimplemented method 'setTransactionId'");
-    }
-
-    public String getTransactionId() {
-      // TODO Auto-generated method stub
-      throw new UnsupportedOperationException("Unimplemented method 'getTransactionId'");
-    }
 }

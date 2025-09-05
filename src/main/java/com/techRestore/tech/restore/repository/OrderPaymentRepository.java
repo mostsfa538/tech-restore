@@ -12,5 +12,5 @@ import com.techRestore.tech.restore.model.entities.OrderPayment;
 public interface OrderPaymentRepository extends JpaRepository<OrderPayment, UUID> {
   Optional<OrderPayment> findByOrderId(UUID orderId);
 
-  Optional<OrderPayment> findByPaymentReference(String orderIdStr);
+  Optional<OrderPayment> findByPaymentId(String orderId);
 }
