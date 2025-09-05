@@ -6,10 +6,12 @@ import java.util.Random;
 
 import com.techRestore.tech.restore.exception.ExpiredOtpException;
 import com.techRestore.tech.restore.exception.InvalidOtpException;
+import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.MailException;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -39,15 +41,17 @@ public class EmailServices {
                 throw new RuntimeException("OTP not generated for user");
             }
 
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(user.getEmail());
-            message.setSubject("Email Verification - TechRestore");
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
-            String emailBody = createSimpleEmailContent(user);
-            message.setText(emailBody);
+            helper.setFrom(fromEmail);
+            helper.setTo(user.getEmail());
+            helper.setSubject("Email Verification - TechRestore");
 
-            mailSender.send(message);
+            String emailBody = createHtmlEmailContent(user);
+            helper.setText(emailBody, true);
+
+            mailSender.send(mimeMessage);
 
         } catch (MailException e) {
             throw new RuntimeException("Failed to send verification email", e);
@@ -57,36 +61,90 @@ public class EmailServices {
         }
     }
 
-    private String createSimpleEmailContent(User user) {
+    private String createHtmlEmailContent(User user) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' HH:mm");
         String expiryTime = user.getOtpExpiry().format(formatter);
-
         String lastName = user.getLast_name() != null ? user.getLast_name() : "";
 
-        return String.format("""
-                Hello %s %s,
-
-                Thank you for registering with TechRestore!
-
-                Your verification code is: %s
-
-                This code will expire on: %s
-
-                Please enter this code to verify your email address.
-
-                If you didn't request this verification, please ignore this email.
-
-                Best regards,
-                The Tech Restore Team
-
-                ---
-                This is an automated message. Please do not reply to this email.
-                """,
-                user.getFirst_name(),
-                lastName,
-                user.getOptCode(),
-                expiryTime);
+        return """
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <title>Email Verification</title>
+          <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+          <style>
+            body {
+              font-family: 'Poppins', Arial, sans-serif;
+              background-color: white;
+              margin: 0;
+              padding: 0;
+              color: #333;
+            }
+            .container {
+              max-width: 600px;
+              margin: 40px auto;
+              background: #ffffff;
+              border-radius: 12px;
+              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+              overflow: hidden;
+            }
+            .header {
+              background: linear-gradient(135deg, #2563eb, #4f46e5);
+              padding: 20px;
+              text-align: center;
+              color: #ffffff;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 24px;
+            }
+            .content {
+              padding: 30px;
+              line-height: 1.6;
+            }
+            .code {
+              display: inline-block;
+              background: #f1f5f9;
+              padding: 12px 24px;
+              border-radius: 8px;
+              font-size: 20px;
+              font-weight: bold;
+              letter-spacing: 3px;
+              color: #1e3a8a;
+              margin: 20px 0;
+            }
+            .footer {
+              text-align: center;
+              font-size: 12px;
+              color: #6b7280;
+              padding: 20px;
+              background: #f9fafb;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>TechRestore</h1>
+            </div>
+            <div class="content">
+              <p>Hello <strong>%s %s</strong>,</p>
+              <p>Thank you for registering with <strong>TechRestore</strong>!</p>
+              <p>Your verification code is:</p>
+              <div class="code">%s</div>
+              <p>This code will expire on: <strong>%s</strong></p>
+              <p>Please enter this code to verify your email address.</p>
+              <p>If you didn't request this verification, please ignore this email.</p>
+              <p>Best regards,<br>
+              <strong>The TechRestore Team</strong></p>
+            </div>
+          </div>
+        </body>
+        </html>
+        """.formatted(user.getFirst_name(), lastName, user.getOptCode(), expiryTime);
     }
+
 
     public void verifyOtp(String email, String otp) {
         if (email == null || otp == null) {
