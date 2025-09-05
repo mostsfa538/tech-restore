@@ -6,11 +6,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.techRestore.tech.restore.dto.payment.PaymentInitiationDto;
 import com.techRestore.tech.restore.exception.CustomException;
 import com.techRestore.tech.restore.model.entities.Address;
+import com.techRestore.tech.restore.model.entities.Order;
 import com.techRestore.tech.restore.model.entities.OrderPayment;
 import com.techRestore.tech.restore.model.entities.User;
 import com.techRestore.tech.restore.model.enums.PaymentMethod;
 import com.techRestore.tech.restore.model.enums.PaymentStatus;
 import com.techRestore.tech.restore.repository.OrderPaymentRepository;
+import com.techRestore.tech.restore.repository.OrderRepository;
 import com.techRestore.tech.restore.repository.UserRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -62,6 +64,7 @@ public class OrderPaymentService {
   private final OrderPaymentRepository orderPaymentRepository;
   private final ProcessingService processingService;
   private final UserRepository userRepository;
+  private final OrderRepository orderRepository;
 
   @Transactional
     public PaymentInitiationDto initiateCardPayment(UUID orderId, UUID userId) {
@@ -70,8 +73,10 @@ public class OrderPaymentService {
             //     throw new CustomException(HttpStatus.BAD_REQUEST, "User has already paid for this order.");
             // }
 
-            BigDecimal price = BigDecimal.valueOf(100);
+            Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "Order not found"));
 
+            BigDecimal price = order.getTotalPrice();
             OrderPayment payment = new OrderPayment();
             payment.setOrderId(orderId);
             payment.setUserId(userId);
