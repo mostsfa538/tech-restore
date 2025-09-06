@@ -12,7 +12,6 @@ import com.techRestore.tech.restore.model.entities.*;
 import com.techRestore.tech.restore.repository.*;
 import com.techRestore.tech.restore.utils.DTOConverter;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
@@ -21,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.techRestore.tech.restore.dto.order.OrderRequestDTO;
-import com.techRestore.tech.restore.dto.order.OrderItemResponseDTO;
 import com.techRestore.tech.restore.dto.order.OrderResponseDTO;
 import com.techRestore.tech.restore.dto.order.TrackingResponseDTO;
 import com.techRestore.tech.restore.exception.NotFoundException;
