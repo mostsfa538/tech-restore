@@ -9,7 +9,8 @@ import java.util.Map;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.techRestore.tech.restore.services.payment.OrderPaymentService;
+import com.techRestore.tech.restore.services.payment.PaymentService;
+
 
 
 @RestController
@@ -17,14 +18,14 @@ import com.techRestore.tech.restore.services.payment.OrderPaymentService;
 @RequiredArgsConstructor
 public class WebhookController {
 
-  private final OrderPaymentService orderPaymentService;
+  private final PaymentService paymentService;
 
   @PostMapping("/paymob/callback")
     public ResponseEntity<String> handlePaymobCallback(
             @RequestBody Map<String, Object> payload,
             HttpServletRequest request) {
         try {
-            orderPaymentService.handlePaymentCallback(payload, request);
+            paymentService.handlePaymentCallback(payload, request);
             return ResponseEntity.ok("Callback received");
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

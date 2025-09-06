@@ -4,14 +4,14 @@ import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.entities.Delivery;
 import com.techRestore.tech.restore.model.entities.Order;
 import com.techRestore.tech.restore.model.entities.OrderItem;
-import com.techRestore.tech.restore.model.entities.OrderPayment;
+import com.techRestore.tech.restore.model.entities.Payment;
 import com.techRestore.tech.restore.model.enums.OrderStatus;
 import com.techRestore.tech.restore.model.enums.PaymentMethod;
 import com.techRestore.tech.restore.model.enums.PaymentStatus;
 import com.techRestore.tech.restore.repository.DeliveryRepository;
 import com.techRestore.tech.restore.repository.OrderItemRepository;
-import com.techRestore.tech.restore.repository.OrderPaymentRepository;
 import com.techRestore.tech.restore.repository.OrderRepository;
+import com.techRestore.tech.restore.repository.PaymentRepository;
 import com.techRestore.tech.restore.services.notification.NotificationService;
 import com.techRestore.tech.restore.dto.delivery.DeliveryProfileUpdateDto;
 import com.techRestore.tech.restore.dto.delivery.DeliveryStateUpdate;
@@ -36,7 +36,7 @@ public class DeliveryService {
     private final DeliveryRepository deliveryRepository;
     private final OrderRepository orderRepository;
     private final NotificationService notificationService;
-    private final OrderPaymentRepository orderPaymentRepository;
+    private final PaymentRepository orderPaymentRepository;
     private final OrderItemRepository orderItemRepository;
 
     private UUID getCurrentDeliveryId() {
@@ -115,7 +115,7 @@ public class DeliveryService {
         orderRepository.save(order);
         if (stateUpdate.getStatus() == OrderStatus.DELIVERED) {
 
-            OrderPayment payment = orderPaymentRepository.findByOrderId(orderId)
+            Payment payment = orderPaymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new NotFoundException("Payment not found for order: " + orderId));
         
             if (payment.getPaymentMethod() == PaymentMethod.CASH && 

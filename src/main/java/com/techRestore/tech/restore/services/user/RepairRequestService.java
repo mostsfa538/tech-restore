@@ -5,9 +5,14 @@ import com.techRestore.tech.restore.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.dto.repair.RepairRequestUpdateDto;
 import com.techRestore.tech.restore.dto.repair.RepairStatusDto;
 import com.techRestore.tech.restore.exception.NotFoundException;
+import com.techRestore.tech.restore.model.entities.Payment;
 import com.techRestore.tech.restore.model.entities.RepairRequest;
+import com.techRestore.tech.restore.model.entities.Shop;
 import com.techRestore.tech.restore.model.entities.User;
+import com.techRestore.tech.restore.model.enums.PaymentStatus;
+import com.techRestore.tech.restore.model.enums.PaymentType;
 import com.techRestore.tech.restore.repository.AddressRepository;
+import com.techRestore.tech.restore.repository.PaymentRepository;
 import com.techRestore.tech.restore.repository.RepairRequestRepository;
 import com.techRestore.tech.restore.repository.ShopRepository;
 import com.techRestore.tech.restore.repository.UserRepository;
@@ -21,6 +26,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @Service
@@ -29,8 +35,9 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final AddressRepository addressRepository;
+    private final PaymentRepository paymentRepository;
 
-    public RepairRequestService(RepairRequestRepository repairRequestRepository,
+    public RepairRequestService(RepairRequestRepository repairRequestRepository,PaymentRepository paymentRepository,
             UserRepository userRepository,
             ShopRepository shopRepository,
             AddressRepository addressRepository) {
@@ -38,6 +45,7 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         this.userRepository = userRepository;
         this.shopRepository = shopRepository;
         this.addressRepository = addressRepository;
+        this.paymentRepository = paymentRepository;
     }
 
     /**
@@ -72,7 +80,6 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         UUID userId = getCurrentUserId();
 
         findByIdOrThrow(shopRepository, shopId, "Shop");
-
         findByIdOrThrow(addressRepository, requestCreateDto.deliveryAddress(), "Address");
 
         RepairRequest repairRequest = new RepairRequest();
@@ -86,8 +93,27 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         repairRequest.setConfirmed(false);
 
         RepairRequest savedRepairRequest = repository.save(repairRequest);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> new NotFoundException("Shop not found"));
+
+        Payment payment = new Payment();
+        payment.setUser(user);
+        payment.setShop(shop);
+        payment.setRepairRequestId(savedRepairRequest.getId());
+        payment.setPaymentMethod(requestCreateDto.paymentMethod());
+        payment.setPaymentStatus(PaymentStatus.PENDING);
+        payment.setPaymentType(PaymentType.REPAIR_PAYMENT);
+        payment.setAmount(BigDecimal.ZERO); 
+        payment.setPaymentReference(UUID.randomUUID().toString());
+
+        paymentRepository.save(payment);
+
         return DTOConverter.convertToRepairRequestDTO(savedRepairRequest);
     }
+
 
     public RepairRequestDto getRepairRequestById(UUID id) {
         RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
