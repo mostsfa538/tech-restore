@@ -19,7 +19,6 @@ import com.techRestore.tech.restore.model.entities.User;
 import com.techRestore.tech.restore.model.enums.PaymentType;
 import com.techRestore.tech.restore.repository.UserRepository;
 import com.techRestore.tech.restore.services.payment.PaymentService;
-import com.techRestore.tech.restore.services.payment.RepairPaymentService;
 
 import lombok.RequiredArgsConstructor;
 
