@@ -3,8 +3,14 @@ package com.techRestore.tech.restore.services.delivery;
 import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.entities.Delivery;
 import com.techRestore.tech.restore.model.entities.Order;
+import com.techRestore.tech.restore.model.entities.OrderItem;
+import com.techRestore.tech.restore.model.entities.OrderPayment;
 import com.techRestore.tech.restore.model.enums.OrderStatus;
+import com.techRestore.tech.restore.model.enums.PaymentMethod;
+import com.techRestore.tech.restore.model.enums.PaymentStatus;
 import com.techRestore.tech.restore.repository.DeliveryRepository;
+import com.techRestore.tech.restore.repository.OrderItemRepository;
+import com.techRestore.tech.restore.repository.OrderPaymentRepository;
 import com.techRestore.tech.restore.repository.OrderRepository;
 import com.techRestore.tech.restore.services.notification.NotificationService;
 import com.techRestore.tech.restore.dto.delivery.DeliveryProfileUpdateDto;
@@ -19,6 +25,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -28,6 +36,8 @@ public class DeliveryService {
     private final DeliveryRepository deliveryRepository;
     private final OrderRepository orderRepository;
     private final NotificationService notificationService;
+    private final OrderPaymentRepository orderPaymentRepository;
+    private final OrderItemRepository orderItemRepository;
 
     private UUID getCurrentDeliveryId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -104,6 +114,16 @@ public class DeliveryService {
         order.setStatus(stateUpdate.getStatus());
         orderRepository.save(order);
         if (stateUpdate.getStatus() == OrderStatus.DELIVERED) {
+
+            OrderPayment payment = orderPaymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new NotFoundException("Payment not found for order: " + orderId));
+        
+            if (payment.getPaymentMethod() == PaymentMethod.CASH && 
+                payment.getPaymentStatus() == PaymentStatus.PENDING) {
+                payment.setPaymentStatus(PaymentStatus.COMPLETED);
+                payment.setPaidAt(LocalDateTime.now());
+                orderPaymentRepository.save(payment);
+            }
             notificationService.sendToUser(order.getUserId(),
                     "Your order " + orderId + " status updated to " + stateUpdate.getStatus());
             notificationService.sendToShop(order.getShopId(), "Order " + orderId + " has been delivered");
@@ -111,10 +131,16 @@ public class DeliveryService {
     }
 
     private OrderDeliveryDto convertToDeliveryDTO(Order order) {
+
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
+        if (orderItems == null || orderItems.isEmpty()) {
+            throw new IllegalStateException("Order " + order.getId() + " has no items");
+        }
+        UUID shopId = orderItems.get(0).getShopId();
         OrderDeliveryDto dto = new OrderDeliveryDto();
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());
-        dto.setShopId(order.getShopId());
+        dto.setShopId(shopId);
         dto.setDeliveryId(order.getDeliveryId());
         dto.setStatus(order.getStatus());
         dto.setTotalPrice(order.getTotalPrice());

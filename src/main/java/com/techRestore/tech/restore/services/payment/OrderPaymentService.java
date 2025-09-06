@@ -26,6 +26,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -101,6 +102,58 @@ public class OrderPaymentService {
             throw e;
         } catch (Exception e) {
             throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "Error generating Paymob card payment link: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public void initiateCashPayment(UUID orderId, UUID userId) {
+        try {
+            Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "Order not found"));
+
+            BigDecimal price = order.getTotalPrice();
+            OrderPayment payment = new OrderPayment();
+            payment.setOrderId(orderId);
+            payment.setUserId(userId);
+            payment.setAmount(price);
+            payment.setPaymentStatus(PaymentStatus.PENDING);
+            payment.setPaymentMethod(PaymentMethod.CASH);
+            payment.setPaymentReference("CASH-" + UUID.randomUUID().toString());
+
+            orderPaymentRepository.save(payment);
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "Error initiating cash payment: " + e.getMessage());
+        }
+    }
+
+    @Transactional
+    public void updateCashPaymentStatus(UUID paymentId, PaymentStatus status) {
+        OrderPayment payment = orderPaymentRepository.findById(paymentId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "Payment not found"));
+        if (payment.getPaymentMethod() != PaymentMethod.CASH) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "Payment is not a cash payment");
+        }
+        payment.setPaymentStatus(status);
+        if (status == PaymentStatus.COMPLETED) {
+            payment.setPaidAt(LocalDateTime.now());
+        }
+        orderPaymentRepository.save(payment);
+    }
+
+    @Transactional
+    public void updatePaymentStatusOnOrderDelivered(UUID orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "Order not found"));
+
+        OrderPayment payment = orderPaymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "Payment not found for order: " + orderId));
+        if (payment.getPaymentMethod() == PaymentMethod.CASH && payment.getPaymentStatus() == PaymentStatus.PENDING && order.getStatus().name().equals("DELIVERED")){
+            payment.setPaymentStatus(PaymentStatus.COMPLETED);
+            payment.setPaidAt(LocalDateTime.now());
+            orderPaymentRepository.save(payment);
+
         }
     }
 

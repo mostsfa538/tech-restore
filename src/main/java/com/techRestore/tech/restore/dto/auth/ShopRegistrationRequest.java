@@ -3,6 +3,7 @@ package com.techRestore.tech.restore.dto.auth;
 import com.techRestore.tech.restore.dto.common.address.AddressRequest;
 import com.techRestore.tech.restore.model.enums.ShopType;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 
 public record ShopRegistrationRequest(
@@ -16,8 +17,9 @@ public record ShopRegistrationRequest(
 
         @NotBlank(message = "Phone is required") @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Invalid phone number format") String phone,
 
-        @NotBlank AddressRequest shopAddress,
+        @Valid @NotNull AddressRequest shopAddress,
 
         boolean verified,
-        @NotBlank ShopType shopType) {
+
+        @Valid @NotNull ShopType shopType) {
 }

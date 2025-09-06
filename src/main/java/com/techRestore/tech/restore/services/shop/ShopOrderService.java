@@ -134,6 +134,9 @@ public class ShopOrderService extends BaseService<Order, UUID> {
         if (order.getStatus() == OrderStatus.CANCELLED) {
             throw new IllegalStateException("CANCELLED orders cannot be updated");
         }
+        if(order.getStatus() == OrderStatus.SHIPPED || order.getStatus() == OrderStatus.DELIVERED) {
+            throw new IllegalStateException("Cannot update order after it has been shipped or Delivered");
+        }
 
         order.setShopId(shopId);
         order.setStatus(statusDto.getStatus());

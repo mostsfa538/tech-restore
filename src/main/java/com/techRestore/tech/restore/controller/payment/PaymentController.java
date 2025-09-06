@@ -18,6 +18,7 @@ import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.entities.User;
 import com.techRestore.tech.restore.repository.UserRepository;
 import com.techRestore.tech.restore.services.payment.OrderPaymentService;
+import com.techRestore.tech.restore.services.payment.RepairPaymentService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,6 +29,7 @@ public class PaymentController {
     
   private final OrderPaymentService orderPaymentService;
   private final UserRepository userRepository;
+  private final RepairPaymentService repairPaymentService;
 
   private UUID getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -49,11 +51,17 @@ public class PaymentController {
     }
 
     @PostMapping("/card/{orderId}")
-    public ResponseEntity<PaymentInitiationDto> initiateCardPayment(@PathVariable UUID orderId) { 
+    public ResponseEntity<PaymentInitiationDto> initiateCardOrderPayment(@PathVariable UUID orderId) { 
         UUID userId = getCurrentUserId();
         PaymentInitiationDto paymentDto = orderPaymentService.initiateCardPayment(orderId, userId);
         return ResponseEntity.ok(paymentDto);
     }
 
+    @PostMapping("/repair/card/{repairRequestId}")
+    public ResponseEntity<PaymentInitiationDto> initiateCardRepairPayment(@PathVariable UUID repairRequestId) {
+        UUID userId = getCurrentUserId();
+        PaymentInitiationDto paymentDto = repairPaymentService.initiateCardPayment(repairRequestId, userId);
+        return ResponseEntity.ok(paymentDto);
+    }
     
 }

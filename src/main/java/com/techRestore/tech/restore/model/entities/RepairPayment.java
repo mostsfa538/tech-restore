@@ -39,6 +39,9 @@ public class RepairPayment {
     @Column(name = "payment_reference")
     private String paymentReference;
 
+    @Column(name = "payment_id", nullable = true, unique = true)
+    private String paymentId;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
