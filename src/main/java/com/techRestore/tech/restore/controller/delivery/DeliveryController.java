@@ -27,46 +27,39 @@ public class DeliveryController extends BaseController {
     private final DeliveryService deliveryService;
 
     @GetMapping("/profile")
-    @PreAuthorize("hasRole('DELIVERY')")
     public ResponseEntity<Delivery> getProfile() {
         return successResponse(deliveryService.getProfile());
     }
 
     @PutMapping("/profile")
-    @PreAuthorize("hasRole('DELIVERY')")
     public ResponseEntity<String> updateProfile(@RequestBody DeliveryProfileUpdateDto updateDto) {
         deliveryService.updateProfile(updateDto);
         return updatedResponse("Profile updated successfully");
     }
 
     @GetMapping("/orders/available")
-    @PreAuthorize("hasRole('DELIVERY')")
     public ResponseEntity<Page<OrderDeliveryDto>> getAvailableOrders(Pageable pageable) {
         return successResponse(deliveryService.getAvailableOrders(pageable));
     }
 
     @GetMapping("/orders/my-deliveries")
-    @PreAuthorize("hasRole('DELIVERY')")
     public ResponseEntity<Page<OrderDeliveryDto>> getMyDeliveries(Pageable pageable) {
         return successResponse(deliveryService.getMyDeliveries(pageable));
     }
 
     @PostMapping("/orders/{orderId}/accept")
-    @PreAuthorize("hasRole('DELIVERY')")
     public ResponseEntity<String> acceptDelivery(@PathVariable UUID orderId) {
         deliveryService.acceptDelivery(orderId);
         return createdResponse("Delivery accepted successfully");
     }
 
     @PostMapping("/orders/{orderId}/reject")
-    @PreAuthorize("hasRole('DELIVERY')")
     public ResponseEntity<String> rejectDelivery(@PathVariable UUID orderId) {
         deliveryService.rejectDelivery(orderId);
         return successResponse("Delivery rejected successfully");
     }
 
     @PutMapping("/orders/{orderId}/status")
-    @PreAuthorize("hasRole('DELIVERY')")
     public ResponseEntity<String> updateOrderStatus(
             @PathVariable UUID orderId, 
             @RequestBody DeliveryStateUpdate statusUpdate) {

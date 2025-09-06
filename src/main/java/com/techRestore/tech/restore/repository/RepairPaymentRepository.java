@@ -11,4 +11,5 @@ public interface RepairPaymentRepository extends JpaRepository<RepairPayment, UU
     List<RepairPayment> findByUserId(UUID userId);
     Optional<RepairPayment> findByRepairRequestId(UUID repairRequestId);
     Optional<RepairPayment> findByPaymentReference(String orderIdStr);
+    Optional<RepairPayment> findByPaymentId(String paymentId);
 }
