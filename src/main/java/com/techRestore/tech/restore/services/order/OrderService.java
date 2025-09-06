@@ -25,6 +25,7 @@ import com.techRestore.tech.restore.dto.order.TrackingResponseDTO;
 import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.enums.OrderStatus;
 import com.techRestore.tech.restore.model.enums.PaymentStatus;
+import com.techRestore.tech.restore.model.enums.PaymentType;
 import com.techRestore.tech.restore.services.notification.NotificationService;
 
 import lombok.AllArgsConstructor;
@@ -35,7 +36,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
-    private final OrderPaymentRepository orderPaymentRepository;
+    private final PaymentRepository orderPaymentRepository;
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
     private final NotificationService notificationService;
@@ -99,21 +100,25 @@ public class OrderService {
         }
         orderItemRepository.saveAll(orderItems);
 
-        OrderPayment payment = new OrderPayment();
-        payment.setUserId(userId);
+        // ✅ Create Payment row
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
+        Payment payment = new Payment();
+        payment.setUser(user);
         payment.setOrderId(order.getId());
         payment.setAmount(totalPrice);
         payment.setPaymentMethod(request.getPaymentMethod());
         payment.setPaymentStatus(PaymentStatus.PENDING);
+        payment.setPaymentType(PaymentType.ORDER_PAYMENT);
         payment.setPaymentReference(UUID.randomUUID().toString());
+
         orderPaymentRepository.save(payment);
 
-        order.setPaymentId(payment.getId());
-        orderRepository.save(order);
+        // Notify shops
         Set<UUID> uniqueShopIds = orderItems.stream()
-            .map(OrderItem::getShopId)
-            .collect(Collectors.toSet());
-
+                .map(OrderItem::getShopId)
+                .collect(Collectors.toSet());
         for (UUID shopId : uniqueShopIds) {
             notificationService.sendToShop(shopId, "New order received: Order ID " + order.getId());
         }
@@ -122,6 +127,7 @@ public class OrderService {
 
         return DTOConverter.convertToOrderResponseDTO(order, orderItems);
     }
+
 
     @Transactional(readOnly = true)
     public Page<OrderResponseDTO> getUserOrders(Pageable pageable) {
@@ -152,7 +158,7 @@ public class OrderService {
         order.setStatus(OrderStatus.CANCELLED);
         orderRepository.save(order);
 
-        OrderPayment payment = orderPaymentRepository.findByOrderId(orderId)
+        Payment payment = orderPaymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new NotFoundException("Payment not found"));
         payment.setPaymentStatus(PaymentStatus.REFUNDED);
         orderPaymentRepository.save(payment);

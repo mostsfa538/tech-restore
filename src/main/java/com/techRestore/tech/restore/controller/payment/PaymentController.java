@@ -16,8 +16,9 @@ import com.techRestore.tech.restore.dto.payment.PaymentInitiationDto;
 import com.techRestore.tech.restore.exception.ActivationException;
 import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.entities.User;
+import com.techRestore.tech.restore.model.enums.PaymentType;
 import com.techRestore.tech.restore.repository.UserRepository;
-import com.techRestore.tech.restore.services.payment.OrderPaymentService;
+import com.techRestore.tech.restore.services.payment.PaymentService;
 import com.techRestore.tech.restore.services.payment.RepairPaymentService;
 
 import lombok.RequiredArgsConstructor;
@@ -27,9 +28,8 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/payments")
 public class PaymentController {
     
-  private final OrderPaymentService orderPaymentService;
   private final UserRepository userRepository;
-  private final RepairPaymentService repairPaymentService;
+  private final PaymentService paymentService;
 
   private UUID getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -50,17 +50,17 @@ public class PaymentController {
         return user.getId();
     }
 
-    @PostMapping("/card/{orderId}")
-    public ResponseEntity<PaymentInitiationDto> initiateCardOrderPayment(@PathVariable UUID orderId) { 
+    @PostMapping("/order/card/{orderId}")
+    public ResponseEntity<PaymentInitiationDto> initiateCardOrderPayment(@PathVariable UUID orderId) {
         UUID userId = getCurrentUserId();
-        PaymentInitiationDto paymentDto = orderPaymentService.initiateCardPayment(orderId, userId);
+        PaymentInitiationDto paymentDto = paymentService.initiateCardPayment(orderId, userId, PaymentType.ORDER_PAYMENT);
         return ResponseEntity.ok(paymentDto);
     }
 
     @PostMapping("/repair/card/{repairRequestId}")
     public ResponseEntity<PaymentInitiationDto> initiateCardRepairPayment(@PathVariable UUID repairRequestId) {
         UUID userId = getCurrentUserId();
-        PaymentInitiationDto paymentDto = repairPaymentService.initiateCardPayment(repairRequestId, userId);
+        PaymentInitiationDto paymentDto = paymentService.initiateCardPayment(repairRequestId, userId, PaymentType.REPAIR_PAYMENT);
         return ResponseEntity.ok(paymentDto);
     }
     

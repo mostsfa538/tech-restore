@@ -5,49 +5,35 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.techRestore.tech.restore.exception.NotFoundException;
-import com.techRestore.tech.restore.model.entities.OrderPayment;
-import com.techRestore.tech.restore.model.entities.RepairPayment;
+import com.techRestore.tech.restore.exception.CustomException;
+import com.techRestore.tech.restore.model.entities.Payment;
 import com.techRestore.tech.restore.model.enums.PaymentStatus;
-import com.techRestore.tech.restore.repository.OrderPaymentRepository;
-import com.techRestore.tech.restore.repository.RepairPaymentRepository;
+import com.techRestore.tech.restore.repository.PaymentRepository;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 
 @Service
 @RequiredArgsConstructor
 public class ProcessingService {
-    private final OrderPaymentRepository orderPaymentRepository;
-    private final RepairPaymentRepository repairPaymentRepository;
+    private final PaymentRepository paymentRepository;
 
     @Transactional
     public void processPaymentCallback(Map<String, Object> payload) {
         String success = (String) payload.get("success");
         String paymobOrderId = (String) payload.get("order_id");
 
-        orderPaymentRepository.findByPaymentId(paymobOrderId).ifPresent(payment -> {
+        paymentRepository.findByTransactionId(paymobOrderId).ifPresent(payment -> {
             updatePaymentStatus(payment, success);
-            orderPaymentRepository.save(payment);
+            paymentRepository.save(payment);
         });
 
-        repairPaymentRepository.findByPaymentId(paymobOrderId).ifPresent(payment -> {
-            updatePaymentStatus(payment, success);
-            repairPaymentRepository.save(payment);
-        });
-
-        if (orderPaymentRepository.findByPaymentId(paymobOrderId).isEmpty() &&
-            repairPaymentRepository.findByPaymentId(paymobOrderId).isEmpty()) {
-            throw new NotFoundException("Payment not found");
+        if (paymentRepository.findByTransactionId(paymobOrderId).isEmpty()) {
+            throw new CustomException(HttpStatus.NOT_FOUND, "Payment not found");
         }
     }
 
-    private void updatePaymentStatus(Object payment, String success) {
-        if (payment instanceof OrderPayment) {
-            OrderPayment orderPayment = (OrderPayment) payment;
-            orderPayment.setPaymentStatus("true".equals(success) ? PaymentStatus.COMPLETED : PaymentStatus.FAILED);
-        } else if (payment instanceof RepairPayment) {
-            RepairPayment repairPayment = (RepairPayment) payment;
-            repairPayment.setPaymentStatus("true".equals(success) ? PaymentStatus.COMPLETED : PaymentStatus.FAILED);
-        }
+    private void updatePaymentStatus(Payment payment, String success) {
+        payment.setPaymentStatus("true".equals(success) ? PaymentStatus.COMPLETED : PaymentStatus.FAILED);
     }
 }
