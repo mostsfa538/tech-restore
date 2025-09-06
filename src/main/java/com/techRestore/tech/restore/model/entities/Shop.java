@@ -60,6 +60,29 @@ public class Shop {
     @Column(name = "product_revenue_percentage", precision = 10, scale = 2)
     private BigDecimal productRevenuePercentage;
 
+    // NEW FIELDS FOR FINANCIAL TRACKING
+    @Column(name = "total_sales_revenue", precision = 15, scale = 2)
+    private BigDecimal totalSalesRevenue = BigDecimal.ZERO;
+
+    @Column(name = "total_repair_revenue", precision = 15, scale = 2)
+    private BigDecimal totalRepairRevenue = BigDecimal.ZERO;
+
+    @Column(name = "total_profit", precision = 15, scale = 2)
+    private BigDecimal totalProfit = BigDecimal.ZERO;
+
+    // INVENTORY TRACKING
+    @Column(name = "total_products_count")
+    private Integer totalProductsCount = 0;
+
+    @Column(name = "low_stock_threshold")
+    private Integer lowStockThreshold = 5;
+
+    @Column(name = "low_stock_products_count")
+    private Integer lowStockProductsCount = 0;
+
+    @Column(name = "total_inventory_value", precision = 15, scale = 2)
+    private BigDecimal totalInventoryValue = BigDecimal.ZERO;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -90,6 +113,16 @@ public class Shop {
 
     @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ShopAddress> addresses = new ArrayList<>();
+
+    // NEW RELATIONSHIPS
+    @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Offer> offers = new ArrayList<>();
+
+    @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Payment> payments = new ArrayList<>();
+
+    @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<SupportTicket> supportTickets = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

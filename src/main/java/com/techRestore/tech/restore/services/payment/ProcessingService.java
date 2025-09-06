@@ -17,7 +17,6 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class ProcessingService {
-
     private final OrderPaymentRepository orderPaymentRepository;
     private final RepairPaymentRepository repairPaymentRepository;
 
