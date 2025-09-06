@@ -80,7 +80,10 @@ public class UserServices {
     }
 
     public UserProfileDTO getCurrentUserProfile() {
-        User user = getCurrentUser();
+        UUID currentUserId = getCurrentUser().getId();
+
+        User user = userRepository.findByIdWithAddresses(currentUserId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         UserProfileDTO profileDTO = new UserProfileDTO();
         profileDTO.setId(user.getId());
@@ -93,17 +96,14 @@ public class UserServices {
         profileDTO.setCreatedAt(user.getCreatedAt());
         profileDTO.setUpdatedAt(user.getUpdatedAt());
 
-        if (user.getAddresses() != null) {
-            List<AddressResponse> addressDTOs = user.getAddresses().stream()
-                    .map(this::convertToAddressDTO)
-                    .collect(Collectors.toList());
-            profileDTO.setAddresses(addressDTOs);
-        } else {
-            profileDTO.setAddresses(new ArrayList<>());
-        }
+        List<AddressResponse> addressDTOs = user.getAddresses().stream()
+                .map(this::convertToAddressDTO)
+                .collect(Collectors.toList());
+        profileDTO.setAddresses(addressDTOs);
 
         return profileDTO;
     }
+
 
     @Transactional
     public UserProfileDTO updateUserProfile(UserProfileUpdateDTO updateDTO) {
