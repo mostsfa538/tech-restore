@@ -3,8 +3,12 @@ package com.techRestore.tech.restore.services.delivery;
 import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.entities.Delivery;
 import com.techRestore.tech.restore.model.entities.Order;
+import com.techRestore.tech.restore.model.entities.OrderPayment;
 import com.techRestore.tech.restore.model.enums.OrderStatus;
+import com.techRestore.tech.restore.model.enums.PaymentMethod;
+import com.techRestore.tech.restore.model.enums.PaymentStatus;
 import com.techRestore.tech.restore.repository.DeliveryRepository;
+import com.techRestore.tech.restore.repository.OrderPaymentRepository;
 import com.techRestore.tech.restore.repository.OrderRepository;
 import com.techRestore.tech.restore.services.notification.NotificationService;
 import com.techRestore.tech.restore.dto.delivery.DeliveryProfileUpdateDto;
@@ -19,6 +23,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -28,6 +33,7 @@ public class DeliveryService {
     private final DeliveryRepository deliveryRepository;
     private final OrderRepository orderRepository;
     private final NotificationService notificationService;
+    private final OrderPaymentRepository orderPaymentRepository;
 
     private UUID getCurrentDeliveryId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -104,6 +110,16 @@ public class DeliveryService {
         order.setStatus(stateUpdate.getStatus());
         orderRepository.save(order);
         if (stateUpdate.getStatus() == OrderStatus.DELIVERED) {
+
+            OrderPayment payment = orderPaymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new NotFoundException("Payment not found for order: " + orderId));
+        
+            if (payment.getPaymentMethod() == PaymentMethod.CASH && 
+                payment.getPaymentStatus() == PaymentStatus.PENDING) {
+                payment.setPaymentStatus(PaymentStatus.COMPLETED);
+                payment.setPaidAt(LocalDateTime.now());
+                orderPaymentRepository.save(payment);
+            }
             notificationService.sendToUser(order.getUserId(),
                     "Your order " + orderId + " status updated to " + stateUpdate.getStatus());
             notificationService.sendToShop(order.getShopId(), "Order " + orderId + " has been delivered");
