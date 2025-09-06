@@ -17,27 +17,28 @@ public class Chat {
     @Column(name = "id", nullable = false, unique = true)
     private UUID id;
 
-    @Column(name = "user_id")
-    private UUID userId;
-
-    @Column(name = "shop_id")
-    private UUID shopId;
-
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // PROPER RELATIONSHIPS - Remove UUID fields and use proper JPA relationships
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @JoinColumn(name = "user_id")
     @JsonIgnore
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "shop_id", insertable = false, updatable = false)
+    @JoinColumn(name = "shop_id")
     @JsonIgnore
     private Shop shop;
+
+    // Optional: Link to support ticket if this chat is part of support
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "support_ticket_id")
+    @JsonIgnore
+    private SupportTicket supportTicket;
 
     @OneToMany(mappedBy = "chat", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Message> messages;
@@ -51,5 +52,20 @@ public class Chat {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    // Business logic helper methods
+    public boolean isGeneralChat() {
+        return supportTicket == null;
+    }
+
+    public boolean isSupportChat() {
+        return supportTicket != null;
+    }
+
+    // Validation method
+    public boolean isValid() {
+        // Must have either user or shop (or both for direct communication)
+        return user != null || shop != null;
     }
 }

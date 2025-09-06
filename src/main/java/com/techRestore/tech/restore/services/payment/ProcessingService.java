@@ -18,19 +18,18 @@ public class ProcessingService {
   private final OrderPaymentRepository orderPaymentRepository;
 
   @Transactional
-  public void processPaymentCallback(Map<String,Object> payload){
+  public void processPaymentCallback(Map<String, Object> payload) {
     String success = (String) payload.get("success");
     String paymobOrderId = (String) payload.get("order_id");
     OrderPayment payment = orderPaymentRepository.findByPaymentId(paymobOrderId)
-        .orElseThrow(()-> new NotFoundException("Payment not found"));
-    if("true".equals(success)){
+        .orElseThrow(() -> new NotFoundException("Payment not found"));
+    if ("true".equals(success)) {
       payment.setPaymentStatus(PaymentStatus.COMPLETED);
       orderPaymentRepository.save(payment);
-    }
-    else{
+    } else {
       payment.setPaymentStatus(PaymentStatus.FAILED);
       orderPaymentRepository.save(payment);
     }
   }
-  
+
 }
