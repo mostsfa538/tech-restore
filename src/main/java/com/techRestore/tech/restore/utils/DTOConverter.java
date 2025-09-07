@@ -5,6 +5,7 @@ import com.techRestore.tech.restore.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.dto.shop.ShopResponseDto;
 import com.techRestore.tech.restore.dto.category.CategoryDTO;
 import com.techRestore.tech.restore.dto.common.address.AddressResponse;
+import com.techRestore.tech.restore.dto.offers.OfferResponseDTO;
 import com.techRestore.tech.restore.dto.order.OrderItemResponseDTO;
 import com.techRestore.tech.restore.dto.order.OrderResponseDTO;
 import com.techRestore.tech.restore.model.entities.*;
@@ -152,6 +153,22 @@ public class DTOConverter {
                 .collect(Collectors.toList());
         dto.setOrderItems(itemDTOs);
 
+        return dto;
+    }
+
+    public static OfferResponseDTO convertToOfferResponseDTO(Offer offer) {
+        OfferResponseDTO dto = new OfferResponseDTO();
+        dto.setId(offer.getId());
+        dto.setName(offer.getName());
+        dto.setDescription(offer.getDescription());
+        dto.setDiscountValue(offer.getDiscountValue());
+        dto.setDiscountType(offer.getDiscountType());
+        dto.setStartDate(offer.getStartDate());
+        dto.setEndDate(offer.getEndDate());
+        dto.setStatus(offer.getStatus());
+        dto.setShopId(offer.getShop().getId());
+        dto.setCreatedAt(offer.getCreatedAt());
+        dto.setUpdatedAt(offer.getUpdatedAt());
         return dto;
     }
 
