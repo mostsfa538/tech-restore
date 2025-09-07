@@ -2,7 +2,6 @@ package com.techRestore.tech.restore.services.auth;
 
 import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.ShopRegistrationRequest;
-import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.exception.EmailAlreadyExistsException;
 import com.techRestore.tech.restore.exception.IllegalArgumentException;
 import com.techRestore.tech.restore.model.entities.Shop;

@@ -8,7 +8,6 @@ import com.techRestore.tech.restore.exception.ExpiredOtpException;
 import com.techRestore.tech.restore.exception.InvalidOtpException;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -24,49 +23,48 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class EmailServices {
-    private final JavaMailSender mailSender;
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
+  private final JavaMailSender mailSender;
+  private final UserRepository userRepository;
+  private final PasswordEncoder passwordEncoder;
 
-    @Value("${spring.mail.username}")
-    private String fromEmail;
+  @Value("${spring.mail.username}")
+  private String fromEmail;
 
-    public void sendOtpEmail(String email) {
-        try {
-            User user = userRepository.findByEmail(email);
-            if (user == null) {
-                throw new NotFoundException("Email is not exist");
-            }
-            if (user.getOptCode() == null || user.getOptCode().isEmpty()) {
-                throw new RuntimeException("OTP not generated for user");
-            }
+  public void sendOtpEmail(String email) {
+    try {
+      User user = userRepository.findByEmail(email);
+      if (user == null) {
+        throw new NotFoundException("Email is not exist");
+      }
+      if (user.getOptCode() == null || user.getOptCode().isEmpty()) {
+        throw new IllegalArgumentException("OTP not generated for user");
+      }
 
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+      MimeMessage mimeMessage = mailSender.createMimeMessage();
+      MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
-            helper.setFrom(fromEmail);
-            helper.setTo(user.getEmail());
-            helper.setSubject("Email Verification - TechRestore");
+      helper.setFrom(fromEmail);
+      helper.setTo(user.getEmail());
+      helper.setSubject("Email Verification - TechRestore");
 
-            String emailBody = createHtmlEmailContent(user);
-            helper.setText(emailBody, true);
+      String emailBody = createHtmlEmailContent(user);
+      helper.setText(emailBody, true);
 
-            mailSender.send(mimeMessage);
+      mailSender.send(mimeMessage);
 
-        } catch (MailException e) {
-            throw new RuntimeException("Failed to send verification email", e);
-        } catch (Exception e) {
-            System.err.println("Error sending email: " + e.getMessage());
-            throw new RuntimeException("Unexpected error occurred while sending email", e);
-        }
+    } catch (MailException e) {
+      throw new IllegalArgumentException("Failed to send verification email", e);
+    } catch (Exception e) {
+      throw new IllegalArgumentException("Unexpected error occurred while sending email", e);
     }
+  }
 
-    private String createHtmlEmailContent(User user) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' HH:mm");
-        String expiryTime = user.getOtpExpiry().format(formatter);
-        String lastName = user.getLast_name() != null ? user.getLast_name() : "";
+  private String createHtmlEmailContent(User user) {
+    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' HH:mm");
+    String expiryTime = user.getOtpExpiry().format(formatter);
+    String lastName = user.getLast_name() != null ? user.getLast_name() : "";
 
-        return """
+    return """
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -143,84 +141,83 @@ public class EmailServices {
         </body>
         </html>
         """.formatted(user.getFirst_name(), lastName, user.getOptCode(), expiryTime);
+  }
+
+  public void verifyOtp(String email, String otp) {
+    if (email == null || otp == null) {
+      throw new IllegalArgumentException("Email and OTP cannot be null");
     }
 
-
-    public void verifyOtp(String email, String otp) {
-        if (email == null || otp == null) {
-            throw new RuntimeException("Email and OTP cannot be null");
-        }
-
-        User user = userRepository.findByEmail(email);
-        if (user == null) {
-            throw new NotFoundException("Email is not exist");
-        }
-
-        if (!otp.equals(user.getOptCode())) {
-            throw new InvalidOtpException("Opt code is not correct");
-        }
-
-        if (user.getOtpExpiry() == null || LocalDateTime.now().isAfter(user.getOtpExpiry())) {
-            throw new ExpiredOtpException("Code is expired");
-        }
-
-        user.setActivate(true);
-        user.setOptCode(null);
-        user.setOtpExpiry(null);
-
-        userRepository.save(user);
+    User user = userRepository.findByEmail(email);
+    if (user == null) {
+      throw new NotFoundException("Email is not exist");
     }
 
-    public void resendOtp(String email) {
-        User user = userRepository.findByEmail(email);
-        if (user == null) {
-            throw new NotFoundException("Email is not exist");
-        }
-
-        String otp = String.valueOf(new Random().nextInt(900000) + 100000);
-        user.setOptCode(otp);
-        user.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
-
-        userRepository.save(user);
-        sendOtpEmail(user.getEmail());
+    if (!otp.equals(user.getOptCode())) {
+      throw new InvalidOtpException("Opt code is not correct");
     }
 
-    public void forgotPassword(String email) {
-        User user = userRepository.findByEmail(email);
-        if (user == null) {
-            throw new NotFoundException("Email does not exist");
-        }
-
-        String otp = String.valueOf(new Random().nextInt(900000) + 100000);
-        user.setOptCode(otp);
-        user.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
-
-        userRepository.save(user);
-        sendOtpEmail(user.getEmail());
+    if (user.getOtpExpiry() == null || LocalDateTime.now().isAfter(user.getOtpExpiry())) {
+      throw new ExpiredOtpException("Code is expired");
     }
 
-    public void resetPassword(String email, String otp, String newPassword, String confirmPassword) {
-        User user = userRepository.findByEmail(email);
-        if (user == null) {
-            throw new NotFoundException("Email does not exist");
-        }
+    user.setActivate(true);
+    user.setOptCode(null);
+    user.setOtpExpiry(null);
 
-        if (user.getOptCode() == null || !user.getOptCode().equals(otp)) {
-            throw new InvalidOtpException("Invalid OTP");
-        }
+    userRepository.save(user);
+  }
 
-        if (user.getOtpExpiry() == null || LocalDateTime.now().isAfter(user.getOtpExpiry())) {
-            throw new ExpiredOtpException("OTP expired");
-        }
-
-        if (!newPassword.equals(confirmPassword)) {
-            throw new IllegalArgumentException("Passwords do not match");
-        }
-
-        user.setPassword(passwordEncoder.encode(newPassword));
-        user.setOptCode(null);
-        user.setOtpExpiry(null);
-        userRepository.save(user);
+  public void resendOtp(String email) {
+    User user = userRepository.findByEmail(email);
+    if (user == null) {
+      throw new NotFoundException("Email is not exist");
     }
+
+    String otp = String.valueOf(new Random().nextInt(900000) + 100000);
+    user.setOptCode(otp);
+    user.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
+
+    userRepository.save(user);
+    sendOtpEmail(user.getEmail());
+  }
+
+  public void forgotPassword(String email) {
+    User user = userRepository.findByEmail(email);
+    if (user == null) {
+      throw new NotFoundException("Email does not exist");
+    }
+
+    String otp = String.valueOf(new Random().nextInt(900000) + 100000);
+    user.setOptCode(otp);
+    user.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
+
+    userRepository.save(user);
+    sendOtpEmail(user.getEmail());
+  }
+
+  public void resetPassword(String email, String otp, String newPassword, String confirmPassword) {
+    User user = userRepository.findByEmail(email);
+    if (user == null) {
+      throw new NotFoundException("Email does not exist");
+    }
+
+    if (user.getOptCode() == null || !user.getOptCode().equals(otp)) {
+      throw new InvalidOtpException("Invalid OTP");
+    }
+
+    if (user.getOtpExpiry() == null || LocalDateTime.now().isAfter(user.getOtpExpiry())) {
+      throw new ExpiredOtpException("OTP expired");
+    }
+
+    if (!newPassword.equals(confirmPassword)) {
+      throw new IllegalArgumentException("Passwords do not match");
+    }
+
+    user.setPassword(passwordEncoder.encode(newPassword));
+    user.setOptCode(null);
+    user.setOtpExpiry(null);
+    userRepository.save(user);
+  }
 
 }

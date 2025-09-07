@@ -73,7 +73,7 @@ public class PaymentService {
     private final OrderRepository orderRepository;
     private final RepairRequestRepository repairRequestRepository;
     private final ShopRepository shopRepository;
-    
+
     @Transactional
     public PaymentInitiationDto initiateCardPayment(UUID referenceId, UUID userId, PaymentType paymentType) {
         try {
@@ -101,7 +101,8 @@ public class PaymentService {
 
             String authToken = getAuthToken();
             String paymobOrderId = createPaymobOrder(authToken, payment);
-            String paymentToken = generatePaymentKey(authToken, paymobOrderId, payment.getAmount(), cardIntegrationId, userId);
+            String paymentToken = generatePaymentKey(authToken, paymobOrderId, payment.getAmount(), cardIntegrationId,
+                    userId);
             String paymentLink = generatePaymentIframeUrl(paymentToken);
 
             PaymentInitiationDto dto = new PaymentInitiationDto();
@@ -110,11 +111,11 @@ public class PaymentService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "Error generating Paymob card payment link: " + e.getMessage());
+            throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Error generating Paymob card payment link: " + e.getMessage());
         }
     }
 
-    
     @Transactional
     public void initiateCashPayment(UUID referenceId, UUID userId, PaymentType paymentType) {
         try {
@@ -144,7 +145,8 @@ public class PaymentService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "Error initiating cash payment: " + e.getMessage());
+            throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Error initiating cash payment: " + e.getMessage());
         }
     }
 
@@ -162,14 +164,14 @@ public class PaymentService {
         paymentRepository.save(payment);
     }
 
-    
     @Transactional
     public void updatePaymentStatusOnOrderDelivered(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "Order not found: " + orderId));
 
         Payment payment = paymentRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "Payment not found for order: " + orderId));
+                .orElseThrow(
+                        () -> new CustomException(HttpStatus.NOT_FOUND, "Payment not found for order: " + orderId));
         if (payment.getPaymentMethod() == PaymentMethod.CASH &&
                 payment.getPaymentStatus() == PaymentStatus.PENDING &&
                 order.getStatus().name().equals("DELIVERED")) {
@@ -179,7 +181,6 @@ public class PaymentService {
         }
     }
 
-   
     @Transactional
     public void processPaymentCallback(Map<String, Object> payload) {
         String success = (String) payload.get("success");
@@ -195,7 +196,6 @@ public class PaymentService {
         }
     }
 
-    
     public void handlePaymentCallback(Map<String, Object> payload, HttpServletRequest request) {
         String receivedHmac = request.getParameter("hmac");
         if (receivedHmac == null) {
@@ -206,8 +206,7 @@ public class PaymentService {
                 "amount_cents", "created_at", "currency", "error_occured", "has_parent_transaction",
                 "id", "integration_id", "is_3d_secure", "is_auth", "is_capture", "is_refunded",
                 "is_standalone_payment", "is_voided", "order.id", "owner", "pending",
-                "source_data.pan", "source_data.sub_type", "source_data.type", "success"
-        );
+                "source_data.pan", "source_data.sub_type", "source_data.type", "success");
 
         String concatenatedValues = concatenateValues(payload, hmacKeys);
         String calculatedHmac = calculateHmac(concatenatedValues, hmacSecretKey);
@@ -219,8 +218,8 @@ public class PaymentService {
         processPaymentCallback(payload);
     }
 
-   
-    private String generatePaymentKey(String authToken, String orderId, BigDecimal amount, int integrationId, UUID userId) {
+    private String generatePaymentKey(String authToken, String orderId, BigDecimal amount, int integrationId,
+            UUID userId) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -258,17 +257,18 @@ public class PaymentService {
         requestBody.put("integration_id", integrationId);
 
         HttpEntity<String> entity = new HttpEntity<>(requestBody.toString(), headers);
-        ResponseEntity<String> response = restTemplate.exchange(paymobPaymentKeyUrl, HttpMethod.POST, entity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange(paymobPaymentKeyUrl, HttpMethod.POST, entity,
+                String.class);
 
         if (response.getStatusCode().is2xxSuccessful()) {
             JSONObject jsonResponse = new JSONObject(response.getBody());
             return jsonResponse.getString("token");
         } else {
-            throw new CustomException(HttpStatus.BAD_REQUEST, "Failed to generate payment key: " + response.getStatusCode());
+            throw new CustomException(HttpStatus.BAD_REQUEST,
+                    "Failed to generate payment key: " + response.getStatusCode());
         }
     }
 
-    
     private String createPaymobOrder(String authToken, Payment payment) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
@@ -291,16 +291,15 @@ public class PaymentService {
             paymentRepository.save(payment);
             return paymobOrderId;
         } else {
-            throw new CustomException(HttpStatus.BAD_REQUEST, "Failed to create Paymob order: " + response.getStatusCode());
+            throw new CustomException(HttpStatus.BAD_REQUEST,
+                    "Failed to create Paymob order: " + response.getStatusCode());
         }
     }
 
-    
     private String generatePaymentIframeUrl(String paymentToken) {
         return "https://accept.paymob.com/api/acceptance/iframes/" + iframeId + "?payment_token=" + paymentToken;
     }
 
-   
     private String getAuthToken() {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
@@ -316,11 +315,11 @@ public class PaymentService {
             JSONObject jsonResponse = new JSONObject(response.getBody());
             return jsonResponse.getString("token");
         } else {
-            throw new CustomException(HttpStatus.BAD_REQUEST, "Failed to authenticate with Paymob: " + response.getStatusCode());
+            throw new CustomException(HttpStatus.BAD_REQUEST,
+                    "Failed to authenticate with Paymob: " + response.getStatusCode());
         }
     }
 
-   
     private String concatenateValues(Map<String, Object> payload, List<String> hmacKeys) {
         Map<String, Object> obj = (Map<String, Object>) payload.get("obj");
         if (obj == null) {
@@ -348,7 +347,6 @@ public class PaymentService {
         return current;
     }
 
-    
     private String calculateHmac(String data, String secretKey) {
         try {
             Mac sha512Hmac = Mac.getInstance("HmacSHA512");
@@ -365,12 +363,10 @@ public class PaymentService {
         }
     }
 
-   
     private boolean isSupportedPaymentType(PaymentType paymentType) {
         return paymentType == PaymentType.ORDER_PAYMENT || paymentType == PaymentType.REPAIR_PAYMENT;
     }
 
-    
     private BigDecimal getPaymentAmount(UUID referenceId, PaymentType paymentType) {
         if (paymentType == PaymentType.ORDER_PAYMENT) {
             Order order = orderRepository.findById(referenceId)
@@ -378,14 +374,14 @@ public class PaymentService {
             return order.getTotalPrice();
         } else if (paymentType == PaymentType.REPAIR_PAYMENT) {
             RepairRequest repair = repairRequestRepository.findById(referenceId)
-                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "Repair Request not found: " + referenceId));
+                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,
+                            "Repair Request not found: " + referenceId));
             return repair.getPrice();
         } else {
             throw new CustomException(HttpStatus.BAD_REQUEST, "Unsupported payment type: " + paymentType);
         }
     }
 
-    
     private void setPaymentReferenceIds(Payment payment, UUID referenceId, PaymentType paymentType) {
         switch (paymentType) {
             case ORDER_PAYMENT:

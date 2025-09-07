@@ -3,7 +3,6 @@ package com.techRestore.tech.restore.services.auth;
 import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.dto.delivery.DeliveryRegistration;
-import com.techRestore.tech.restore.exception.EmailAlreadyExistsException;
 import com.techRestore.tech.restore.exception.IllegalArgumentException;
 import com.techRestore.tech.restore.exception.NotFoundException;
 import com.techRestore.tech.restore.model.enums.Role;

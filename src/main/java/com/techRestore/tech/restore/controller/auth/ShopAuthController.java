@@ -2,7 +2,6 @@ package com.techRestore.tech.restore.controller.auth;
 
 import com.techRestore.tech.restore.dto.auth.LoginDto;
 import com.techRestore.tech.restore.dto.auth.ShopRegistrationRequest;
-import com.techRestore.tech.restore.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.services.auth.ShopAuthService;
 
 import jakarta.validation.Valid;

@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.techRestore.tech.restore.controller.BaseController;
 import com.techRestore.tech.restore.dto.common.address.AddressRequest;
 import com.techRestore.tech.restore.dto.common.address.AddressResponse;
-import com.techRestore.tech.restore.repository.UserRepository;
 import com.techRestore.tech.restore.services.adress.AddressService;
 
 import lombok.RequiredArgsConstructor;
