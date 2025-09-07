@@ -94,6 +94,7 @@ public class ShopAuthService {
 
             return response;
         } catch (BadCredentialsException e) {
+            System.out.println(e.getMessage());
             throw new BadCredentialsException("Invalid email or password");
         } catch (DisabledException e) {
             throw new DisabledException("Account is disabled");

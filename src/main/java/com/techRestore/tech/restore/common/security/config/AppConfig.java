@@ -56,7 +56,7 @@ public class AppConfig {
                         .requestMatchers("/api/cart/**").hasAnyRole("GUEST")
                         .requestMatchers("/api/auth/home", "/api/auth/logout").authenticated()
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN")
-                        .requestMatchers("/api/shops/products/**").hasAnyRole("SELLER", "BOTH")
+                        .requestMatchers("/api/shops/products/**", "/api/shop/offers/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/shops/repair-request/**").hasAnyRole("REPAIRER")
                         .requestMatchers("/api/users/**", "/api/products/**").hasAnyRole("GUEST")
                         .requestMatchers("/api/reviews/**").hasAnyRole("GUEST", "SHOP_OWNER"))
