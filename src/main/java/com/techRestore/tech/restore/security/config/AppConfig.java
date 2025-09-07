@@ -50,7 +50,7 @@ public class AppConfig {
                         .requestMatchers("/api/payments/**").hasAnyRole("GUEST")
                         .requestMatchers("/api/webhook/**").permitAll()
                         .requestMatchers("/api/AllShops").authenticated()
-                        .requestMatchers("/api/delivery/**").permitAll()
+                        .requestMatchers("/api/delivery/**").hasAnyRole("DELIVERY")
                         .requestMatchers("/api/shops/orders/control/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/cart/**").hasAnyRole("GUEST")
                         .requestMatchers("/api/auth/home", "/api/auth/logout").authenticated()
