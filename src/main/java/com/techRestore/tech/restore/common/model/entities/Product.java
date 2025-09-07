@@ -40,6 +40,9 @@ public class Product {
     @Enumerated(EnumType.STRING)
     private ProductCondition condition;
 
+    @Column(name = "deleted", nullable = false)
+    private boolean deleted = false;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -49,7 +52,7 @@ public class Product {
     private Shop shop;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id", insertable = false, updatable = false)
+    @JoinColumn(name = "category_id", nullable = true)
     @JsonIgnore
     private Category category;
 

@@ -107,7 +107,8 @@ public class ShopProductService extends BaseService<Product, UUID> {
 
     public void deleteProduct(UUID productId) {
         Product product = findProductByIdAndValidateOwnership(productId);
-        repository.delete(product);
+        product.setDeleted(true);
+        repository.save(product);
     }
 
     public ProductResponseDTO updateProductStock(UUID productId, StockUpdateRequest stockUpdateRequest) {

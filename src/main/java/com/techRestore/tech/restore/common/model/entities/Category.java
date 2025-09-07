@@ -23,7 +23,7 @@ public class Category {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "category", cascade = CascadeType.PERSIST, orphanRemoval = false)
     @JsonIgnore
     private List<Product> products;
 
