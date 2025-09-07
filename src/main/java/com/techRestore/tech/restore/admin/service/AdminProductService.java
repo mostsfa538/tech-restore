@@ -39,7 +39,9 @@ public class AdminProductService extends BaseService<Product, UUID> {
 
     @PreAuthorize("hasRole('ADMIN')")
     public void deleteProduct(UUID productId) {
-        deleteByIdOrThrow(productId, "Product");
+        Product product = findByIdOrThrow(productId, "Product");
+        product.setDeleted(true);
+        repository.save(product);
     }
 
     private void updateProductFields(Product product, UpdateProductDto updateDto) {
