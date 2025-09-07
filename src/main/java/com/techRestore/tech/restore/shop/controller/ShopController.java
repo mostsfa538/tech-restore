@@ -23,6 +23,11 @@ public class ShopController extends BaseController {
     @Autowired
     private ShopServices shopServices;
 
+    @GetMapping("/{shopId}")
+    public ResponseEntity<ShopResponseDto> getShopById(@PathVariable UUID shopId) {
+        return successResponse(shopServices.getShopById(shopId));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<ShopResponseDto> updateShop(@RequestBody ShopUpdateRequest shopUpdateRequest) {
         return updatedResponse(shopServices.updateShop(shopUpdateRequest));

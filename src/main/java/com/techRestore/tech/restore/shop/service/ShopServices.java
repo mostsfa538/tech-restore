@@ -120,4 +120,9 @@ public class ShopServices extends BaseService<Shop, UUID> {
                 .map(DTOConverter::toReviewResponseDTO);
     }
 
+    public ShopResponseDto getShopById(UUID shopId) {
+        Shop shop = findByIdOrThrow(repository, shopId, "Shop");
+        return DTOConverter.convertToShopyDTO(shop);
+    }
+
 }
