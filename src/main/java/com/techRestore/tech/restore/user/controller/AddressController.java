@@ -1,4 +1,4 @@
-package com.techRestore.tech.restore.common.controller.adress;
+package com.techRestore.tech.restore.user.controller;
 
 import java.util.UUID;
 
