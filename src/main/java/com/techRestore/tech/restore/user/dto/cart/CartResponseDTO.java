@@ -1,0 +1,20 @@
+package com.techRestore.tech.restore.user.dto.cart;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.UUID;
+
+import lombok.Data;
+
+@Data
+public class CartResponseDTO {
+    private UUID id;
+    private UUID userId;
+    private List<CartItemResponseDTO> items;
+    private BigDecimal totalPrice;
+    private Integer totalItems;
+    private int page;
+    private int size;
+    private long totalElements;
+    private int totalPages;
+}
