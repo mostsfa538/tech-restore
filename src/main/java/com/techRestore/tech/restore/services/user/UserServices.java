@@ -21,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -103,7 +102,6 @@ public class UserServices {
 
         return profileDTO;
     }
-
 
     @Transactional
     public UserProfileDTO updateUserProfile(UserProfileUpdateDTO updateDTO) {

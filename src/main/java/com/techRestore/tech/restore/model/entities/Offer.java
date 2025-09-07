@@ -1,7 +1,8 @@
 package com.techRestore.tech.restore.model.entities;
 
-import com.techRestore.tech.restore.model.enums.OfferType;
 import com.techRestore.tech.restore.model.enums.DiscountType;
+import com.techRestore.tech.restore.model.enums.OfferStatus;
+
 import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
@@ -27,23 +28,7 @@ public class Offer {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "discount_type")
-    private DiscountType discountType; // PERCENTAGE, FIXED_AMOUNT
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "offer_type")
-    private OfferType offerType; // PRODUCT, REPAIR, GENERAL
-
-    @Column(name = "min_purchase_amount", precision = 10, scale = 2)
-    private BigDecimal minPurchaseAmount;
-
-    @Column(name = "max_discount_amount", precision = 10, scale = 2)
-    private BigDecimal maxDiscountAmount;
-
-    @Column(name = "usage_limit")
-    private Integer usageLimit;
-
-    @Column(name = "usage_count")
-    private Integer usageCount = 0;
+    private DiscountType discountType;
 
     @Column(name = "start_date")
     private LocalDateTime startDate;
@@ -51,8 +36,9 @@ public class Offer {
     @Column(name = "end_date")
     private LocalDateTime endDate;
 
-    @Column(name = "is_active")
-    private Boolean isActive = true;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private OfferStatus status = OfferStatus.SCHEDULED;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shop_id", nullable = false)
