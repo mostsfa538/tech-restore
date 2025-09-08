@@ -56,8 +56,8 @@ public class SupportTicket {
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
 
-    @OneToMany(mappedBy = "supportTicket", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Chat> supportChats = new ArrayList<>();
+    // @OneToMany(mappedBy = "supportTicket", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // private List<Chat> supportChats = new ArrayList<>();
 
     @PrePersist
     protected void onCreate() {

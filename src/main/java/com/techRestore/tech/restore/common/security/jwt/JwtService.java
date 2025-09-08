@@ -6,6 +6,7 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
 import com.techRestore.tech.restore.common.security.userdetails.DeliveryPrincipal;
@@ -15,8 +16,10 @@ import com.techRestore.tech.restore.common.security.userdetails.UserPrincipal;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -69,6 +72,31 @@ public class JwtService {
                 .issuedAt(new Date())
                 .signWith(secret)
                 .compact();
+    }
+
+    public List<SimpleGrantedAuthority> extractAuthoritiesFromToken(String token) {
+        return extractClaim(token, claims -> {
+            Object rolesObj = claims.get("roles");
+            List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+
+            if (rolesObj instanceof List<?> rolesList) {
+                // Handle array of roles
+                authorities = rolesList.stream()
+                        .filter(role -> role instanceof String)
+                        .map(role -> new SimpleGrantedAuthority((String) role))
+                        .collect(Collectors.toList());
+            } else if (rolesObj instanceof String rolesString) {
+                String[] roleArray = rolesString.contains(",")
+                        ? rolesString.split(",")
+                        : new String[]{rolesString};
+                authorities = Arrays.stream(roleArray)
+                        .map(String::trim)
+                        .map(SimpleGrantedAuthority::new)
+                        .collect(Collectors.toList());
+            }
+
+            return authorities;
+        });
     }
 
     public String extractUsername(String token) {

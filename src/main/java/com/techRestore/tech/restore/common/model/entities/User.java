@@ -2,6 +2,7 @@ package com.techRestore.tech.restore.common.model.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.techRestore.tech.restore.common.model.enums.Role;
+import com.techRestore.tech.restore.common.model.enums.Status;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -38,12 +39,12 @@ public class User {
     @Column(name = "activate")
     private boolean activate = false;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Chat> chats;
+    // @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // private List<Chat> chats;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Message> sentMessages;
+    // @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // @JsonIgnore
+    // private List<Message> sentMessages;
 
     @Enumerated(EnumType.STRING)
     private Role role = Role.GUEST;
@@ -65,6 +66,8 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Address> addresses;
+
+    private Status status;
 
     @PrePersist
     protected void onCreate() {

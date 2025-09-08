@@ -44,4 +44,8 @@ public class ShopPrincipal implements UserDetails {
     public String getUsername() {
         return shop.getEmail();
     }
+
+    public Shop getShop() {
+        return shop;
+    }
 }
