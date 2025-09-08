@@ -3,6 +3,8 @@ package com.techRestore.tech.restore.user.service.reviews;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -72,6 +74,11 @@ public class ReviewService {
     review.setComment(reviewRequestDTO.getComment());
     review = reviewRepository.save(review);
     return DTOConverter.toReviewResponseDTO(review);
+  }
+
+  public Page<ReviewResponseDTO> getReviewsByShopId(UUID shopId, Pageable pageable) {
+    Page<Review> reviews = reviewRepository.findAllByShopId(shopId, pageable);
+    return reviews.map(DTOConverter::toReviewResponseDTO);
   }
 
   @PreAuthorize("hasRole('GUEST')")
