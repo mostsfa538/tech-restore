@@ -4,6 +4,7 @@ import com.techRestore.tech.restore.admin.service.AdminServices;
 import com.techRestore.tech.restore.common.controller.BaseController;
 import com.techRestore.tech.restore.common.dto.common.SearchRequest;
 import com.techRestore.tech.restore.common.model.entities.Shop;
+import com.techRestore.tech.restore.shop.dto.offers.OfferResponseDTO;
 import com.techRestore.tech.restore.shop.dto.shop.ShopResponseDto;
 import com.techRestore.tech.restore.user.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.user.dto.user.ResponseUsersDto;
@@ -103,5 +104,16 @@ public class AdminController extends BaseController {
 	public ResponseEntity<Void> suspendShop(@PathVariable UUID shopId) {
 		adminServices.suspendShop(shopId);
 		return updatedResponse();
+	}
+
+	@GetMapping("/offers")
+	public ResponseEntity<Page<OfferResponseDTO>> getAllShopsWithOffers(Pageable pageable) {
+		return successResponse(adminServices.getAllOffers(pageable));
+	}
+
+	@DeleteMapping("/offers/{offerId}")
+	public ResponseEntity<Void> deleteOffer(@PathVariable UUID offerId) {
+		adminServices.deleteOffer(offerId);
+		return deletedResponse();
 	}
 }

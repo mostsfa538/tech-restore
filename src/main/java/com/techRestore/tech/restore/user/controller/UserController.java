@@ -1,12 +1,15 @@
 package com.techRestore.tech.restore.user.controller;
 
 import com.techRestore.tech.restore.common.controller.BaseController;
+import com.techRestore.tech.restore.shop.dto.offers.OfferResponseDTO;
 import com.techRestore.tech.restore.shop.dto.shop.ShopResponseDto;
 import com.techRestore.tech.restore.user.dto.user.UserProfileDTO;
 import com.techRestore.tech.restore.user.dto.user.UserProfileUpdateDTO;
 import com.techRestore.tech.restore.user.service.user.UserServices;
 
 import lombok.RequiredArgsConstructor;
+
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,4 +45,17 @@ public class UserController extends BaseController {
         userServices.deleteUserAccount();
         return deletedResponse();
     }
+
+    @GetMapping("/offers")
+    public ResponseEntity<Page<OfferResponseDTO>> getUserOffers(Pageable pageable) {
+        Page<OfferResponseDTO> offers = userServices.getUserOffers(pageable);
+        return successResponse(offers);
+    }
+
+    @GetMapping("offers/{offerId}")
+    public ResponseEntity<OfferResponseDTO> getOfferById(@PathVariable UUID offerId) {
+        OfferResponseDTO offer = userServices.getOfferById(offerId);
+        return successResponse(offer);
+    }
+
 }
