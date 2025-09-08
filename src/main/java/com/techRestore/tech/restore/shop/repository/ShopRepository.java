@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import com.techRestore.tech.restore.common.model.entities.Shop;
+import com.techRestore.tech.restore.common.model.enums.Status;
 
 import org.springframework.data.domain.Pageable;
 
@@ -29,4 +30,6 @@ public interface ShopRepository extends JpaRepository<Shop, UUID> {
 
     @Query("SELECT s FROM Shop s WHERE s.verified = true")
     Page<Shop> findAllVerified(Pageable pageable);
+
+    Optional<Shop> findAllByStatus(Status status);
 }

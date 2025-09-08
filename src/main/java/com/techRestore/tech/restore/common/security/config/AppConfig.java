@@ -54,7 +54,10 @@ public class AppConfig {
                                 "/api/auth/delivery/login",
                                 "/api/auth/delivery/refresh")
                         .permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/payments/**").hasAnyRole("GUEST")
+                        .requestMatchers("/shops/connected").hasRole("GUEST")
+                        .requestMatchers("/messages/**").hasAnyRole("GUEST", "SHOP_OWNER")
                         .requestMatchers("/api/webhook/**").permitAll()
                         .requestMatchers("/api/AllShops").authenticated()
                         .requestMatchers("/api/delivery/**").hasAnyRole("DELIVERY")

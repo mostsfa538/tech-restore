@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.techRestore.tech.restore.common.interfaces.OtpVerifiable;
 import com.techRestore.tech.restore.common.model.enums.ContractType;
 import com.techRestore.tech.restore.common.model.enums.ShopType;
+import com.techRestore.tech.restore.common.model.enums.Status;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -108,12 +109,12 @@ public class Shop implements OtpVerifiable {
     @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Review> reviews;
 
-    @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Chat> chats;
+    // @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // private List<Chat> chats;
 
-    @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private List<Message> sentMessages;
+    // @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // @JsonIgnore
+    // private List<Message> sentMessages;
 
     @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ShopAddress> addresses = new ArrayList<>();
@@ -127,6 +128,8 @@ public class Shop implements OtpVerifiable {
 
     @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<SupportTicket> supportTickets = new ArrayList<>();
+
+    private Status status;
 
     @PrePersist
     protected void onCreate() {

@@ -23,7 +23,7 @@ public class UserController extends BaseController {
 
     private final UserServices userServices;
 
-    @GetMapping
+    @GetMapping("/shops/all")
     public ResponseEntity<Page<ShopResponseDto>> getAllShops(Pageable pageable) {
         return successResponse(userServices.getAllShops(pageable));
     }
