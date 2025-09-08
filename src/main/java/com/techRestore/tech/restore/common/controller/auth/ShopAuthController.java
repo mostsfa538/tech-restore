@@ -13,28 +13,18 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth/shops")
 public class ShopAuthController {
-    @Autowired
-    private ShopAuthService shopAuthService;
+        @Autowired
+        private ShopAuthService shopAuthService;
 
-    @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody @Valid LoginDto loginDto) {
-        try {
-            Map<String, Object> response = shopAuthService.login(loginDto);
-            return ResponseEntity.ok().body(response);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException(e.getMessage());
-        } catch (Exception e) {
-            throw new RuntimeException("Login failed: " + e.getMessage());
+        @PostMapping("/login")
+        public ResponseEntity<Map<String, Object>> login(@RequestBody @Valid LoginDto loginDto) {
+                Map<String, Object> response = shopAuthService.login(loginDto);
+                return ResponseEntity.ok().body(response);
         }
-    }
 
-    @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody @Valid ShopRegistrationRequest shopRegistrationRequest) {
-        try {
-            String message = shopAuthService.register(shopRegistrationRequest);
-            return ResponseEntity.ok().body(message);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+        @PostMapping("/register")
+        public ResponseEntity<String> register(@RequestBody @Valid ShopRegistrationRequest shopRegistrationRequest) {
+                String message = shopAuthService.register(shopRegistrationRequest);
+                return ResponseEntity.ok().body(message);
         }
-    }
 }
