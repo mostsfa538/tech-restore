@@ -5,7 +5,6 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import com.techRestore.tech.restore.common.model.enums.DiscountType;
 import com.techRestore.tech.restore.common.model.enums.OfferStatus;
@@ -23,5 +22,4 @@ public class OfferRequestDTO {
     private OfferStatus status;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
-    private UUID shopId;
 }

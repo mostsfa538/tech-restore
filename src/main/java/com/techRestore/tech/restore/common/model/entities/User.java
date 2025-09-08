@@ -1,6 +1,7 @@
 package com.techRestore.tech.restore.common.model.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.techRestore.tech.restore.common.interfaces.OtpVerifiable;
 import com.techRestore.tech.restore.common.model.enums.Role;
 import com.techRestore.tech.restore.common.model.enums.Status;
 
@@ -14,7 +15,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "users")
 @Data
-public class User {
+public class User implements OtpVerifiable {
 
     @Id
     @GeneratedValue
@@ -84,4 +85,20 @@ public class User {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'orElseThrow'");
     }
+
+    @Override
+    public String getDisplayName() {
+        return first_name + " " + (last_name != null ? last_name : "");
+    }
+
+    @Override
+    public String getEntityType() {
+        return "User";
+    }
+
+    @Override
+    public void setActivate(boolean activate) {
+        this.activate = activate;
+    }
+
 }

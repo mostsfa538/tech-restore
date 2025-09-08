@@ -56,6 +56,12 @@ public class ShopOfferService {
                 .orElseThrow(() -> new NotFoundException("Offer not found"));
     }
 
+    public Page<OfferResponseDTO> searchOffers(String query, Pageable pageable) {
+        UUID shopId = getCurrentShop().getId();
+        return offersRepository.searchByShopIdAndNameOrDescription(shopId, query, pageable)
+                .map(DTOConverter::convertToOfferResponseDTO);
+    }
+
     public OfferResponseDTO createOffer(OfferRequestDTO request) {
         Offer offer = new Offer();
         offer.setName(request.getName());

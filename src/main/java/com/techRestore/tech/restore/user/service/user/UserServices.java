@@ -6,8 +6,10 @@ import com.techRestore.tech.restore.common.exception.NotFoundException;
 import com.techRestore.tech.restore.common.model.entities.Address;
 import com.techRestore.tech.restore.common.model.entities.User;
 import com.techRestore.tech.restore.common.utils.DTOConverter;
+import com.techRestore.tech.restore.shop.dto.offers.OfferResponseDTO;
 import com.techRestore.tech.restore.shop.dto.product.ProductResponseDTO;
 import com.techRestore.tech.restore.shop.dto.shop.ShopResponseDto;
+import com.techRestore.tech.restore.shop.repository.OffersRepository;
 import com.techRestore.tech.restore.shop.repository.ProductRepository;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
 import com.techRestore.tech.restore.user.dto.order.OrderResponseDTO;
@@ -51,6 +53,9 @@ public class UserServices {
 
     @Autowired
     private ShopRepository shopRepository;
+
+    @Autowired
+    private OffersRepository offersRepository;
 
     public Page<ProductResponseDTO> getProductsByCategory(UUID shopId, UUID categoryId, Pageable pageable) {
         categoryRepository.findById(categoryId)
@@ -152,6 +157,17 @@ public class UserServices {
     public Page<ShopResponseDto> getAllShops(Pageable pageable) {
         return shopRepository.findAllVerified(pageable)
                 .map(DTOConverter::convertToShopyDTO);
+    }
+
+    public Page<OfferResponseDTO> getUserOffers(Pageable pageable) {
+        return offersRepository.findAll(pageable)
+                .map(DTOConverter::convertToOfferResponseDTO);
+    }
+
+    public OfferResponseDTO getOfferById(UUID offerId) {
+        return offersRepository.findById(offerId)
+                .map(DTOConverter::convertToOfferResponseDTO)
+                .orElseThrow(() -> new NotFoundException("Offer not found"));
     }
 
 }

@@ -5,6 +5,8 @@ import com.techRestore.tech.restore.common.security.userdetails.DeliveryDetailsS
 import com.techRestore.tech.restore.common.security.userdetails.ShopDetailsServiceImpl;
 import com.techRestore.tech.restore.common.security.userdetails.UserDetailsServiceImpl;
 
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -13,9 +15,11 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.authentication.OAuth2LoginAuthenticationToken;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 public class CustomAuthenticationManager implements AuthenticationManager {
 
     private final UserDetailsServiceImpl userDetailsService;
@@ -36,6 +40,10 @@ public class CustomAuthenticationManager implements AuthenticationManager {
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+
+        if (authentication instanceof OAuth2LoginAuthenticationToken) {
+            return authentication;
+        }
         String username = authentication.getName();
         String password = authentication.getCredentials().toString();
 
@@ -57,13 +65,22 @@ public class CustomAuthenticationManager implements AuthenticationManager {
                         password,
                         userDetails.getAuthorities());
             }
+
         } catch (UsernameNotFoundException e) {
             // User not found, continue to shop authentication
         }
 
         try {
             UserDetails shopDetails = shopDetailsService.loadUserByUsername(username);
-            if (shopDetails != null && passwordEncoder.matches(password, shopDetails.getPassword())) {
+            if (shopDetails != null) {
+                if (!passwordEncoder.matches(password, shopDetails.getPassword())) {
+                    throw new BadCredentialsException("Invalid username or password");
+                }
+                if (!shopDetails.isEnabled()) {
+                    throw new ActivationException(
+                            "Account is not activated. Please check your email for activation instructions");
+                }
+
                 return new UsernamePasswordAuthenticationToken(
                         shopDetails,
                         password,
@@ -74,7 +91,14 @@ public class CustomAuthenticationManager implements AuthenticationManager {
         }
         try {
             UserDetails deliveryDetails = deliveryDetailsService.loadUserByUsername(username);
-            if (deliveryDetails != null && passwordEncoder.matches(password, deliveryDetails.getPassword())) {
+            if (deliveryDetails != null) {
+                if (!passwordEncoder.matches(password, deliveryDetails.getPassword())) {
+                    throw new BadCredentialsException("Invalid username or password");
+                }
+                if (!deliveryDetails.isEnabled()) {
+                    throw new ActivationException(
+                            "Account is not activated. Please check your email for activation instructions");
+                }
                 return new UsernamePasswordAuthenticationToken(
                         deliveryDetails,
                         password,

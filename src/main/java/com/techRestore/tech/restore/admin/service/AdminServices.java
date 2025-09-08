@@ -1,12 +1,15 @@
 package com.techRestore.tech.restore.admin.service;
 
 import com.techRestore.tech.restore.common.exception.NotFoundException;
+import com.techRestore.tech.restore.common.model.entities.Offer;
 import com.techRestore.tech.restore.common.model.entities.Shop;
 import com.techRestore.tech.restore.common.model.entities.User;
 import com.techRestore.tech.restore.common.model.enums.Role;
 import com.techRestore.tech.restore.common.services.BaseService;
 import com.techRestore.tech.restore.common.utils.DTOConverter;
+import com.techRestore.tech.restore.shop.dto.offers.OfferResponseDTO;
 import com.techRestore.tech.restore.shop.dto.shop.ShopResponseDto;
+import com.techRestore.tech.restore.shop.repository.OffersRepository;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
 import com.techRestore.tech.restore.user.dto.user.ResponseUsersDto;
 import com.techRestore.tech.restore.user.repository.UserRepository;
@@ -23,6 +26,8 @@ import java.util.UUID;
 public class AdminServices extends BaseService<User, UUID> {
     @Autowired
     private ShopRepository shopRepository;
+
+    private OffersRepository offersRepository;
 
     public AdminServices(UserRepository userRepository) {
         super(userRepository);
@@ -103,6 +108,18 @@ public class AdminServices extends BaseService<User, UUID> {
 
         shop.setVerified(false);
         shopRepository.save(shop);
+    }
+
+    public Page<OfferResponseDTO> getAllOffers(Pageable pageable) {
+        return offersRepository.findAll(pageable).map(DTOConverter::convertToOfferResponseDTO);
+    }
+
+    public void deleteOffer(UUID offerId) {
+        Optional<Offer> offer = offersRepository.findById(offerId);
+        if (offer.isEmpty()) {
+            throw new NotFoundException("Offer Not Found");
+        }
+        offersRepository.deleteById(offerId);
     }
 
     public ResponseUsersDto convertDto(User user) {

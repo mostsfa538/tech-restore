@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -40,6 +42,11 @@ public class ReviewController {
   @PreAuthorize("hasRole('GUEST')")
   public ResponseEntity<ReviewResponseDTO> getReviewById(@PathVariable UUID id) {
     return ResponseEntity.ok(reviewService.getReviewById(id));
+  }
+
+  @GetMapping("/{shopId}/reviews")
+  public ResponseEntity<Page<ReviewResponseDTO>> getReviewByShopId(@PathVariable UUID shopId, Pageable pageable) {
+    return ResponseEntity.ok(reviewService.getReviewsByShopId(shopId, pageable));
   }
 
   @PutMapping("/{id}")

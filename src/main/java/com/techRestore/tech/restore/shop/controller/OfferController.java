@@ -30,6 +30,13 @@ public class OfferController {
         return ResponseEntity.ok(offerService.getOfferById(offerId));
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<Page<OfferResponseDTO>> searchOffers(
+            @RequestParam String query,
+            Pageable pageable) {
+        return ResponseEntity.ok(offerService.searchOffers(query, pageable));
+    }
+
     @PostMapping
     public ResponseEntity<OfferResponseDTO> createOffer(@RequestBody @Valid OfferRequestDTO request) {
         return ResponseEntity.ok(offerService.createOffer(request));

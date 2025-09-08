@@ -23,4 +23,5 @@ public class ShopResponseDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String shopType;
+    private boolean activate;
 }
