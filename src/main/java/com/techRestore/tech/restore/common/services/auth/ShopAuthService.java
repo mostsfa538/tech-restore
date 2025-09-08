@@ -2,15 +2,15 @@ package com.techRestore.tech.restore.common.services.auth;
 
 import com.techRestore.tech.restore.common.dto.auth.LoginDto;
 import com.techRestore.tech.restore.common.dto.auth.ShopRegistrationRequest;
-import com.techRestore.tech.restore.common.exception.EmailAlreadyExistsException;
 import com.techRestore.tech.restore.common.exception.IllegalArgumentException;
 import com.techRestore.tech.restore.common.model.entities.Shop;
 import com.techRestore.tech.restore.common.model.entities.ShopAddress;
 import com.techRestore.tech.restore.common.security.config.CustomAuthenticationManager;
 import com.techRestore.tech.restore.common.security.jwt.JwtService;
 import com.techRestore.tech.restore.common.security.jwt.RefreshTokenService;
+import com.techRestore.tech.restore.common.services.emailVerification.EmailServices;
+import com.techRestore.tech.restore.common.utils.EmailValidatorService;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
-import com.techRestore.tech.restore.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,12 +37,12 @@ public class ShopAuthService {
 
     private final RefreshTokenService refreshTokenService;
 
-    private final UserRepository userRepository;
+    private final EmailServices emailServices;
+
+    private final EmailValidatorService emailValidatorService;
 
     public String register(ShopRegistrationRequest shopRegistrationRequest) {
-        if (shopRepository.existsByEmail(shopRegistrationRequest.email())
-                && userRepository.existsByEmail(shopRegistrationRequest.email()))
-            throw new EmailAlreadyExistsException("Emails is already exists");
+        emailValidatorService.validateUniqueEmail(shopRegistrationRequest.email());
 
         try {
             Shop shop = new Shop();
@@ -64,6 +64,7 @@ public class ShopAuthService {
 
             address.setShop(shop);
             shopRepository.save(shop);
+            emailServices.generateAndSendOtp(shop.getEmail());
 
             return "Registration successfully, wait for acceptance";
 

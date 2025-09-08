@@ -44,4 +44,9 @@ public class ShopPrincipal implements UserDetails {
     public String getUsername() {
         return shop.getEmail();
     }
+
+    @Override
+    public boolean isEnabled() {
+        return shop.isActivate();
+    }
 }
