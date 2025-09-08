@@ -63,7 +63,15 @@ public class CustomAuthenticationManager implements AuthenticationManager {
 
         try {
             UserDetails shopDetails = shopDetailsService.loadUserByUsername(username);
-            if (shopDetails != null && passwordEncoder.matches(password, shopDetails.getPassword())) {
+            if (shopDetails != null) {
+                if (!passwordEncoder.matches(password, shopDetails.getPassword())) {
+                    throw new BadCredentialsException("Invalid username or password");
+                }
+                if (!shopDetails.isEnabled()) {
+                    throw new ActivationException(
+                            "Account is not activated. Please check your email for activation instructions");
+                }
+
                 return new UsernamePasswordAuthenticationToken(
                         shopDetails,
                         password,
@@ -74,7 +82,14 @@ public class CustomAuthenticationManager implements AuthenticationManager {
         }
         try {
             UserDetails deliveryDetails = deliveryDetailsService.loadUserByUsername(username);
-            if (deliveryDetails != null && passwordEncoder.matches(password, deliveryDetails.getPassword())) {
+            if (deliveryDetails != null) {
+                if (!passwordEncoder.matches(password, deliveryDetails.getPassword())) {
+                    throw new BadCredentialsException("Invalid username or password");
+                }
+                if (!deliveryDetails.isEnabled()) {
+                    throw new ActivationException(
+                            "Account is not activated. Please check your email for activation instructions");
+                }
                 return new UsernamePasswordAuthenticationToken(
                         deliveryDetails,
                         password,

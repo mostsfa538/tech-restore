@@ -10,6 +10,7 @@ import com.techRestore.tech.restore.common.security.config.CustomAuthenticationM
 import com.techRestore.tech.restore.common.security.jwt.JwtService;
 import com.techRestore.tech.restore.common.security.jwt.RefreshTokenService;
 import com.techRestore.tech.restore.common.services.emailVerification.EmailServices;
+import com.techRestore.tech.restore.common.utils.EmailValidatorService;
 import com.techRestore.tech.restore.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -23,7 +24,6 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 @Service
 @RequiredArgsConstructor
@@ -34,8 +34,10 @@ public class AuthServices {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final EmailServices emailService;
+    private final EmailValidatorService emailValidatorService;
 
     public void register(UserRegistration userRegistration) {
+        emailValidatorService.validateUniqueEmail(userRegistration.email());
         try {
             User user = new User();
             user.setFirst_name(userRegistration.first_name());
@@ -46,12 +48,8 @@ public class AuthServices {
             user.setPhone(userRegistration.phone());
             user.setCreatedAt(LocalDateTime.now());
 
-            String otp = String.valueOf(new Random().nextInt(900000) + 100000);
-            user.setOptCode(otp);
-            user.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
-
             userRepository.save(user);
-            emailService.sendOtpEmail(user.getEmail());
+            emailService.generateAndSendOtp(user.getEmail());
 
         } catch (Exception e) {
             System.err.println("Error saving user: " + e.getMessage());

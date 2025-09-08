@@ -1,6 +1,7 @@
 package com.techRestore.tech.restore.common.model.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.techRestore.tech.restore.common.interfaces.OtpVerifiable;
 import com.techRestore.tech.restore.common.model.enums.ContractType;
 import com.techRestore.tech.restore.common.model.enums.ShopType;
 
@@ -16,7 +17,7 @@ import java.util.UUID;
 @Entity
 @Data
 @Table(name = "shop")
-public class Shop {
+public class Shop implements OtpVerifiable {
     @Id
     @GeneratedValue
     @Column(name = "id", nullable = false, unique = true)
@@ -36,6 +37,9 @@ public class Shop {
 
     @Column(nullable = false)
     private Boolean verified = false;
+
+    @Column(name = "activate")
+    private boolean activate = false;
 
     @Column(name = "phone", length = 20)
     private String phone;
@@ -135,4 +139,18 @@ public class Shop {
         updatedAt = LocalDateTime.now();
     }
 
+    @Override
+    public String getDisplayName() {
+        return name;
+    }
+
+    @Override
+    public String getEntityType() {
+        return "Shop";
+    }
+
+    @Override
+    public void setActivate(boolean activate) {
+        this.activate = activate;
+    }
 }

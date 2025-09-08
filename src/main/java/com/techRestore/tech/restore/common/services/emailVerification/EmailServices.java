@@ -14,9 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.techRestore.tech.restore.common.exception.ExpiredOtpException;
 import com.techRestore.tech.restore.common.exception.InvalidOtpException;
-import com.techRestore.tech.restore.common.exception.NotFoundException;
-import com.techRestore.tech.restore.common.model.entities.User;
-import com.techRestore.tech.restore.user.repository.UserRepository;
+import com.techRestore.tech.restore.common.interfaces.OtpVerifiable;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,30 +22,40 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EmailServices {
   private final JavaMailSender mailSender;
-  private final UserRepository userRepository;
+  private final EntityRepositoryService entityRepositoryService;
   private final PasswordEncoder passwordEncoder;
 
   @Value("${spring.mail.username}")
   private String fromEmail;
 
+  public void generateAndSendOtp(String email) {
+    OtpVerifiable entity = entityRepositoryService.findByEmail(email);
+
+    String otp = String.valueOf(new Random().nextInt(900000) + 100000);
+    entity.setOptCode(otp);
+    entity.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
+
+    entityRepositoryService.save(entity);
+
+    sendOtpEmail(email);
+  }
+
   public void sendOtpEmail(String email) {
     try {
-      User user = userRepository.findByEmail(email);
-      if (user == null) {
-        throw new NotFoundException("Email is not exist");
-      }
-      if (user.getOptCode() == null || user.getOptCode().isEmpty()) {
-        throw new IllegalArgumentException("OTP not generated for user");
+      OtpVerifiable entity = entityRepositoryService.findByEmail(email);
+
+      if (entity.getOptCode() == null || entity.getOptCode().isEmpty()) {
+        throw new IllegalArgumentException("OTP not generated for " + entity.getEntityType());
       }
 
       MimeMessage mimeMessage = mailSender.createMimeMessage();
       MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
 
       helper.setFrom(fromEmail);
-      helper.setTo(user.getEmail());
+      helper.setTo(entity.getEmail());
       helper.setSubject("Email Verification - TechRestore");
 
-      String emailBody = createHtmlEmailContent(user);
+      String emailBody = createHtmlEmailContent(entity);
       helper.setText(emailBody, true);
 
       mailSender.send(mimeMessage);
@@ -59,10 +67,9 @@ public class EmailServices {
     }
   }
 
-  private String createHtmlEmailContent(User user) {
+  private String createHtmlEmailContent(OtpVerifiable entity) {
     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("MMM dd, yyyy 'at' HH:mm");
-    String expiryTime = user.getOtpExpiry().format(formatter);
-    String lastName = user.getLast_name() != null ? user.getLast_name() : "";
+    String expiryTime = entity.getOtpExpiry().format(formatter);
 
     return """
         <!DOCTYPE html>
@@ -127,8 +134,8 @@ public class EmailServices {
               <h1>TechRestore</h1>
             </div>
             <div class="content">
-              <p>Hello <strong>%s %s</strong>,</p>
-              <p>Thank you for registering with <strong>TechRestore</strong>!</p>
+              <p>Hello <strong>%s</strong>,</p>
+              <p>Thank you for registering with <strong>TechRestore</strong> as a %s!</p>
               <p>Your verification code is:</p>
               <div class="code">%s</div>
               <p>This code will expire on: <strong>%s</strong></p>
@@ -140,7 +147,11 @@ public class EmailServices {
           </div>
         </body>
         </html>
-        """.formatted(user.getFirst_name(), lastName, user.getOptCode(), expiryTime);
+        """.formatted(
+        entity.getDisplayName(),
+        entity.getEntityType(),
+        entity.getOptCode(),
+        expiryTime);
   }
 
   public void verifyOtp(String email, String otp) {
@@ -148,65 +159,39 @@ public class EmailServices {
       throw new IllegalArgumentException("Email and OTP cannot be null");
     }
 
-    User user = userRepository.findByEmail(email);
-    if (user == null) {
-      throw new NotFoundException("Email is not exist");
+    OtpVerifiable entity = entityRepositoryService.findByEmail(email);
+
+    if (!otp.equals(entity.getOptCode())) {
+      throw new InvalidOtpException("OTP code is not correct");
     }
 
-    if (!otp.equals(user.getOptCode())) {
-      throw new InvalidOtpException("Opt code is not correct");
-    }
-
-    if (user.getOtpExpiry() == null || LocalDateTime.now().isAfter(user.getOtpExpiry())) {
+    if (entity.getOtpExpiry() == null || LocalDateTime.now().isAfter(entity.getOtpExpiry())) {
       throw new ExpiredOtpException("Code is expired");
     }
 
-    user.setActivate(true);
-    user.setOptCode(null);
-    user.setOtpExpiry(null);
+    entity.setActivate(true);
+    entity.setOptCode(null);
+    entity.setOtpExpiry(null);
 
-    userRepository.save(user);
+    entityRepositoryService.save(entity);
   }
 
   public void resendOtp(String email) {
-    User user = userRepository.findByEmail(email);
-    if (user == null) {
-      throw new NotFoundException("Email is not exist");
-    }
-
-    String otp = String.valueOf(new Random().nextInt(900000) + 100000);
-    user.setOptCode(otp);
-    user.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
-
-    userRepository.save(user);
-    sendOtpEmail(user.getEmail());
+    generateAndSendOtp(email);
   }
 
   public void forgotPassword(String email) {
-    User user = userRepository.findByEmail(email);
-    if (user == null) {
-      throw new NotFoundException("Email does not exist");
-    }
-
-    String otp = String.valueOf(new Random().nextInt(900000) + 100000);
-    user.setOptCode(otp);
-    user.setOtpExpiry(LocalDateTime.now().plusMinutes(5));
-
-    userRepository.save(user);
-    sendOtpEmail(user.getEmail());
+    generateAndSendOtp(email);
   }
 
   public void resetPassword(String email, String otp, String newPassword, String confirmPassword) {
-    User user = userRepository.findByEmail(email);
-    if (user == null) {
-      throw new NotFoundException("Email does not exist");
-    }
+    OtpVerifiable entity = entityRepositoryService.findByEmail(email);
 
-    if (user.getOptCode() == null || !user.getOptCode().equals(otp)) {
+    if (entity.getOptCode() == null || !entity.getOptCode().equals(otp)) {
       throw new InvalidOtpException("Invalid OTP");
     }
 
-    if (user.getOtpExpiry() == null || LocalDateTime.now().isAfter(user.getOtpExpiry())) {
+    if (entity.getOtpExpiry() == null || LocalDateTime.now().isAfter(entity.getOtpExpiry())) {
       throw new ExpiredOtpException("OTP expired");
     }
 
@@ -214,18 +199,10 @@ public class EmailServices {
       throw new IllegalArgumentException("Passwords do not match");
     }
 
-    user.setPassword(passwordEncoder.encode(newPassword));
-    user.setOptCode(null);
-    user.setOtpExpiry(null);
-    userRepository.save(user);
+    entity.setPassword(passwordEncoder.encode(newPassword));
+    entity.setOptCode(null);
+    entity.setOtpExpiry(null);
+
+    entityRepositoryService.save(entity);
   }
-
-  // public OtpVerifiable findByEmail(String email) {
-  // return userRepository.findByEmail(email)
-  // .map(u -> (OtpVerifiable) u)
-  // .or(() -> shopRepository.findByEmail(email).map(s -> (OtpVerifiable) s))
-  // .or(() -> deliveryRepository.findByEmail(email).map(d -> (OtpVerifiable) d))
-  // .orElseThrow(() -> new NotFoundException("Email not found: " + email));
-  // }
-
 }
