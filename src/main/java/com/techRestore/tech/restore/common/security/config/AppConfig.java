@@ -44,10 +44,9 @@ public class AppConfig {
                 .cors(corsConfig -> corsConfig.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/login/oauth2/code/**", "/oauth2/authorization/**").permitAll()
-                        .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh",
+                        .requestMatchers("/api/auth/register/user", "/api/auth/login", "/api/auth/refresh",
                                 "/api/auth/verify-email", "/api/auth/resend-otp", "api/auth/forgot-password",
-                                "api/auth/reset-password",
-                                "/api/auth/shops/**")
+                                "api/auth/reset-password")
                         .permitAll()
                         .requestMatchers(
                                 "/api/auth/delivery/register",
