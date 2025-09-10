@@ -57,7 +57,7 @@ public class AppConfig {
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/payments/**").hasAnyRole("GUEST")
                         .requestMatchers("/shops/connected").hasRole("GUEST")
-                        .requestMatchers("/messages/**").hasAnyRole("GUEST", "SHOP_OWNER")
+                        .requestMatchers("/api/chats/**").hasAnyRole("GUEST", "SHOP_OWNER")
                         .requestMatchers("/api/webhook/**").permitAll()
                         .requestMatchers("/api/AllShops").authenticated()
                         .requestMatchers("/api/delivery/**").hasAnyRole("DELIVERY")
@@ -68,7 +68,9 @@ public class AppConfig {
                         .requestMatchers("/api/shops/products/**", "/api/shop/offers/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/shops/repair-request/**").hasAnyRole("REPAIRER")
                         .requestMatchers("/api/users/**", "/api/products/**").hasAnyRole("GUEST")
-                        .requestMatchers("/api/reviews/**").hasAnyRole("GUEST", "SHOP_OWNER"))
+                        .requestMatchers("/api/reviews/**").hasAnyRole("GUEST", "SHOP_OWNER")
+                        .anyRequest().authenticated())
+                        
 
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/oauth2/authorization/google")

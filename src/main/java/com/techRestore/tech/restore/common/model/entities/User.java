@@ -40,13 +40,6 @@ public class User implements OtpVerifiable {
     @Column(name = "activate")
     private boolean activate = false;
 
-    // @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // private List<Chat> chats;
-
-    // @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    // @JsonIgnore
-    // private List<Message> sentMessages;
-
     @Enumerated(EnumType.STRING)
     private Role role = Role.GUEST;
 
