@@ -1,6 +1,7 @@
 package com.techRestore.tech.restore.common.repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,4 +36,9 @@ public interface RefreshTokenRepository extends JpaRepository<RefreshToken, UUID
 
     boolean existsByUsername(String username);
 
+    void deleteByIp(String ipAddress);
+
+    List<RefreshToken> findByUsernameAndExpiryDateAfter(String username, LocalDateTime now);
+
+    void deleteAllByUsername(String username);
 }

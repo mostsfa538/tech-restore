@@ -66,9 +66,9 @@ public class AuthController extends BaseController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, Object>> login(@RequestBody @Valid LoginDto loginDto,
+    public ResponseEntity<Map<String, Object>> login(@RequestBody @Valid LoginDto loginDto, HttpServletRequest request,
             HttpServletResponse response) {
-        return ResponseEntity.ok(authServices.login(loginDto, response));
+        return ResponseEntity.ok(authServices.login(loginDto, request, response));
     }
 
     @PostMapping("/refresh")
@@ -77,17 +77,25 @@ public class AuthController extends BaseController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
-        authServices.logout(request, response);
-        return successResponse("Logged out successfully");
+    public ResponseEntity<Map<String, String>> logout(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            authServices.logout(request, response);
+            return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Logout failed"));
+        }
     }
 
     @PostMapping("/logout-all")
-    public ResponseEntity<String> logoutAllSessions(@RequestBody @Valid LoginDto loginDto,
-            HttpServletResponse response) {
-        authServices.logoutFromAllDevices(loginDto.email(), response);
-        return successResponse("Logged out from all sessions successfully");
+    public ResponseEntity<String> logoutAllSessions(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            authServices.logoutFromAllDevices(request, response);
+            return successResponse("Logged out from all sessions successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Logout failed");
+        }
     }
+
 
     @GetMapping("/get-code")
     public ResponseEntity<Void> getCode(@RequestBody @Valid EmailVerification emailVerification) {

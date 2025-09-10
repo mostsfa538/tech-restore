@@ -21,11 +21,13 @@ import com.techRestore.tech.restore.user.service.user.UserRegistrationStrategy;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -57,7 +59,7 @@ public class AuthServices {
         return unifiedRegistrationService.register(shopRegistrationRequest, shopRegistrationStrategy);
     }
 
-    public Map<String, Object> login(LoginDto loginDto, HttpServletResponse response) {
+    public Map<String, Object> login(LoginDto loginDto, HttpServletRequest request, HttpServletResponse response) {
         try {
             Authentication authentication = customAuthenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password()));
@@ -65,7 +67,7 @@ public class AuthServices {
             String accessToken = jwtService.generateAccessToken(authentication);
             String refreshToken = jwtService.generateRefreshToken(authentication);
 
-            refreshTokenService.saveRefreshToken(authentication.getName(), refreshToken);
+            refreshTokenService.saveRefreshToken(authentication.getName(), refreshToken, request);
 
             cookieUtil.addRefreshTokenCookie(response, refreshToken);
 
@@ -111,7 +113,7 @@ public class AuthServices {
 
             String username = jwtService.extractClaim(refreshToken, claims -> claims.get("username", String.class));
 
-            if (!refreshTokenService.isValidRefreshToken(username, refreshToken)) {
+            if (!refreshTokenService.isValidRefreshToken(username, refreshToken, request)) {
                 System.out.println(response);
                 cookieUtil.deleteRefreshTokenCookie(response);
                 throw new IllegalArgumentException("Invalid refresh token");
@@ -130,7 +132,7 @@ public class AuthServices {
             String newAccessToken = jwtService.generateAccessToken(authentication);
             String newRefreshToken = jwtService.generateRefreshToken(authentication);
 
-            refreshTokenService.saveRefreshToken(username, newRefreshToken);
+            refreshTokenService.saveRefreshToken(username, newRefreshToken, request);
             cookieUtil.addRefreshTokenCookie(response, newRefreshToken);
 
             return new TokenResponse(
@@ -145,29 +147,47 @@ public class AuthServices {
     }
 
     public void logout(HttpServletRequest request, HttpServletResponse response) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
         try {
             Optional<String> refreshTokenOpt = cookieUtil.getRefreshTokenFromCookie(request);
-
             if (refreshTokenOpt.isPresent()) {
-                String refreshToken = refreshTokenOpt.get();
-                String username = jwtService.extractClaim(refreshToken, claims -> claims.get("username", String.class));
-
-                refreshTokenService.deleteRefreshToken(username);
+                refreshTokenService.deleteRefreshTokenByToken(refreshTokenOpt.get());
             }
 
+            HttpSession session = request.getSession(false);
+            if (session != null) {
+                session.invalidate();
+            }
+
+            SecurityContextHolder.clearContext();
             cookieUtil.deleteRefreshTokenCookie(response);
 
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            SecurityContextHolder.clearContext();
             cookieUtil.deleteRefreshTokenCookie(response);
+            throw new RuntimeException("Logout failed", e);
         }
     }
 
-    public void logoutFromAllDevices(String username, HttpServletResponse response) {
-        try {
-            refreshTokenService.deleteRefreshToken(username);
-            cookieUtil.deleteRefreshTokenCookie(response);
-        } catch (Exception e) {
+    public void logoutFromAllDevices(HttpServletRequest request, HttpServletResponse response) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new IllegalStateException("User not authenticated");
         }
+
+        String username = auth.getName();
+
+        refreshTokenService.deleteAllByUsername(username);
+
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            session.invalidate();
+        }
+
+        SecurityContextHolder.clearContext();
+
+        cookieUtil.deleteRefreshTokenCookie(response);
+
     }
 }

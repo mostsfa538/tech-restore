@@ -32,6 +32,12 @@ public class RefreshToken {
     private String username;
 
     @Column(nullable = false)
+    private String ip;
+
+    @Column(nullable = false)
+    private String userAgent;
+
+    @Column(nullable = false)
     private LocalDateTime expiryDate;
 
     @Column(nullable = false)

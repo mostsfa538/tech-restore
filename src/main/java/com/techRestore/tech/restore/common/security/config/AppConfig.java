@@ -46,6 +46,7 @@ public class AppConfig {
                         .requestMatchers("/login/oauth2/code/**", "/oauth2/authorization/**").permitAll()
                         .requestMatchers("/api/auth/register/user", "/api/auth/login", "/api/auth/refresh",
                                 "/api/auth/verify-email", "/api/auth/resend-otp", "api/auth/forgot-password",
+                                "/api/auth/logout",
                                 "api/auth/reset-password")
                         .permitAll()
                         .requestMatchers(
@@ -62,7 +63,7 @@ public class AppConfig {
                         .requestMatchers("/api/delivery/**").hasAnyRole("DELIVERY")
                         .requestMatchers("/api/shops/orders/control/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/cart/**").hasAnyRole("GUEST")
-                        .requestMatchers("/api/auth/home", "/api/auth/logout").authenticated()
+                        .requestMatchers("/api/auth/home", "/api/auth/logout", "/api/auth/logout-all").authenticated()
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN")
                         .requestMatchers("/api/shops/products/**", "/api/shop/offers/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/shops/repair-request/**").hasAnyRole("REPAIRER")
