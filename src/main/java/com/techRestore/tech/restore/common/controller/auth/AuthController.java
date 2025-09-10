@@ -11,6 +11,7 @@ import com.techRestore.tech.restore.common.dto.email.EmailVerification;
 import com.techRestore.tech.restore.common.dto.email.ResendOpt;
 import com.techRestore.tech.restore.common.services.auth.AuthServices;
 import com.techRestore.tech.restore.common.services.emailVerification.EmailServices;
+import com.techRestore.tech.restore.common.utils.CookieUtil;
 import com.techRestore.tech.restore.delivery.dto.DeliveryRegistration;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +20,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +33,7 @@ public class AuthController extends BaseController {
 
     private final AuthServices authServices;
     private final EmailServices emailServices;
+    private final CookieUtil cookieUtil;
 
     @PostMapping("/register/user")
     public ResponseEntity<Map<String, String>> registerUser(@Valid @RequestBody UserRegistration userRegistration) {
@@ -42,27 +45,17 @@ public class AuthController extends BaseController {
     @PostMapping("/register/delivery")
     public ResponseEntity<Map<String, String>> registerDelivery(
             @Valid @RequestBody DeliveryRegistration deliveryRegistration) {
-        try {
-            String deliveryId = authServices.registerDelivery(deliveryRegistration);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(Map.of("message", "Delivery registered successfully", "delivery_id", deliveryId));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
-        }
+        String deliveryId = authServices.registerDelivery(deliveryRegistration);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("message", "Delivery registered successfully", "delivery_id", deliveryId));
     }
 
     @PostMapping("/register/shop")
     public ResponseEntity<Map<String, String>> registerShop(
             @Valid @RequestBody ShopRegistrationRequest shopRegistrationRequest) {
-        try {
-            String result = authServices.registerShop(shopRegistrationRequest);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(Map.of("message", result));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
-        }
+        String result = authServices.registerShop(shopRegistrationRequest);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("message", result));
     }
 
     @PostMapping("/login")
@@ -71,19 +64,15 @@ public class AuthController extends BaseController {
         return ResponseEntity.ok(authServices.login(loginDto, request, response));
     }
 
-    @PostMapping("/refresh")
+    @PostMapping("/refresh-token")
     public ResponseEntity<TokenResponse> refreshToken(HttpServletRequest request, HttpServletResponse response) {
         return successResponse(authServices.refreshToken(request, response));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(HttpServletRequest request, HttpServletResponse response) {
-        try {
             authServices.logout(request, response);
             return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body(Map.of("error", "Logout failed"));
-        }
     }
 
     @PostMapping("/logout-all")
@@ -95,7 +84,6 @@ public class AuthController extends BaseController {
             return ResponseEntity.status(500).body("Logout failed");
         }
     }
-
 
     @GetMapping("/get-code")
     public ResponseEntity<Void> getCode(@RequestBody @Valid EmailVerification emailVerification) {
@@ -129,5 +117,14 @@ public class AuthController extends BaseController {
                 request.newPassword(),
                 request.confirmPassword());
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/test-cookie")
+    public ResponseEntity<?> testCookie(HttpServletRequest request) {
+        Optional<String> refreshToken = cookieUtil.getRefreshTokenFromCookie(request);
+        return ResponseEntity.ok(Map.of(
+                "hasCookie", refreshToken.isPresent(),
+                "cookieValue", refreshToken.orElse("none")
+        ));
     }
 }

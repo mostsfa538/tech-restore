@@ -20,16 +20,16 @@ public class CookieUtil {
     @Value("${app.cookie.secure:true}")
     private boolean isSecure;
 
-    @Value("${jwt.refresh-token.expiration:604800}") // 7 days in seconds
+    @Value("${jwt.refresh-token.expiration:604800}")
     private int refreshTokenExpirationSeconds;
 
     public void addRefreshTokenCookie(HttpServletResponse response, String refreshToken) {
         Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, refreshToken);
-        cookie.setHttpOnly(true); // Prevent XSS attacks
-        cookie.setSecure(isSecure); // Only send over HTTPS in production
-        cookie.setPath("/"); // Available for all paths
-        cookie.setMaxAge(refreshTokenExpirationSeconds); // 7 days
-        cookie.setAttribute("SameSite", "Strict"); // CSRF protection
+        cookie.setHttpOnly(true);
+        cookie.setSecure(isSecure);
+        cookie.setPath("/");
+        cookie.setMaxAge(refreshTokenExpirationSeconds);
+        cookie.setAttribute("SameSite", "Strict");
 
         if (!cookieDomain.isEmpty()) {
             cookie.setDomain(cookieDomain);
@@ -54,7 +54,7 @@ public class CookieUtil {
         cookie.setHttpOnly(true);
         cookie.setSecure(isSecure);
         cookie.setPath("/");
-        cookie.setMaxAge(0); // Delete immediately
+        cookie.setMaxAge(0);
 
         if (!cookieDomain.isEmpty()) {
             cookie.setDomain(cookieDomain);

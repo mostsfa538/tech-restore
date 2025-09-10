@@ -44,9 +44,9 @@ public class AppConfig {
                 .cors(corsConfig -> corsConfig.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers("/login/oauth2/code/**", "/oauth2/authorization/**").permitAll()
-                        .requestMatchers("/api/auth/register/user", "/api/auth/login", "/api/auth/refresh",
+                        .requestMatchers("/api/auth/register/user", "/api/auth/login",
                                 "/api/auth/verify-email", "/api/auth/resend-otp", "api/auth/forgot-password",
-                                "/api/auth/logout",
+                                "/api/auth/test-cookie",
                                 "api/auth/reset-password")
                         .permitAll()
                         .requestMatchers(
@@ -63,7 +63,8 @@ public class AppConfig {
                         .requestMatchers("/api/delivery/**").hasAnyRole("DELIVERY")
                         .requestMatchers("/api/shops/orders/control/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/cart/**").hasAnyRole("GUEST")
-                        .requestMatchers("/api/auth/home", "/api/auth/logout", "/api/auth/logout-all").authenticated()
+                        .requestMatchers("/api/auth/home", "/api/auth/logout", "/api/auth/logout-all",
+                                "/api/auth/refresh-token").authenticated()
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN")
                         .requestMatchers("/api/shops/products/**", "/api/shop/offers/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/shops/repair-request/**").hasAnyRole("REPAIRER")
@@ -94,7 +95,7 @@ public class AppConfig {
         corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
         corsConfiguration.setExposedHeaders(List.of("Authorization"));
         corsConfiguration.setMaxAge(3600L); // Duration (in seconds) that the browser can cache the CORS preflight
-                                            // response (here: 1 hour)
+        // response (here: 1 hour)
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;

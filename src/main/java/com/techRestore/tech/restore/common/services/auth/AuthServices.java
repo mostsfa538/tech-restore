@@ -60,7 +60,6 @@ public class AuthServices {
     }
 
     public Map<String, Object> login(LoginDto loginDto, HttpServletRequest request, HttpServletResponse response) {
-        try {
             Authentication authentication = customAuthenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password()));
 
@@ -90,10 +89,6 @@ public class AuthServices {
             }
 
             return responseData;
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-            throw new IllegalArgumentException("Invalid User");
-        }
     }
 
     public TokenResponse refreshToken(HttpServletRequest request, HttpServletResponse response) {
@@ -113,7 +108,7 @@ public class AuthServices {
 
             String username = jwtService.extractClaim(refreshToken, claims -> claims.get("username", String.class));
 
-            if (!refreshTokenService.isValidRefreshToken(username, refreshToken, request)) {
+            if (!refreshTokenService.isValidRefreshToken(username, refreshToken)) {
                 System.out.println(response);
                 cookieUtil.deleteRefreshTokenCookie(response);
                 throw new IllegalArgumentException("Invalid refresh token");
@@ -130,10 +125,6 @@ public class AuthServices {
             Authentication authentication = authenticationOpt.get();
 
             String newAccessToken = jwtService.generateAccessToken(authentication);
-            String newRefreshToken = jwtService.generateRefreshToken(authentication);
-
-            refreshTokenService.saveRefreshToken(username, newRefreshToken, request);
-            cookieUtil.addRefreshTokenCookie(response, newRefreshToken);
 
             return new TokenResponse(
                     newAccessToken,
@@ -147,13 +138,9 @@ public class AuthServices {
     }
 
     public void logout(HttpServletRequest request, HttpServletResponse response) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
         try {
             Optional<String> refreshTokenOpt = cookieUtil.getRefreshTokenFromCookie(request);
-            if (refreshTokenOpt.isPresent()) {
-                refreshTokenService.deleteRefreshTokenByToken(refreshTokenOpt.get());
-            }
+            refreshTokenOpt.ifPresent(refreshTokenService::deleteRefreshTokenByToken);
 
             HttpSession session = request.getSession(false);
             if (session != null) {
