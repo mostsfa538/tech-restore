@@ -26,4 +26,31 @@ public class EmailValidatorService {
             throw new EmailAlreadyExistsException("Email is already registered: " + email);
         }
     }
+
+    public void validateEmailExists(String email) {
+        boolean exists = userRepository.existsByEmail(email) ||
+                shopRepository.existsByEmail(email) ||
+                deliveryRepository.existsByEmail(email);
+
+        if (!exists) {
+            throw new IllegalArgumentException("Email not found: " + email);
+        }
+    }
+
+    public boolean emailExists(String email) {
+        return userRepository.existsByEmail(email) ||
+                shopRepository.existsByEmail(email) ||
+                deliveryRepository.existsByEmail(email);
+    }
+
+    public String getEntityTypeForEmail(String email) {
+        if (userRepository.existsByEmail(email)) {
+            return "USER";
+        } else if (shopRepository.existsByEmail(email)) {
+            return "SHOP";
+        } else if (deliveryRepository.existsByEmail(email)) {
+            return "DELIVERY";
+        }
+        return null;
+    }
 }

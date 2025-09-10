@@ -132,6 +132,18 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
         String path = request.getServletPath();
-        return path.startsWith("/api/auth/");
+        List<String> publicPaths = Arrays.asList(
+                "/api/auth/login",
+                "/api/auth/register/user",
+                "/api/auth/register/shop",
+                "/api/auth/register/delivery",
+                "/api/auth/verify-email",
+                "/api/auth/resend-otp",
+                "/api/auth/forgot-password",
+                "/api/auth/reset-password",
+                "/oauth2/authorization/google",
+                "/login/oauth2/code/google"
+        );
+        return publicPaths.stream().anyMatch(path::startsWith);
     }
 }
