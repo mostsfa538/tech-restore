@@ -47,12 +47,9 @@ public class AppConfig {
                         .requestMatchers("/api/auth/register/user", "/api/auth/login",
                                 "/api/auth/verify-email", "/api/auth/resend-otp", "api/auth/forgot-password",
                                 "/api/auth/test-cookie",
+                                "/api/auth/register/shop",
+                                "/api/auth/register/delivery",
                                 "api/auth/reset-password")
-                        .permitAll()
-                        .requestMatchers(
-                                "/api/auth/delivery/register",
-                                "/api/auth/delivery/login",
-                                "/api/auth/delivery/refresh")
                         .permitAll()
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/payments/**").hasAnyRole("GUEST")
