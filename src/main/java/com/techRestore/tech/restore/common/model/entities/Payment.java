@@ -41,6 +41,7 @@ public class Payment {
 
     @Column(name = "transaction_id", length = 255)
     private String transactionId;
+    
 
     @Column(name = "details", columnDefinition = "TEXT")
     private String details;

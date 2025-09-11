@@ -38,4 +38,8 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     Optional<Payment> findByTransactionIdForUpdate(@Param("transactionId") String transactionId);
 
     Optional<Payment> findByRepairRequestId(UUID repairRequestId);
+
+    List<Payment> findByShopIdAndPaymentStatus(UUID shopId, PaymentStatus paymentStatus);
+
+    List<Payment> findByShopIdAndPaymentTypeAndPaymentStatus(UUID shopId, PaymentType paymentType, PaymentStatus paymentStatus);
 }

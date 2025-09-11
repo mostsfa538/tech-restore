@@ -4,8 +4,10 @@ import com.techRestore.tech.restore.common.controller.BaseController;
 import com.techRestore.tech.restore.common.dto.address.AddressRequest;
 import com.techRestore.tech.restore.common.dto.address.AddressResponse;
 import com.techRestore.tech.restore.common.dto.address.AddressUpdate;
+import com.techRestore.tech.restore.shop.dto.paymentReports.ShopFinancialReportDto;
 import com.techRestore.tech.restore.shop.dto.shop.ShopResponseDto;
 import com.techRestore.tech.restore.shop.dto.shop.ShopUpdateRequest;
+import com.techRestore.tech.restore.shop.service.ShopFinancialService;
 import com.techRestore.tech.restore.shop.service.ShopServices;
 import com.techRestore.tech.restore.user.dto.reviews.ReviewResponseDTO;
 
@@ -13,8 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -22,6 +26,8 @@ import java.util.UUID;
 public class ShopController extends BaseController {
     @Autowired
     private ShopServices shopServices;
+
+    @Autowired ShopFinancialService shopFinancialService;
 
     @GetMapping("/{shopId}")
     public ResponseEntity<ShopResponseDto> getShopById(@PathVariable UUID shopId) {
@@ -60,5 +66,23 @@ public class ShopController extends BaseController {
     public ResponseEntity<Page<ReviewResponseDTO>> getReviewsByShopId(
             Pageable pageable) {
         return successResponse(shopServices.getReviewsByShopId(pageable));
+    }
+
+    @GetMapping("/payments/financial-report")
+    @PreAuthorize("hasRole('SHOP_OWNER')")
+    public ResponseEntity<ShopFinancialReportDto> getFinancialReport() {
+        return successResponse(shopFinancialService.getFinancialReport());
+    }
+
+    @GetMapping("/payments/repairs")
+    @PreAuthorize("hasRole('SHOP_OWNER')")
+    public ResponseEntity<List<ShopFinancialReportDto.TransactionDto>> getRepairPayments() {
+        return successResponse(shopFinancialService.getRepairPayments());
+    }
+
+    @GetMapping("/payments/orders")
+    @PreAuthorize("hasRole('SHOP_OWNER')")
+    public ResponseEntity<List<ShopFinancialReportDto.TransactionDto>> getOrderPayments() {
+        return successResponse(shopFinancialService.getOrderPayments());
     }
 }
