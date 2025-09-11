@@ -3,9 +3,7 @@ package com.techRestore.tech.restore.user.service.order;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import com.techRestore.tech.restore.common.exception.ActivationException;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
@@ -77,7 +75,6 @@ public class OrderService {
             throw new IllegalArgumentException("Cart is empty");
         }
 
-        // ✅ Ensure all cart items belong to the same shop
         UUID shopId = cartItems.get(0).getShopId();
         boolean allSameShop = cartItems.stream().allMatch(ci -> ci.getShopId().equals(shopId));
         if (!allSameShop) {
@@ -97,6 +94,7 @@ public class OrderService {
         order.setTotalPrice(totalPrice);
         order.setStatus(OrderStatus.PENDING);
         order.setPaymentMethod(request.getPaymentMethod());
+        order.setShopId(shopId);
         orderRepository.save(order);
 
         List<OrderItem> orderItems = new ArrayList<>();
@@ -114,7 +112,6 @@ public class OrderService {
         }
         orderItemRepository.saveAll(orderItems);
 
-        // ✅ Create Payment row with Shop
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
         Shop shop = shopRepository.findById(shopId)
@@ -122,7 +119,7 @@ public class OrderService {
 
         Payment payment = new Payment();
         payment.setUser(user);
-        payment.setShop(shop); // ✅ now like createRepairRequest
+        payment.setShop(shop);
         payment.setOrderId(order.getId());
         payment.setAmount(totalPrice);
         payment.setPaymentMethod(request.getPaymentMethod());
@@ -132,7 +129,6 @@ public class OrderService {
 
         orderPaymentRepository.save(payment);
 
-        // Notify the shop
         notificationService.sendToShop(shopId, "New order received: Order ID " + order.getId());
 
         cartItemRepository.deleteAll(cartItems);
