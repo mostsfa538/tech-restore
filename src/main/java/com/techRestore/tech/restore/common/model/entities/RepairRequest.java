@@ -26,6 +26,9 @@ public class RepairRequest {
     @Column(name = "shop_id")
     private UUID shopId;
 
+    @Column(name = "delivery_id")
+    private UUID deliveryId;
+
     @Column(name = "device_category", nullable = false)
     private UUID categoryId;
 

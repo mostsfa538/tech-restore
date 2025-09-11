@@ -65,6 +65,8 @@ public class NotificationService {
         }
     }
 
+    
+
     private void addToHistory(String currentHistory, String message, Consumer<String> setter) {
         try {
             ArrayNode arrayNode;
