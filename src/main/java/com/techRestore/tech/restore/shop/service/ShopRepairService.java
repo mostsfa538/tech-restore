@@ -14,6 +14,7 @@ import com.techRestore.tech.restore.common.model.entities.RepairRequest;
 import com.techRestore.tech.restore.common.model.entities.Shop;
 import com.techRestore.tech.restore.common.model.enums.RepairStatus;
 import com.techRestore.tech.restore.common.services.BaseService;
+import com.techRestore.tech.restore.common.services.notification.NotificationService;
 import com.techRestore.tech.restore.common.utils.DTOConverter;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
 import com.techRestore.tech.restore.user.dto.repair.RepairPriceUpdateDto;
@@ -25,10 +26,13 @@ import com.techRestore.tech.restore.user.repository.RepairRequestRepository;
 public class ShopRepairService extends BaseService<RepairRequest, UUID> {
 
     private final ShopRepository shopRepository;
+    private final NotificationService notificationService;
 
-    public ShopRepairService(RepairRequestRepository repairRequestRepository, ShopRepository shopRepository) {
+    public ShopRepairService(RepairRequestRepository repairRequestRepository, ShopRepository shopRepository,
+                             NotificationService notificationService) {
         super(repairRequestRepository);
         this.shopRepository = shopRepository;
+        this.notificationService=notificationService;
     }
 
     /**
@@ -57,8 +61,15 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
 
     public void setStatus(UUID id, RepairStatusDto repairStatusDto) {
         RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
-        repairRequest.setStatus(repairStatusDto.status());
+        RepairStatus newStatus = repairStatusDto.status();
+        repairRequest.setStatus(newStatus);
         repository.save(repairRequest);
+
+        if (newStatus == RepairStatus.REPAIR_COMPLETED && repairRequest.getDeliveryAddress() != null) {
+            notificationService.sendToAllDelivery(
+                    "Repair request " + id + " is now REPAIR_COMPLETED and ready for delivery."
+            );
+        }
     }
 
     public RepairRequestDto getRepairRequestById(UUID id) {

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import com.techRestore.tech.restore.common.model.entities.RepairRequest;
 import com.techRestore.tech.restore.common.model.enums.RepairStatus;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,5 +24,9 @@ public interface RepairRequestRepository extends JpaRepository<RepairRequest, UU
     Optional<RepairRequest> findByIdAndShopId(UUID id, UUID shopId);
 
     Page<RepairRequest> findByShopIdAndStatus(UUID shopId, RepairStatus status, Pageable pageable);
+
+    Page<RepairRequest> findByStatusInAndDeliveryIdIsNull(List<RepairStatus> statuses, Pageable pageable);
+
+    Page<RepairRequest> findByDeliveryId(UUID deliveryId, Pageable pageable);
 
 }
