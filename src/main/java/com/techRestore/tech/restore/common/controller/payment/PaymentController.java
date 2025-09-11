@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.core.Authentication;
 
+import com.techRestore.tech.restore.common.controller.BaseController;
 import com.techRestore.tech.restore.common.dto.payment.PaymentInitiationDto;
 import com.techRestore.tech.restore.common.exception.ActivationException;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
@@ -25,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/payments")
-public class PaymentController {
+public class PaymentController extends BaseController{
 
     private final UserRepository userRepository;
     private final PaymentService paymentService;
@@ -52,17 +53,14 @@ public class PaymentController {
     @PostMapping("/order/card/{orderId}")
     public ResponseEntity<PaymentInitiationDto> initiateCardOrderPayment(@PathVariable UUID orderId) {
         UUID userId = getCurrentUserId();
-        PaymentInitiationDto paymentDto = paymentService.initiateCardPayment(orderId, userId,
-                PaymentType.ORDER_PAYMENT);
-        return ResponseEntity.ok(paymentDto);
+        PaymentInitiationDto paymentDto = paymentService.initiateCardPayment(orderId, userId, PaymentType.ORDER_PAYMENT);
+        return createdResponse(paymentDto);
     }
 
     @PostMapping("/repair/card/{repairRequestId}")
     public ResponseEntity<PaymentInitiationDto> initiateCardRepairPayment(@PathVariable UUID repairRequestId) {
         UUID userId = getCurrentUserId();
-        PaymentInitiationDto paymentDto = paymentService.initiateCardPayment(repairRequestId, userId,
-                PaymentType.REPAIR_PAYMENT);
-        return ResponseEntity.ok(paymentDto);
+        PaymentInitiationDto paymentDto = paymentService.initiateCardPayment(repairRequestId, userId, PaymentType.REPAIR_PAYMENT);
+        return createdResponse(paymentDto);
     }
-
 }
