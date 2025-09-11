@@ -25,7 +25,6 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -79,125 +78,125 @@ public class PaymentService {
     private final ShopRepository shopRepository;
 
     @Transactional
-public PaymentInitiationDto initiateCardPayment(UUID referenceId, UUID userId, PaymentType paymentType) {
-    if (!isSupportedPaymentType(paymentType)) {
-        throw new CustomException(HttpStatus.BAD_REQUEST, "Unsupported payment type: " + paymentType);
-    }
-
-    User user = userRepository.findById(userId)
-            .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "User not found: " + userId));
-    
-    Payment payment = findPaymentByReferenceId(referenceId);
-    
-    if (payment == null) {
-        // No existing payment, create a new one
-        payment = createNewPayment(referenceId, paymentType, user);
-    } else {
-        // Existing payment found
-        PaymentType actualPaymentType = determinePaymentTypeFromPayment(payment);
-        if (actualPaymentType != paymentType) {
-            throw new CustomException(HttpStatus.BAD_REQUEST, 
-                "Payment type mismatch. Expected: " + paymentType + ", Found: " + actualPaymentType);
+    public PaymentInitiationDto initiateCardPayment(UUID referenceId, UUID userId, PaymentType paymentType) {
+        if (!isSupportedPaymentType(paymentType)) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "Unsupported payment type: " + paymentType);
         }
 
-        if (payment.getPaymentStatus() == PaymentStatus.COMPLETED) {
-            throw new CustomException(HttpStatus.BAD_REQUEST, 
-                "Payment for reference ID: " + referenceId + " is already completed");
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "User not found: " + userId));
+        
+        Payment payment = findPaymentByReferenceId(referenceId);
+        
+        if (payment == null) {
+            // No existing payment, create a new one
+            payment = createNewPayment(referenceId, paymentType, user);
+        } else {
+            // Existing payment found
+            PaymentType actualPaymentType = determinePaymentTypeFromPayment(payment);
+            if (actualPaymentType != paymentType) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, 
+                    "Payment type mismatch. Expected: " + paymentType + ", Found: " + actualPaymentType);
+            }
+
+            if (payment.getPaymentStatus() == PaymentStatus.COMPLETED) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, 
+                    "Payment for reference ID: " + referenceId + " is already completed");
+            }
+
+            // Update existing payment instead of creating new one
+            updateExistingPayment(payment, user);
         }
 
-        // Update existing payment instead of creating new one
-        updateExistingPayment(payment, user);
+        String authToken = getAuthToken();
+        String paymobOrderId = createPaymobOrder(authToken, payment);
+        payment.setTransactionId(paymobOrderId);
+        paymentRepository.saveAndFlush(payment);
+
+        String paymentToken = generatePaymentKey(authToken, paymobOrderId, payment.getAmount(), cardIntegrationId, userId);
+        String paymentLink = generatePaymentIframeUrl(paymentToken);
+
+        PaymentInitiationDto dto = new PaymentInitiationDto();
+        dto.setPaymentURL(paymentLink);
+        return dto;
     }
 
-    String authToken = getAuthToken();
-    String paymobOrderId = createPaymobOrder(authToken, payment);
-    payment.setTransactionId(paymobOrderId);
-    paymentRepository.saveAndFlush(payment);
+    private Payment createNewPayment(UUID referenceId, PaymentType paymentType, User user) {
+        BigDecimal amount = getPaymentAmount(referenceId, paymentType);
+        
+        Payment payment = new Payment();
+        setPaymentReferenceIds(payment, referenceId, paymentType);
+        payment.setUser(user);
+        payment.setAmount(amount);
+        payment.setPaymentStatus(PaymentStatus.PENDING);
+        payment.setPaymentMethod(PaymentMethod.CREDIT_CARD);
+        payment.setPaymentType(paymentType);
+        payment.setUpdatedAt(LocalDateTime.now());
 
-    String paymentToken = generatePaymentKey(authToken, paymobOrderId, payment.getAmount(), cardIntegrationId, userId);
-    String paymentLink = generatePaymentIframeUrl(paymentToken);
-
-    PaymentInitiationDto dto = new PaymentInitiationDto();
-    dto.setPaymentURL(paymentLink);
-    return dto;
-}
-
-private Payment createNewPayment(UUID referenceId, PaymentType paymentType, User user) {
-    BigDecimal amount = getPaymentAmount(referenceId, paymentType);
-    
-    Payment payment = new Payment();
-    setPaymentReferenceIds(payment, referenceId, paymentType);
-    payment.setUser(user);
-    payment.setAmount(amount);
-    payment.setPaymentStatus(PaymentStatus.PENDING);
-    payment.setPaymentMethod(PaymentMethod.CREDIT_CARD);
-    payment.setPaymentType(paymentType);
-    payment.setUpdatedAt(LocalDateTime.now());
-
-    if (payment.getPaymentType() == null) {
-        throw new IllegalStateException("Payment type cannot be null");
-    }
-
-    return payment;
-}
-
-private void updateExistingPayment(Payment payment, User user) {
-    BigDecimal amount = getPaymentAmountFromPayment(payment);
-    
-    payment.setUser(user);
-    payment.setAmount(amount);
-    payment.setPaymentStatus(PaymentStatus.PENDING);
-    payment.setPaymentMethod(PaymentMethod.CREDIT_CARD);
-    payment.setUpdatedAt(LocalDateTime.now());
-}
-
-private BigDecimal getPaymentAmountFromPayment(Payment payment) {
-    if (payment.getOrderId() != null) {
-        Order order = orderRepository.findById(payment.getOrderId())
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, 
-                    "Order not found: " + payment.getOrderId()));
-        BigDecimal totalPrice = order.getTotalPrice();
-        if (totalPrice == null) {
-            throw new CustomException(HttpStatus.BAD_REQUEST, 
-                "Total price is not set for order: " + payment.getOrderId());
+        if (payment.getPaymentType() == null) {
+            throw new IllegalStateException("Payment type cannot be null");
         }
-        return totalPrice;
-    } else if (payment.getRepairRequestId() != null) {
-        RepairRequest repair = repairRequestRepository.findById(payment.getRepairRequestId())
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,
-                    "Repair Request not found: " + payment.getRepairRequestId()));
-        BigDecimal price = repair.getPrice();
-        if (price == null) {
+
+        return payment;
+    }
+
+    private void updateExistingPayment(Payment payment, User user) {
+        BigDecimal amount = getPaymentAmountFromPayment(payment);
+        
+        payment.setUser(user);
+        payment.setAmount(amount);
+        payment.setPaymentStatus(PaymentStatus.PENDING);
+        payment.setPaymentMethod(PaymentMethod.CREDIT_CARD);
+        payment.setUpdatedAt(LocalDateTime.now());
+    }
+
+    private BigDecimal getPaymentAmountFromPayment(Payment payment) {
+        if (payment.getOrderId() != null) {
+            Order order = orderRepository.findById(payment.getOrderId())
+                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, 
+                        "Order not found: " + payment.getOrderId()));
+            BigDecimal totalPrice = order.getTotalPrice();
+            if (totalPrice == null) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, 
+                    "Total price is not set for order: " + payment.getOrderId());
+            }
+            return totalPrice;
+        } else if (payment.getRepairRequestId() != null) {
+            RepairRequest repair = repairRequestRepository.findById(payment.getRepairRequestId())
+                    .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND,
+                        "Repair Request not found: " + payment.getRepairRequestId()));
+            BigDecimal price = repair.getPrice();
+            if (price == null) {
+                throw new CustomException(HttpStatus.BAD_REQUEST, 
+                    "Price is not set for repair request: " + payment.getRepairRequestId());
+            }
+            return price;
+        } else {
             throw new CustomException(HttpStatus.BAD_REQUEST, 
-                "Price is not set for repair request: " + payment.getRepairRequestId());
+                "Payment record has neither order ID nor repair request ID");
         }
-        return price;
-    } else {
-        throw new CustomException(HttpStatus.BAD_REQUEST, 
-            "Payment record has neither order ID nor repair request ID");
     }
-}
 
-private Payment findPaymentByReferenceId(UUID referenceId) {
-    Optional<Payment> orderPayment = paymentRepository.findByOrderId(referenceId);
-    if (orderPayment.isPresent()) {
-        return orderPayment.get();
+    private Payment findPaymentByReferenceId(UUID referenceId) {
+        Optional<Payment> orderPayment = paymentRepository.findByOrderId(referenceId);
+        if (orderPayment.isPresent()) {
+            return orderPayment.get();
+        }
+        
+        Optional<Payment> repairPayment = paymentRepository.findByRepairRequestId(referenceId);
+        return repairPayment.orElse(null);
     }
-    
-    Optional<Payment> repairPayment = paymentRepository.findByRepairRequestId(referenceId);
-    return repairPayment.orElse(null);
-}
 
-private PaymentType determinePaymentTypeFromPayment(Payment payment) {
-    if (payment.getOrderId() != null) {
-        return PaymentType.ORDER_PAYMENT;
-    } else if (payment.getRepairRequestId() != null) {
-        return PaymentType.REPAIR_PAYMENT;
-    } else {
-        throw new CustomException(HttpStatus.BAD_REQUEST, 
-            "Payment record has neither order ID nor repair request ID");
+    private PaymentType determinePaymentTypeFromPayment(Payment payment) {
+        if (payment.getOrderId() != null) {
+            return PaymentType.ORDER_PAYMENT;
+        } else if (payment.getRepairRequestId() != null) {
+            return PaymentType.REPAIR_PAYMENT;
+        } else {
+            throw new CustomException(HttpStatus.BAD_REQUEST, 
+                "Payment record has neither order ID nor repair request ID");
+        }
     }
-}
 
 
     @Transactional

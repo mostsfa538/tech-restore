@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.techRestore.tech.restore.shop.repository.ProductRepository;
+import com.techRestore.tech.restore.shop.repository.ShopRepository;
 import com.techRestore.tech.restore.user.dto.order.OrderRequestDTO;
 import com.techRestore.tech.restore.user.dto.order.OrderResponseDTO;
 import com.techRestore.tech.restore.user.dto.order.TrackingResponseDTO;
@@ -47,6 +48,7 @@ public class OrderService {
     private final ProductRepository productRepository;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
+    private final ShopRepository shopRepository;
 
     private UUID getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -73,6 +75,13 @@ public class OrderService {
         List<CartItem> cartItems = cartItemRepository.findByUserId(userId);
         if (cartItems.isEmpty()) {
             throw new IllegalArgumentException("Cart is empty");
+        }
+
+        // ✅ Ensure all cart items belong to the same shop
+        UUID shopId = cartItems.get(0).getShopId();
+        boolean allSameShop = cartItems.stream().allMatch(ci -> ci.getShopId().equals(shopId));
+        if (!allSameShop) {
+            throw new IllegalArgumentException("All items in the order must be from the same shop");
         }
 
         BigDecimal totalPrice = BigDecimal.ZERO;
@@ -105,12 +114,15 @@ public class OrderService {
         }
         orderItemRepository.saveAll(orderItems);
 
-        // ✅ Create Payment row
+        // ✅ Create Payment row with Shop
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found"));
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> new NotFoundException("Shop not found"));
 
         Payment payment = new Payment();
         payment.setUser(user);
+        payment.setShop(shop); // ✅ now like createRepairRequest
         payment.setOrderId(order.getId());
         payment.setAmount(totalPrice);
         payment.setPaymentMethod(request.getPaymentMethod());
@@ -120,18 +132,14 @@ public class OrderService {
 
         orderPaymentRepository.save(payment);
 
-        // Notify shops
-        Set<UUID> uniqueShopIds = orderItems.stream()
-                .map(OrderItem::getShopId)
-                .collect(Collectors.toSet());
-        for (UUID shopId : uniqueShopIds) {
-            notificationService.sendToShop(shopId, "New order received: Order ID " + order.getId());
-        }
+        // Notify the shop
+        notificationService.sendToShop(shopId, "New order received: Order ID " + order.getId());
 
         cartItemRepository.deleteAll(cartItems);
 
         return DTOConverter.convertToOrderResponseDTO(order, orderItems);
     }
+
 
     @Transactional(readOnly = true)
     public Page<OrderResponseDTO> getUserOrders(Pageable pageable) {
