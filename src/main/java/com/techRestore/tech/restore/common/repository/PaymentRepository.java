@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -42,4 +44,6 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     List<Payment> findByShopIdAndPaymentStatus(UUID shopId, PaymentStatus paymentStatus);
 
     List<Payment> findByShopIdAndPaymentTypeAndPaymentStatus(UUID shopId, PaymentType paymentType, PaymentStatus paymentStatus);
+    
+    Page<Payment> findAllByUserId(UUID userId, Pageable pageable);
 }

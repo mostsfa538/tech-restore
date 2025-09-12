@@ -3,7 +3,10 @@ package com.techRestore.tech.restore.admin.controller;
 import com.techRestore.tech.restore.admin.service.AdminServices;
 import com.techRestore.tech.restore.common.controller.BaseController;
 import com.techRestore.tech.restore.common.dto.common.SearchRequest;
+import com.techRestore.tech.restore.common.dto.payment.AdminPaymentDto;
+import com.techRestore.tech.restore.common.dto.payment.PaymentDto;
 import com.techRestore.tech.restore.common.model.entities.Shop;
+import com.techRestore.tech.restore.common.services.payment.PaymentService;
 import com.techRestore.tech.restore.shop.dto.offers.OfferResponseDTO;
 import com.techRestore.tech.restore.shop.dto.shop.ShopResponseDto;
 import com.techRestore.tech.restore.user.dto.repair.RepairRequestDto;
@@ -15,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -24,6 +28,9 @@ import java.util.UUID;
 public class AdminController extends BaseController {
 	@Autowired
 	private RepairRequestService repairRequestService;
+
+	@Autowired
+	private PaymentService paymentService;
 
 	@Autowired
 	private AdminServices adminServices;
@@ -116,4 +123,21 @@ public class AdminController extends BaseController {
 		adminServices.deleteOffer(offerId);
 		return deletedResponse();
 	}
+
+
+	@GetMapping("transactions/all")
+	@PreAuthorize("hasRole('ADMIN')")
+  public ResponseEntity<Page<AdminPaymentDto>> getAllTransactions(Pageable pageable) {
+    Page<AdminPaymentDto> transactions = paymentService.getAllTransactions(pageable);
+    return successResponse(transactions);
+  }
+
+	@GetMapping("transactions/{userId}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Page<PaymentDto>> getTransactionByUserId(@PathVariable UUID userId,Pageable pageable){
+		Page<PaymentDto> transactions = paymentService.getAllUserTransactions(userId, pageable);
+		return successResponse(transactions);
+	}
+
+
 }

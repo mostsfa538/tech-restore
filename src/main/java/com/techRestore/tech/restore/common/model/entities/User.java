@@ -1,6 +1,7 @@
 package com.techRestore.tech.restore.common.model.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.techRestore.tech.restore.common.interfaces.OtpVerifiable;
 import com.techRestore.tech.restore.common.model.enums.Role;
 import com.techRestore.tech.restore.common.model.enums.Status;
@@ -59,7 +60,12 @@ public class User implements OtpVerifiable {
     private LocalDateTime OtpExpiry;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<Address> addresses;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonManagedReference  // Allows serialization of this side
+    private List<Payment> payments;
 
     private Status status;
 
