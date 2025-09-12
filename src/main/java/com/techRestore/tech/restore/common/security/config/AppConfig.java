@@ -22,6 +22,8 @@ import com.techRestore.tech.restore.common.security.userdetails.DeliveryDetailsS
 import com.techRestore.tech.restore.common.security.userdetails.ShopDetailsServiceImpl;
 import com.techRestore.tech.restore.common.security.userdetails.UserDetailsServiceImpl;
 
+import jakarta.servlet.http.HttpServletResponse;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -77,6 +79,20 @@ public class AppConfig {
                         .failureHandler(oAuth2AuthenticationFailureHandler()))
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http
+        .exceptionHandling(ex -> ex
+            .authenticationEntryPoint((request, response, authException) -> {
+                response.setContentType("application/json");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("{\"error\": \"Unauthorized\"}");
+            })
+            .accessDeniedHandler((request, response, accessDeniedException) -> {
+                response.setContentType("application/json");
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.getWriter().write("{\"error\": \"Forbidden\"}");
+            })
+        );
+
 
         return http.build();
     }
@@ -88,13 +104,12 @@ public class AppConfig {
 
     private CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(Collections.singletonList("http://localhost:4200")); // Front-End
+        corsConfiguration.setAllowedOrigins(Collections.singletonList("http://localhost:4200")); 
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
         corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
         corsConfiguration.setExposedHeaders(List.of("Authorization"));
-        corsConfiguration.setMaxAge(3600L); // Duration (in seconds) that the browser can cache the CORS preflight
-        // response (here: 1 hour)
+        corsConfiguration.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", corsConfiguration);
         return source;

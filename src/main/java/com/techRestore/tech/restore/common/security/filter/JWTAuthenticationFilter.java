@@ -59,7 +59,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                 // Verify it's an access token and valid
                 if (jwtService.isAccessToken(jwt) && jwtService.isValidToken(jwt, username)) {
 
-                    List<SimpleGrantedAuthority> authorities = extractAuthoritiesFromToken(jwt);
+                    List<SimpleGrantedAuthority> authorities = jwtService.extractAuthoritiesFromToken(jwt);
 
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             username,
