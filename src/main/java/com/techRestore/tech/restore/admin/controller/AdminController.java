@@ -125,14 +125,14 @@ public class AdminController extends BaseController {
 	}
 
 
-	@GetMapping("transactions/all")
+	@GetMapping("/transactions/all")
 	@PreAuthorize("hasRole('ADMIN')")
   public ResponseEntity<Page<AdminPaymentDto>> getAllTransactions(Pageable pageable) {
     Page<AdminPaymentDto> transactions = paymentService.getAllTransactions(pageable);
     return successResponse(transactions);
   }
 
-	@GetMapping("transactions/{userId}")
+	@GetMapping("/transactions/{userId}")
 	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Page<PaymentDto>> getTransactionByUserId(@PathVariable UUID userId,Pageable pageable){
 		Page<PaymentDto> transactions = paymentService.getAllUserTransactions(userId, pageable);
