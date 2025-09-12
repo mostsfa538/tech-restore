@@ -1,5 +1,7 @@
 package com.techRestore.tech.restore.common.services.payment;
 
+import com.techRestore.tech.restore.common.dto.payment.AdminPaymentDto;
+import com.techRestore.tech.restore.common.dto.payment.PaymentDto;
 import com.techRestore.tech.restore.common.dto.payment.PaymentInitiationDto;
 import com.techRestore.tech.restore.common.exception.CustomException;
 import com.techRestore.tech.restore.common.model.entities.Address;
@@ -25,12 +27,15 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -77,6 +82,52 @@ public class PaymentService {
     private final RepairRequestRepository repairRequestRepository;
     private final ShopRepository shopRepository;
 
+
+    public Page<PaymentDto> getAllUserTransactions(UUID userId, Pageable pageable) {
+        return paymentRepository.findAllByUserId(userId, pageable)
+                .map(this::toDto);
+    }
+
+    private PaymentDto toDto(Payment payment) {
+        PaymentDto dto = new PaymentDto();
+        dto.setId(payment.getId());
+        dto.setAmount(payment.getAmount());
+        dto.setPaymentMethod(payment.getPaymentMethod());
+        dto.setPaymentStatus(payment.getPaymentStatus());
+        dto.setPaymentType(payment.getPaymentType());
+        dto.setPaymentReference(payment.getPaymentReference());
+        dto.setTransactionId(payment.getTransactionId());
+        dto.setDetails(payment.getDetails());
+        dto.setPaidAt(payment.getPaidAt());
+        dto.setCreatedAt(payment.getCreatedAt());
+        dto.setUpdatedAt(payment.getUpdatedAt());
+        return dto;
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<AdminPaymentDto> getAllTransactions(Pageable pageable) {
+        return paymentRepository.findAll(pageable)
+                .map(this::toAdminDto);
+    }
+
+    private AdminPaymentDto toAdminDto(Payment payment) {
+        AdminPaymentDto dto = new AdminPaymentDto();
+        dto.setId(payment.getId());
+        dto.setAmount(payment.getAmount());
+        dto.setPaymentMethod(payment.getPaymentMethod());
+        dto.setPaymentStatus(payment.getPaymentStatus());
+        dto.setPaymentType(payment.getPaymentType());
+        dto.setPaymentReference(payment.getPaymentReference());
+        dto.setTransactionId(payment.getTransactionId());
+        dto.setDetails(payment.getDetails());
+        dto.setPaidAt(payment.getPaidAt());
+        dto.setCreatedAt(payment.getCreatedAt());
+        dto.setUpdatedAt(payment.getUpdatedAt());
+        dto.setUserId(payment.getUser() != null ? payment.getUser().getId() : null);
+        dto.setShopId(payment.getShop() != null ? payment.getShop().getId() : null);
+        return dto;
+    }
+
     @Transactional
     public PaymentInitiationDto initiateCardPayment(UUID referenceId, UUID userId, PaymentType paymentType) {
         if (!isSupportedPaymentType(paymentType)) {
@@ -89,10 +140,8 @@ public class PaymentService {
         Payment payment = findPaymentByReferenceId(referenceId);
         
         if (payment == null) {
-            // No existing payment, create a new one
             payment = createNewPayment(referenceId, paymentType, user);
         } else {
-            // Existing payment found
             PaymentType actualPaymentType = determinePaymentTypeFromPayment(payment);
             if (actualPaymentType != paymentType) {
                 throw new CustomException(HttpStatus.BAD_REQUEST, 
@@ -104,7 +153,6 @@ public class PaymentService {
                     "Payment for reference ID: " + referenceId + " is already completed");
             }
 
-            // Update existing payment instead of creating new one
             updateExistingPayment(payment, user);
         }
 

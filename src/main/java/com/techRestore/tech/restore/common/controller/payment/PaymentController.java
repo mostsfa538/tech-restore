@@ -2,9 +2,12 @@ package com.techRestore.tech.restore.common.controller.payment;
 
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -13,11 +16,14 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.security.core.Authentication;
 
 import com.techRestore.tech.restore.common.controller.BaseController;
+import com.techRestore.tech.restore.common.dto.payment.PaymentDto;
 import com.techRestore.tech.restore.common.dto.payment.PaymentInitiationDto;
 import com.techRestore.tech.restore.common.exception.ActivationException;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
+import com.techRestore.tech.restore.common.model.entities.Payment;
 import com.techRestore.tech.restore.common.model.entities.User;
 import com.techRestore.tech.restore.common.model.enums.PaymentType;
+import com.techRestore.tech.restore.common.repository.PaymentRepository;
 import com.techRestore.tech.restore.common.services.payment.PaymentService;
 import com.techRestore.tech.restore.user.repository.UserRepository;
 
@@ -63,4 +69,12 @@ public class PaymentController extends BaseController{
         PaymentInitiationDto paymentDto = paymentService.initiateCardPayment(repairRequestId, userId, PaymentType.REPAIR_PAYMENT);
         return createdResponse(paymentDto);
     }
+
+    @GetMapping("/transactions/all")
+    public ResponseEntity<Page<PaymentDto>> getUserTransactions(Pageable pageable) {
+        UUID userId = getCurrentUserId();
+        Page<PaymentDto> transactions = paymentService.getAllUserTransactions(userId, pageable);
+        return ResponseEntity.ok(transactions);
+    }
+
 }
