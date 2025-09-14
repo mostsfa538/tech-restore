@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,10 +23,17 @@ import lombok.RequiredArgsConstructor;
 public class ChatController {
     
     private final ChatMessageService chatMessageService;
+     private final SimpMessagingTemplate messagingTemplate;
 
-    @MessageMapping("/chat")
+    @MessageMapping("/chat.sendMessage")
     public void processMessage(@Payload @Valid ChatMessage chatMessage, Principal principal) {
-        chatMessageService.processMessage(chatMessage, principal);
+        ChatMessage saved = chatMessageService.processMessage(chatMessage, principal);
+
+        messagingTemplate.convertAndSendToUser(
+                chatMessage.getRecipientId().toString(),
+                "/queue/messages",
+                saved
+        );
     }
 
     @GetMapping("/messages/{senderId}/{recipientId}/count")
