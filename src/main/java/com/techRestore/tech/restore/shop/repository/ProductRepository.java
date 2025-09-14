@@ -45,4 +45,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
 
       @Query("SELECT p FROM Product p WHERE p.shop.verified = true and p.deleted = false")
       Page<Product> findAllVerified(Pageable pageable);
+
+      Page<Product> findByStockLessThanEqual(int stockThreshold, Pageable pageable);
 }
