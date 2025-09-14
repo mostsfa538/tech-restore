@@ -1,7 +1,6 @@
 package com.techRestore.tech.restore.common.security.config;
 
 import com.techRestore.tech.restore.common.exception.ActivationException;
-import com.techRestore.tech.restore.common.exception.NotFoundException;
 import com.techRestore.tech.restore.common.security.userdetails.DeliveryDetailsServiceImpl;
 import com.techRestore.tech.restore.common.security.userdetails.ShopDetailsServiceImpl;
 import com.techRestore.tech.restore.common.security.userdetails.UserDetailsServiceImpl;

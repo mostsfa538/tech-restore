@@ -18,9 +18,11 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import com.techRestore.tech.restore.common.security.filter.JWTAuthenticationFilter;
 import com.techRestore.tech.restore.common.security.jwt.JwtService;
+import com.techRestore.tech.restore.common.security.jwt.RefreshTokenService;
 import com.techRestore.tech.restore.common.security.userdetails.DeliveryDetailsServiceImpl;
 import com.techRestore.tech.restore.common.security.userdetails.ShopDetailsServiceImpl;
 import com.techRestore.tech.restore.common.security.userdetails.UserDetailsServiceImpl;
+import com.techRestore.tech.restore.common.utils.CookieUtil;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -38,6 +40,8 @@ public class AppConfig {
     private final JWTAuthenticationFilter jwtAuthenticationFilter;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokenService;
+    private final CookieUtil cookieUtil;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -63,14 +67,14 @@ public class AppConfig {
                         .requestMatchers("/api/shops/orders/control/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/cart/**").hasAnyRole("GUEST")
                         .requestMatchers("/api/auth/home", "/api/auth/logout", "/api/auth/logout-all",
-                                "/api/auth/refresh-token").authenticated()
+                                "/api/auth/refresh-token")
+                        .authenticated()
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN")
                         .requestMatchers("/api/shops/products/**", "/api/shop/offers/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/shops/repair-request/**").hasAnyRole("REPAIRER")
                         .requestMatchers("/api/users/**", "/api/products/**").hasAnyRole("GUEST")
                         .requestMatchers("/api/reviews/**").hasAnyRole("GUEST", "SHOP_OWNER")
                         .anyRequest().authenticated())
-                        
 
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/oauth2/authorization/google")
@@ -80,19 +84,17 @@ public class AppConfig {
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         http
-        .exceptionHandling(ex -> ex
-            .authenticationEntryPoint((request, response, authException) -> {
-                response.setContentType("application/json");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("{\"error\": \"Unauthorized\"}");
-            })
-            .accessDeniedHandler((request, response, accessDeniedException) -> {
-                response.setContentType("application/json");
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                response.getWriter().write("{\"error\": \"Forbidden\"}");
-            })
-        );
-
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setContentType("application/json");
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.getWriter().write("{\"error\": \"Unauthorized\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setContentType("application/json");
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.getWriter().write("{\"error\": \"Forbidden\"}");
+                        }));
 
         return http.build();
     }
@@ -104,7 +106,7 @@ public class AppConfig {
 
     private CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(Collections.singletonList("http://localhost:4200")); 
+        corsConfiguration.setAllowedOrigins(Collections.singletonList("http://localhost:4200"));
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
         corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
@@ -127,16 +129,24 @@ public class AppConfig {
     private AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler() {
         return (request, response, authentication) -> {
             try {
-                jwtService.generateAccessToken(authentication);
+                String accessToken = jwtService.generateAccessToken(authentication);
+                String refreshToken = jwtService.generateRefreshToken(authentication);
+
+                refreshTokenService.saveRefreshToken(authentication.getName(), refreshToken, request);
+
+                cookieUtil.addRefreshTokenCookie(response, refreshToken);
 
                 response.setContentType("application/json");
                 response.setCharacterEncoding("UTF-8");
-
-                String body = String.format("{\"message\": \"OAuth2 login successful\", \"email\": \"%s\"}",
-                        authentication.getName());
-                response.getWriter().write(body);
+                response.getWriter().write(
+                        String.format("{\"access_token\":\"%s\",\"token_type\":\"Bearer\",\"expires_in\":%d}",
+                                accessToken, 60 * 60));
             } catch (Exception e) {
-
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                response.getWriter().write(
+                        String.format("{\"error\":\"%s\"}", e.getMessage()));
             }
         };
     }
@@ -145,7 +155,9 @@ public class AppConfig {
         return (request, response, exception) -> {
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
-            String body = String.format("{\"message\": \"OAuth2 login fail\", \"email\": \"%s\"}");
+            String body = String.format(
+                    "{\"message\": \"OAuth2 login fail\", \"error\": \"%s\"}",
+                    exception.getMessage());
             response.getWriter().write(body);
         };
     }
