@@ -10,6 +10,7 @@ import com.techRestore.tech.restore.common.utils.DTOConverter;
 import com.techRestore.tech.restore.shop.dto.offers.OfferResponseDTO;
 import com.techRestore.tech.restore.shop.dto.shop.ShopResponseDto;
 import com.techRestore.tech.restore.shop.repository.OffersRepository;
+import com.techRestore.tech.restore.shop.repository.ProductRepository;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
 import com.techRestore.tech.restore.user.dto.user.ResponseUsersDto;
 import com.techRestore.tech.restore.user.repository.UserRepository;
@@ -28,6 +29,9 @@ public class AdminServices extends BaseService<User, UUID> {
     private ShopRepository shopRepository;
 
     private OffersRepository offersRepository;
+
+    @Autowired
+    private ProductRepository productRepository;
 
     public AdminServices(UserRepository userRepository) {
         super(userRepository);
@@ -77,11 +81,15 @@ public class AdminServices extends BaseService<User, UUID> {
     }
 
     public void deleteShop(UUID id) {
-        Optional<Shop> findShop = shopRepository.findById(id);
-        if (findShop.isEmpty()) {
-            throw new NotFoundException("Shop Not Found");
-        }
-        shopRepository.deleteById(id);
+        Shop shop = shopRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Shop Not Found"));
+
+        Shop unknownShop = shopRepository.findById(UUID.fromString("00000000-0000-0000-0000-000000000000"))
+                .orElseThrow(() -> new IllegalStateException("Unknown shop must exist"));
+
+        productRepository.updateShopToUnknown(id, unknownShop.getId());
+
+        shopRepository.delete(shop);
     }
 
     public Page<Shop> search(String name, Pageable pageable) {

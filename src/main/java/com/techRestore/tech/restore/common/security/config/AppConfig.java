@@ -72,6 +72,7 @@ public class AppConfig {
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN")
                         .requestMatchers("/api/shops/products/**", "/api/shop/offers/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/shops/repair-request/**").hasAnyRole("REPAIRER")
+                        .requestMatchers("/api/shop/inventory/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/users/**", "/api/products/**").hasAnyRole("GUEST")
                         .requestMatchers("/api/reviews/**").hasAnyRole("GUEST", "SHOP_OWNER")
                         .anyRequest().authenticated())
