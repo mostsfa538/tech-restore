@@ -2,8 +2,11 @@ package com.techRestore.tech.restore.shop.controller;
 
 import java.math.BigDecimal;
 
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -49,16 +52,23 @@ public class InventoryContoller {
         return ResponseEntity.ok(inventoryService.getTotalItemsInInventory());
     }
 
-    @PostMapping("/import")
-    public ResponseEntity<Void> importInventoryData(@RequestParam("filePath") String filePath) {
-        inventoryService.importInventoryData(filePath);
-        return ResponseEntity.ok().build();
-    }
+    // @PostMapping("/import")
+    // public ResponseEntity<Void> importInventoryData(@RequestParam("filePath")
+    // String filePath) {
+    // inventoryService.importInventoryData(filePath);
+    // return ResponseEntity.ok().build();
+    // }
 
     @GetMapping("/export")
-    public ResponseEntity<Void> exportInventoryData(@RequestParam("filePath") String filePath) {
-        inventoryService.exportInventoryData(filePath);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<ByteArrayResource> exportInventoryData() {
+        byte[] csvData = inventoryService.exportInventoryData();
+        ByteArrayResource resource = new ByteArrayResource(csvData);
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=products_export.csv")
+                .contentType(MediaType.parseMediaType("text/csv"))
+                .contentLength(csvData.length)
+                .body(resource);
     }
 
 }

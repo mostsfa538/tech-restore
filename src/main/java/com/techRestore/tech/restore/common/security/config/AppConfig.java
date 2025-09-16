@@ -63,14 +63,15 @@ public class AppConfig {
                         .requestMatchers("/api/shops/orders/control/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/cart/**").hasAnyRole("GUEST")
                         .requestMatchers("/api/auth/home", "/api/auth/logout", "/api/auth/logout-all",
-                                "/api/auth/refresh-token").authenticated()
+                                "/api/auth/refresh-token")
+                        .authenticated()
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN")
                         .requestMatchers("/api/shops/products/**", "/api/shop/offers/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/shops/repair-request/**").hasAnyRole("REPAIRER")
+                        .requestMatchers("/api/shop/inventory/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/users/**", "/api/products/**").hasAnyRole("GUEST")
                         .requestMatchers("/api/reviews/**").hasAnyRole("GUEST", "SHOP_OWNER")
                         .anyRequest().authenticated())
-                        
 
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/oauth2/authorization/google")
@@ -80,19 +81,17 @@ public class AppConfig {
 
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         http
-        .exceptionHandling(ex -> ex
-            .authenticationEntryPoint((request, response, authException) -> {
-                response.setContentType("application/json");
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("{\"error\": \"Unauthorized\"}");
-            })
-            .accessDeniedHandler((request, response, accessDeniedException) -> {
-                response.setContentType("application/json");
-                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                response.getWriter().write("{\"error\": \"Forbidden\"}");
-            })
-        );
-
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setContentType("application/json");
+                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            response.getWriter().write("{\"error\": \"Unauthorized\"}");
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            response.setContentType("application/json");
+                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            response.getWriter().write("{\"error\": \"Forbidden\"}");
+                        }));
 
         return http.build();
     }
@@ -104,7 +103,7 @@ public class AppConfig {
 
     private CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(Collections.singletonList("http://localhost:4200")); 
+        corsConfiguration.setAllowedOrigins(Collections.singletonList("http://localhost:4200"));
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
         corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
