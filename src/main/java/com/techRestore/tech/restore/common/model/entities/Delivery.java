@@ -50,7 +50,7 @@ public class Delivery implements OtpVerifiable {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "JSONB")
     private String notificationHistory = "[]";
 
     @PrePersist
