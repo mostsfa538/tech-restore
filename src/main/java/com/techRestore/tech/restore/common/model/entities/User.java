@@ -50,7 +50,7 @@ public class User implements OtpVerifiable {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "JSONB")
     private String notificationHistory = "[]";
 
     @Column(name = "opt_code", length = 6)

@@ -55,7 +55,7 @@ public class Shop implements OtpVerifiable {
     @Enumerated(EnumType.STRING)
     private ShopType shopType;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "JSONB")
     private String notificationHistory = "[]";
 
     @Column(name = "repair_revenue_percentage", precision = 10, scale = 2)
