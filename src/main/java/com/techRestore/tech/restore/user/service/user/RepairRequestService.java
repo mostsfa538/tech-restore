@@ -10,6 +10,7 @@ import com.techRestore.tech.restore.common.model.enums.PaymentType;
 import com.techRestore.tech.restore.common.repository.AddressRepository;
 import com.techRestore.tech.restore.common.repository.PaymentRepository;
 import com.techRestore.tech.restore.common.services.BaseService;
+import com.techRestore.tech.restore.common.services.notification.NotificationService;
 import com.techRestore.tech.restore.common.utils.DTOConverter;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
 import com.techRestore.tech.restore.user.dto.repair.RepairRequestCreateDto;
@@ -36,16 +37,19 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
     private final ShopRepository shopRepository;
     private final AddressRepository addressRepository;
     private final PaymentRepository paymentRepository;
+    private final NotificationService notificationService;
 
     public RepairRequestService(RepairRequestRepository repairRequestRepository, PaymentRepository paymentRepository,
             UserRepository userRepository,
             ShopRepository shopRepository,
-            AddressRepository addressRepository) {
+            AddressRepository addressRepository,
+            NotificationService notificationService) {
         super(repairRequestRepository);
         this.userRepository = userRepository;
         this.shopRepository = shopRepository;
         this.addressRepository = addressRepository;
         this.paymentRepository = paymentRepository;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -111,6 +115,8 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
 
         paymentRepository.save(payment);
 
+        notificationService.sendToShop(shopId, "New repair request received: Request ID " + savedRepairRequest.getId());
+
         return DTOConverter.convertToRepairRequestDTO(savedRepairRequest);
     }
 
@@ -148,6 +154,7 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         }
 
         RepairRequest updatedRepairRequest = repository.save(repairRequest);
+        notificationService.sendToShop(shopId, "Repair request updated: Request ID " + requestId);
         return DTOConverter.convertToRepairRequestDTO(updatedRepairRequest);
     }
 
@@ -155,6 +162,9 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
     public void deleteRepairRequest(UUID id) {
         findByIdOrThrow(id, "Repair request");
         repository.deleteById(id);
+        RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
+        UUID shopId = repairRequest.getShopId();
+        notificationService.sendToShop(shopId, "Repair request deleted: Request ID " + id);
     }
 
     @PreAuthorize("hasRole('USER')")
@@ -166,5 +176,6 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
         repairRequest.setStatus(repairStatusDto.status());
         repository.save(repairRequest);
+        notificationService.sendToShop(repairRequest.getShopId(), "Repair request status updated: Request ID " + id + " to " + repairStatusDto.status());
     }
 }
