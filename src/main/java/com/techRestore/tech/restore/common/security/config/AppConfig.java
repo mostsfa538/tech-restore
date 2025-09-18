@@ -26,6 +26,7 @@ import com.techRestore.tech.restore.common.utils.CookieUtil;
 
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -107,7 +108,13 @@ public class AppConfig {
 
     private CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOrigins(Collections.singletonList("http://localhost:4200"));
+        corsConfiguration.setAllowedOrigins(Arrays.asList(
+        "http://localhost:4200",           // Your existing Angular frontend
+        "http://127.0.0.1:5500",          // Your HTML file served by Live Server
+        "http://localhost:5500",           // Alternative localhost format
+        "http://localhost:3000",           // Common React development port
+        "http://127.0.0.1:3000"           // Alternative format
+    ));
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
         corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
