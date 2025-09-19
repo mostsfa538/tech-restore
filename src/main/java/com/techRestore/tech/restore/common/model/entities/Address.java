@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.common.model.entities;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -42,6 +43,9 @@ public class Address {
 
     @PrePersist
     protected void onCreate() {
+        if (id == null) {
+            id = UuidCreator.getTimeOrdered();
+        }
         createdAt = LocalDateTime.now();
     }
 }

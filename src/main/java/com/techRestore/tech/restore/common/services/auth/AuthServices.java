@@ -6,12 +6,12 @@ import com.techRestore.tech.restore.common.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.common.dto.auth.UserRegistration;
 import com.techRestore.tech.restore.common.exception.CustomException;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
-import com.techRestore.tech.restore.common.model.entities.Delivery;
-import com.techRestore.tech.restore.common.model.entities.Shop;
-import com.techRestore.tech.restore.common.model.entities.User;
 import com.techRestore.tech.restore.common.security.config.CustomAuthenticationManager;
 import com.techRestore.tech.restore.common.security.jwt.JwtService;
 import com.techRestore.tech.restore.common.security.jwt.RefreshTokenService;
+import com.techRestore.tech.restore.common.security.userdetails.DeliveryPrincipal;
+import com.techRestore.tech.restore.common.security.userdetails.ShopPrincipal;
+import com.techRestore.tech.restore.common.security.userdetails.UserPrincipal;
 import com.techRestore.tech.restore.common.services.EntityFinderService;
 import com.techRestore.tech.restore.common.utils.CookieUtil;
 import com.techRestore.tech.restore.delivery.dto.DeliveryRegistration;
@@ -27,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -60,35 +61,43 @@ public class AuthServices {
     }
 
     public Map<String, Object> login(LoginDto loginDto, HttpServletRequest request, HttpServletResponse response) {
-            Authentication authentication = customAuthenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password()));
+        Authentication authentication = customAuthenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password()));
 
-            String accessToken = jwtService.generateAccessToken(authentication);
-            String refreshToken = jwtService.generateRefreshToken(authentication);
+        String accessToken = jwtService.generateAccessToken(authentication);
+        String refreshToken = jwtService.generateRefreshToken(authentication);
 
-            refreshTokenService.saveRefreshToken(authentication.getName(), refreshToken, request);
+        refreshTokenService.saveRefreshToken(authentication.getName(), refreshToken, request);
 
-            cookieUtil.addRefreshTokenCookie(response, refreshToken);
+        cookieUtil.addRefreshTokenCookie(response, refreshToken);
 
-            Object principal = authentication.getPrincipal();
+        Object principal = authentication.getPrincipal();
 
-            Map<String, Object> responseData = new HashMap<>();
-            responseData.put("access_token", accessToken);
-            responseData.put("token_type", "Bearer");
-            responseData.put("expires_in", 60 * 60);
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("access_token", accessToken);
+        responseData.put("token_type", "Bearer");
+        responseData.put("expires_in", 60 * 60);
+        if (principal instanceof UserPrincipal userPrincipal) {
+            responseData.put("id", userPrincipal.getUser().getId());
+            responseData.put("role", authentication.getAuthorities()
+                    .stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .toList());
+        } else if (principal instanceof ShopPrincipal shopPrincipal) {
+            responseData.put("id", shopPrincipal.getShop().getId());
+            responseData.put("role", authentication.getAuthorities()
+                    .stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .toList());
+        } else if (principal instanceof DeliveryPrincipal deliveryPrincipal) {
+            responseData.put("id", deliveryPrincipal.getDelivery().getId());
+            responseData.put("role", authentication.getAuthorities()
+                    .stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .toList());
+        }
 
-            if (principal instanceof User user) {
-                responseData.put("user_id", user.getId());
-                responseData.put("role", user.getRole().name());
-            } else if (principal instanceof Shop shop) {
-                responseData.put("shop_id", shop.getId());
-                responseData.put("role", "SHOP");
-            } else if (principal instanceof Delivery delivery) {
-                responseData.put("delivery_id", delivery.getId());
-                responseData.put("role", "DELIVERY");
-            }
-
-            return responseData;
+        return responseData;
     }
 
     public TokenResponse refreshToken(HttpServletRequest request, HttpServletResponse response) {

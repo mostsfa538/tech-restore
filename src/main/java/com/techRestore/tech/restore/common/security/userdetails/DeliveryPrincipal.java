@@ -51,4 +51,8 @@ public class DeliveryPrincipal implements UserDetails {
     public boolean isEnabled() {
         return delivery.isActivate();
     }
+
+    public Delivery getDelivery() {
+        return delivery;
+    }
 }
