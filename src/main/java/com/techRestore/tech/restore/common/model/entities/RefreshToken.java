@@ -3,10 +3,10 @@ package com.techRestore.tech.restore.common.model.entities;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.github.f4b6a3.uuid.UuidCreator;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -22,7 +22,6 @@ import lombok.NoArgsConstructor;
 public class RefreshToken {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false, unique = true, columnDefinition = "TEXT")
@@ -45,6 +44,7 @@ public class RefreshToken {
 
     @PrePersist
     protected void onCreate() {
+        id = UuidCreator.getTimeOrderedEpoch();
         this.createdAt = LocalDateTime.now();
     }
 

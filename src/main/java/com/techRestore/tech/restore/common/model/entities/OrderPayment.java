@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import com.techRestore.tech.restore.common.model.enums.PaymentMethod;
 import com.techRestore.tech.restore.common.model.enums.PaymentStatus;
 
@@ -16,7 +17,6 @@ import com.techRestore.tech.restore.common.model.enums.PaymentStatus;
 public class OrderPayment {
 
     @Id
-    @GeneratedValue
     @Column(name = "id", nullable = false, unique = true)
     private UUID id;
 
@@ -59,6 +59,7 @@ public class OrderPayment {
 
     @PrePersist
     protected void onCreate() {
+        id = UuidCreator.getTimeOrderedEpoch();
         createdAt = LocalDateTime.now();
     }
 

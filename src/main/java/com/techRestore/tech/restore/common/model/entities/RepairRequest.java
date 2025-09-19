@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import com.techRestore.tech.restore.common.model.enums.DeliveryMethod;
 import com.techRestore.tech.restore.common.model.enums.PaymentMethod;
 import com.techRestore.tech.restore.common.model.enums.RepairStatus;
@@ -16,7 +17,6 @@ import com.techRestore.tech.restore.common.model.enums.RepairStatus;
 @Data
 public class RepairRequest {
     @Id
-    @GeneratedValue
     @Column(name = "id", nullable = false, unique = true)
     private UUID id;
 
@@ -81,6 +81,7 @@ public class RepairRequest {
 
     @PrePersist
     protected void onCreate() {
+        id = UuidCreator.getTimeOrderedEpoch();
         createdAt = LocalDateTime.now();
     }
 }

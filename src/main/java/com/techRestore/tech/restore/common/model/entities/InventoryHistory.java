@@ -5,6 +5,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import com.techRestore.tech.restore.common.model.enums.InventoryAction;
 
 @Entity
@@ -12,7 +13,7 @@ import com.techRestore.tech.restore.common.model.enums.InventoryAction;
 @Table(name = "inventory_history")
 public class InventoryHistory {
     @Id
-    @GeneratedValue
+    @Column(name = "id", nullable = false, unique = true)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -25,7 +26,7 @@ public class InventoryHistory {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "action", nullable = false)
-    private InventoryAction action; // STOCK_IN, STOCK_OUT, ADJUSTMENT, SALE, RETURN
+    private InventoryAction action;
 
     @Column(name = "quantity_change", nullable = false)
     private Integer quantityChange;
@@ -40,13 +41,14 @@ public class InventoryHistory {
     private String reason;
 
     @Column(name = "reference_id")
-    private UUID referenceId; // Could reference transaction, repair, etc.
+    private UUID referenceId;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @PrePersist
     protected void onCreate() {
+        id = UuidCreator.getTimeOrderedEpoch();
         createdAt = LocalDateTime.now();
     }
 }

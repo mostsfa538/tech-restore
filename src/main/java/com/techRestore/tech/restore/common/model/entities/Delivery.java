@@ -6,6 +6,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import com.techRestore.tech.restore.common.interfaces.OtpVerifiable;
 import com.techRestore.tech.restore.common.model.enums.Role;
 
@@ -15,7 +16,6 @@ import com.techRestore.tech.restore.common.model.enums.Role;
 public class Delivery implements OtpVerifiable {
 
     @Id
-    @GeneratedValue
     @Column(name = "id", nullable = false, unique = true)
     private UUID id;
 
@@ -55,6 +55,7 @@ public class Delivery implements OtpVerifiable {
 
     @PrePersist
     protected void onCreate() {
+        id = UuidCreator.getTimeOrderedEpoch();
         createdAt = LocalDateTime.now();
     }
 

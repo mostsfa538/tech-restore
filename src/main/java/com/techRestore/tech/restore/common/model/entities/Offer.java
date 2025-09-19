@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import com.techRestore.tech.restore.common.model.enums.DiscountType;
 import com.techRestore.tech.restore.common.model.enums.OfferStatus;
 
@@ -14,7 +15,7 @@ import com.techRestore.tech.restore.common.model.enums.OfferStatus;
 @Table(name = "offers")
 public class Offer {
     @Id
-    @GeneratedValue
+    @Column(name = "id", nullable = false, unique = true)
     private UUID id;
 
     @Column(nullable = false, length = 100)
@@ -58,6 +59,7 @@ public class Offer {
 
     @PreUpdate
     protected void onUpdate() {
+        id = UuidCreator.getTimeOrderedEpoch();
         updatedAt = LocalDateTime.now();
     }
 }

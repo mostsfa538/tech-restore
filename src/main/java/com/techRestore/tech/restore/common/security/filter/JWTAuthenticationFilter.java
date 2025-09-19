@@ -18,10 +18,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -80,31 +78,6 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    private List<SimpleGrantedAuthority> extractAuthoritiesFromToken(String jwt) {
-        return jwtService.extractClaim(jwt, claims -> {
-            Object rolesObj = claims.get("roles");
-            List<SimpleGrantedAuthority> authorities = new ArrayList<>();
-
-            if (rolesObj instanceof List<?> rolesList) {
-                // Handle array of roles
-                authorities = rolesList.stream()
-                        .filter(role -> role instanceof String)
-                        .map(role -> new SimpleGrantedAuthority((String) role))
-                        .collect(Collectors.toList());
-            } else if (rolesObj instanceof String rolesString) {
-                String[] roleArray = rolesString.contains(",")
-                        ? rolesString.split(",")
-                        : new String[] { rolesString };
-                authorities = Arrays.stream(roleArray)
-                        .map(String::trim)
-                        .map(SimpleGrantedAuthority::new)
-                        .collect(Collectors.toList());
-            }
-
-            return authorities;
-        });
-    }
-
     private void handleExpiredToken(HttpServletResponse response) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -142,8 +115,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                 "/api/auth/forgot-password",
                 "/api/auth/reset-password",
                 "/oauth2/authorization/google",
-                "/login/oauth2/code/google"
-        );
+                "/login/oauth2/code/google");
         return publicPaths.stream().anyMatch(path::startsWith);
     }
 }

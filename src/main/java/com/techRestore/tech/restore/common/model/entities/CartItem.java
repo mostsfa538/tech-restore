@@ -1,6 +1,7 @@
 package com.techRestore.tech.restore.common.model.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.github.f4b6a3.uuid.UuidCreator;
 import jakarta.persistence.*;
 import lombok.Data;
 
@@ -12,7 +13,6 @@ import java.util.UUID;
 @Data
 public class CartItem {
     @Id
-    @GeneratedValue
     @Column(name = "id", nullable = false, unique = true)
     private UUID id;
 
@@ -46,6 +46,7 @@ public class CartItem {
 
     @PrePersist
     protected void onCreate() {
+        id = UuidCreator.getTimeOrderedEpoch();
         addedAt = LocalDateTime.now();
     }
 }

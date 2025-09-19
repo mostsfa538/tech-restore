@@ -71,9 +71,7 @@ public class User implements OtpVerifiable {
 
     @PrePersist
     protected void onCreate() {
-        if (id == null) {
-            id = UuidCreator.getTimeOrdered();
-        }
+        id = UuidCreator.getTimeOrderedEpoch();
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }

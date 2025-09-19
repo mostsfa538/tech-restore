@@ -12,7 +12,6 @@ import java.util.UUID;
 @Data
 public class Address {
     @Id
-    @GeneratedValue
     @Column(name = "id", nullable = false, unique = true)
     private UUID id;
 
@@ -43,9 +42,7 @@ public class Address {
 
     @PrePersist
     protected void onCreate() {
-        if (id == null) {
-            id = UuidCreator.getTimeOrdered();
-        }
+        id = UuidCreator.getTimeOrderedEpoch();
         createdAt = LocalDateTime.now();
     }
 }

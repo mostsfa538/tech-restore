@@ -6,6 +6,8 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.github.f4b6a3.uuid.UuidCreator;
+
 @Entity
 @Data
 @Table(name = "review", uniqueConstraints = {
@@ -13,7 +15,6 @@ import java.util.UUID;
 })
 public class Review {
     @Id
-    @GeneratedValue
     @Column(name = "review_id", nullable = false, unique = true)
     private UUID id;
 
@@ -37,4 +38,10 @@ public class Review {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shop_id", insertable = false, updatable = false)
     private Shop shop;
+
+    @PrePersist
+    protected void onCreate() {
+        id = UuidCreator.getTimeOrderedEpoch();
+        createdAt = LocalDateTime.now();
+    }
 }
