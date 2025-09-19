@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.common.model.entities;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import com.techRestore.tech.restore.common.interfaces.OtpVerifiable;
 import com.techRestore.tech.restore.common.model.enums.ContractType;
 import com.techRestore.tech.restore.common.model.enums.ShopType;
@@ -19,7 +20,6 @@ import java.util.UUID;
 @Table(name = "shop")
 public class Shop implements OtpVerifiable {
     @Id
-    @GeneratedValue
     @Column(name = "id", nullable = false, unique = true)
     private UUID id;
 
@@ -125,6 +125,7 @@ public class Shop implements OtpVerifiable {
 
     @PrePersist
     protected void onCreate() {
+        id = UuidCreator.getTimeOrderedEpoch();
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }

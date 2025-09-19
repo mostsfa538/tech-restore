@@ -1,13 +1,11 @@
 package com.techRestore.tech.restore.shop.service;
 
 import java.math.BigDecimal;
-import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import java.io.*;
 import java.util.*;
 
 import com.techRestore.tech.restore.common.exception.NotFoundException;
-import com.techRestore.tech.restore.common.model.entities.Product;
 import com.techRestore.tech.restore.common.model.entities.Shop;
 
 import org.springframework.data.domain.Page;
@@ -76,29 +74,6 @@ public class InventoryService {
                 .sum();
     }
 
-    // public void importInventoryData(String filePath) {
-    // UUID shopId = getCurrentShop();
-    // try (CSVReader reader = new CSVReader(new FileReader(filePath))) {
-    // List<Product> products = new ArrayList<>();
-    // String[] nextLine;
-    // reader.readNext();
-    // while ((nextLine = reader.readNext()) != null) {
-    // Product product = new Product();
-    // product.setName(nextLine[0]);
-    // product.setDescription(nextLine[1]);
-    // product.setPrice(new BigDecimal(nextLine[2]));
-    // product.setStock(Integer.parseInt(nextLine[3]));
-    // product.setImageUrl(nextLine[4]);
-    // product.setShopId(shopId);
-
-    // products.add(product);
-    // }
-    // productRepository.saveAll(products);
-    // } catch (Exception e) {
-    // e.printStackTrace();
-    // }
-    // }
-
     public byte[] exportInventoryData() {
         UUID shopId = getCurrentShop();
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -110,8 +85,7 @@ public class InventoryService {
                         product.getName(),
                         product.getDescription(),
                         product.getPrice().toString(),
-                        product.getStock().toString(),
-                        product.getImageUrl()
+                        product.getStock().toString()
                 };
                 writer.writeNext(data);
             });

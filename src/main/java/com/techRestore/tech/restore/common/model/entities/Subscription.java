@@ -6,6 +6,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import com.techRestore.tech.restore.common.model.enums.SubscriptionType;
 
 @Entity
@@ -13,7 +14,6 @@ import com.techRestore.tech.restore.common.model.enums.SubscriptionType;
 @Data
 public class Subscription {
     @Id
-    @GeneratedValue
     @Column(name = "id", nullable = false, unique = true)
     private UUID id;
 
@@ -46,6 +46,7 @@ public class Subscription {
 
     @PrePersist
     protected void onCreate() {
+        id = UuidCreator.getTimeOrderedEpoch();
         createdAt = LocalDateTime.now();
     }
 }

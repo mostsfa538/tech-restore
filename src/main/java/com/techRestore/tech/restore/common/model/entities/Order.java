@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.github.f4b6a3.uuid.UuidCreator;
 import com.techRestore.tech.restore.common.model.enums.OrderStatus;
 import com.techRestore.tech.restore.common.model.enums.PaymentMethod;
 
@@ -17,7 +18,6 @@ import com.techRestore.tech.restore.common.model.enums.PaymentMethod;
 public class Order {
 
     @Id
-    @GeneratedValue
     @Column(name = "id", nullable = false, unique = true)
     private UUID id;
 
@@ -65,6 +65,7 @@ public class Order {
 
     @PrePersist
     protected void onCreate() {
+        id = UuidCreator.getTimeOrderedEpoch();
         createdAt = LocalDateTime.now();
     }
 

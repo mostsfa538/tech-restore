@@ -2,6 +2,7 @@ package com.techRestore.tech.restore.common.model.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.github.f4b6a3.uuid.UuidCreator;
 import com.techRestore.tech.restore.common.interfaces.OtpVerifiable;
 import com.techRestore.tech.restore.common.model.enums.Role;
 import com.techRestore.tech.restore.common.model.enums.Status;
@@ -19,7 +20,6 @@ import java.util.UUID;
 public class User implements OtpVerifiable {
 
     @Id
-    @GeneratedValue
     @Column(name = "id", nullable = false, updatable = false, unique = true)
     private UUID id;
 
@@ -64,13 +64,14 @@ public class User implements OtpVerifiable {
     private List<Address> addresses;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JsonManagedReference  // Allows serialization of this side
+    @JsonManagedReference // Allows serialization of this side
     private List<Payment> payments;
 
     private Status status;
 
     @PrePersist
     protected void onCreate() {
+        id = UuidCreator.getTimeOrderedEpoch();
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }

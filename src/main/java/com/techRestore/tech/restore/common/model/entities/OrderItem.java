@@ -6,6 +6,8 @@ import lombok.Data;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import com.github.f4b6a3.uuid.UuidCreator;
+
 @Entity
 @Table(name = "order_item")
 @Data
@@ -41,4 +43,9 @@ public class OrderItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "shop_id", insertable = false, updatable = false)
     private Shop shop;
+
+    @PrePersist
+    protected void onCreate() {
+        id = UuidCreator.getTimeOrderedEpoch();
+    }
 }

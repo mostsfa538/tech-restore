@@ -1,6 +1,7 @@
 package com.techRestore.tech.restore.common.model.entities;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.github.f4b6a3.uuid.UuidCreator;
 import com.techRestore.tech.restore.common.model.enums.ProductCondition;
 
 import jakarta.persistence.*;
@@ -17,7 +18,6 @@ import java.util.UUID;
 public class Product {
 
     @Id
-    @GeneratedValue
     @Column(name = "id", nullable = false, unique = true)
     private UUID id;
 
@@ -62,6 +62,7 @@ public class Product {
 
     @PrePersist
     protected void onCreate() {
+        id = UuidCreator.getTimeOrderedEpoch();
         createdAt = LocalDateTime.now();
     }
 
