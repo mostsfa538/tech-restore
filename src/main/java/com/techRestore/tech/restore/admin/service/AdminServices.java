@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.admin.service;
 
+import com.techRestore.tech.restore.admin.dto.AdminStatsDto;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
 import com.techRestore.tech.restore.common.model.entities.Offer;
 import com.techRestore.tech.restore.common.model.entities.Shop;
@@ -13,6 +14,8 @@ import com.techRestore.tech.restore.shop.repository.OffersRepository;
 import com.techRestore.tech.restore.shop.repository.ProductRepository;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
 import com.techRestore.tech.restore.user.dto.user.ResponseUsersDto;
+import com.techRestore.tech.restore.user.repository.OrderRepository;
+import com.techRestore.tech.restore.user.repository.RepairRequestRepository;
 import com.techRestore.tech.restore.user.repository.UserRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +35,12 @@ public class AdminServices extends BaseService<User, UUID> {
 
     @Autowired
     private ProductRepository productRepository;
+
+    @Autowired
+    private RepairRequestRepository repairRequestRepository;
+
+    @Autowired
+    private OrderRepository orderRepository;
 
     public AdminServices(UserRepository userRepository) {
         super(userRepository);
@@ -139,5 +148,13 @@ public class AdminServices extends BaseService<User, UUID> {
                 user.getPhone(),
                 user.getRole(),
                 user.isActivate());
+    }
+
+    public AdminStatsDto getAdminStats() {
+        return new AdminStatsDto(
+                repository.count(),
+                shopRepository.count(),
+                repairRequestRepository.count(),
+                orderRepository.count());
     }
 }
