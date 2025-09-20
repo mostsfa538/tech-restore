@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.admin.controller;
 
+import com.techRestore.tech.restore.admin.dto.AdminStatsDto;
 import com.techRestore.tech.restore.admin.service.AdminServices;
 import com.techRestore.tech.restore.common.controller.BaseController;
 import com.techRestore.tech.restore.common.dto.common.SearchRequest;
@@ -124,20 +125,23 @@ public class AdminController extends BaseController {
 		return deletedResponse();
 	}
 
-
 	@GetMapping("/transactions/all")
 	@PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Page<AdminPaymentDto>> getAllTransactions(Pageable pageable) {
-    Page<AdminPaymentDto> transactions = paymentService.getAllTransactions(pageable);
-    return successResponse(transactions);
-  }
+	public ResponseEntity<Page<AdminPaymentDto>> getAllTransactions(Pageable pageable) {
+		Page<AdminPaymentDto> transactions = paymentService.getAllTransactions(pageable);
+		return successResponse(transactions);
+	}
 
 	@GetMapping("/transactions/{userId}")
 	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<Page<PaymentDto>> getTransactionByUserId(@PathVariable UUID userId,Pageable pageable){
+	public ResponseEntity<Page<PaymentDto>> getTransactionByUserId(@PathVariable UUID userId, Pageable pageable) {
 		Page<PaymentDto> transactions = paymentService.getAllUserTransactions(userId, pageable);
 		return successResponse(transactions);
 	}
 
+	@GetMapping("/stats")
+	public ResponseEntity<AdminStatsDto> getAdminStats() {
+		return ResponseEntity.ok(adminServices.getAdminStats());
+	}
 
 }

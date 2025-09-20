@@ -27,7 +27,8 @@ public class ShopController extends BaseController {
     @Autowired
     private ShopServices shopServices;
 
-    @Autowired ShopFinancialService shopFinancialService;
+    @Autowired
+    ShopFinancialService shopFinancialService;
 
     @GetMapping("/{shopId}")
     public ResponseEntity<ShopResponseDto> getShopById(@PathVariable UUID shopId) {
