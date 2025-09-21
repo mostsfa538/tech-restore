@@ -2,6 +2,7 @@ package com.techRestore.tech.restore.admin.service;
 
 import com.techRestore.tech.restore.assigners.dto.AssignerResponseDto;
 import com.techRestore.tech.restore.assigners.repository.AssignerRepository;
+import com.techRestore.tech.restore.admin.dto.AdminStatsDto;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
 import com.techRestore.tech.restore.common.model.entities.Assigner;
 import com.techRestore.tech.restore.common.model.entities.Delivery;
@@ -58,6 +59,7 @@ public class AdminServices extends BaseService<User, UUID> {
     @Autowired
     private OrderRepository orderRepository;
 
+
     @Autowired
     private RepairRequestRepository repairRequestRepository;  
 
@@ -66,6 +68,7 @@ public class AdminServices extends BaseService<User, UUID> {
 
     @Autowired
     private NotificationService notificationService;
+
 
     public AdminServices(UserRepository userRepository) {
         super(userRepository);
@@ -358,5 +361,13 @@ public class AdminServices extends BaseService<User, UUID> {
                 user.getPhone(),
                 user.getRole(),
                 user.isActivate());
+    }
+
+    public AdminStatsDto getAdminStats() {
+        return new AdminStatsDto(
+                repository.count(),
+                shopRepository.count(),
+                repairRequestRepository.count(),
+                orderRepository.count());
     }
 }

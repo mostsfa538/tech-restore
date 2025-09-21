@@ -75,6 +75,7 @@ public class AppConfig {
                         .requestMatchers("/api/auth/home", "/api/auth/logout", "/api/auth/logout-all",
                                 "/api/auth/refresh-token")
                         .authenticated()
+                        .requestMatchers("api/shops/dashboard/**").hasAnyRole("SELLER", "BOTH", "REPAIRER")
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN")
                         .requestMatchers("/api/shops/products/**", "/api/shop/offers/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/shops/repair-request/**").hasAnyRole("REPAIRER")
@@ -114,12 +115,12 @@ public class AppConfig {
     private CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedOrigins(Arrays.asList(
-        "http://localhost:4200",           // Your existing Angular frontend
-        "http://127.0.0.1:5500",          // Your HTML file served by Live Server
-        "http://localhost:5500",           // Alternative localhost format
-        "http://localhost:3000",           // Common React development port
-        "http://127.0.0.1:3000"           // Alternative format
-    ));
+                "http://localhost:4200", // Your existing Angular frontend
+                "http://127.0.0.1:5500", // Your HTML file served by Live Server
+                "http://localhost:5500", // Alternative localhost format
+                "http://localhost:3000", // Common React development port
+                "http://127.0.0.1:3000" // Alternative format
+        ));
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
         corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
