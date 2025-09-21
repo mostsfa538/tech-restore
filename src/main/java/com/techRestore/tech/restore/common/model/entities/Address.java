@@ -40,6 +40,16 @@ public class Address {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    public String getFullAddress() {
+        StringBuilder sb = new StringBuilder();
+        if (building != null) sb.append("Building ").append(building).append(", ");
+        if (street != null) sb.append(street).append(", ");
+        if (city != null) sb.append(city).append(", ");
+        if (state != null) sb.append(state);
+        if (notes != null && !notes.isBlank()) sb.append(" (").append(notes).append(")");
+        return sb.toString();
+    }
+
     @PrePersist
     protected void onCreate() {
         id = UuidCreator.getTimeOrderedEpoch();

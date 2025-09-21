@@ -32,7 +32,6 @@ public class RefreshTokenService {
             String ipAddress = getClientIpAddress(request);
             String userAgent = getUserAgent(request);
 
-
             RefreshToken token = new RefreshToken();
             token.setToken(refreshToken);
             token.setUsername(username);

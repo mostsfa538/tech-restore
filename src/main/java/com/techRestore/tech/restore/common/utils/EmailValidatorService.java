@@ -2,6 +2,7 @@ package com.techRestore.tech.restore.common.utils;
 
 import org.springframework.stereotype.Service;
 
+import com.techRestore.tech.restore.assigners.repository.AssignerRepository;
 import com.techRestore.tech.restore.common.exception.EmailAlreadyExistsException;
 import com.techRestore.tech.restore.delivery.repository.DeliveryRepository;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
@@ -16,11 +17,13 @@ public class EmailValidatorService {
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final DeliveryRepository deliveryRepository;
+    private final AssignerRepository assignerRepository;
 
     public void validateUniqueEmail(String email) {
         boolean exists = userRepository.existsByEmail(email) ||
                 shopRepository.existsByEmail(email) ||
-                deliveryRepository.existsByEmail(email);
+                deliveryRepository.existsByEmail(email)||
+                assignerRepository.existsByEmail(email);
 
         if (exists) {
             throw new EmailAlreadyExistsException("Email is already registered: " + email);
@@ -30,7 +33,8 @@ public class EmailValidatorService {
     public void validateEmailExists(String email) {
         boolean exists = userRepository.existsByEmail(email) ||
                 shopRepository.existsByEmail(email) ||
-                deliveryRepository.existsByEmail(email);
+                deliveryRepository.existsByEmail(email)||
+                assignerRepository.existsByEmail(email);
 
         if (!exists) {
             throw new IllegalArgumentException("Email not found: " + email);
@@ -40,7 +44,8 @@ public class EmailValidatorService {
     public boolean emailExists(String email) {
         return userRepository.existsByEmail(email) ||
                 shopRepository.existsByEmail(email) ||
-                deliveryRepository.existsByEmail(email);
+                deliveryRepository.existsByEmail(email)||
+                assignerRepository.existsByEmail(email);
     }
 
     public String getEntityTypeForEmail(String email) {
@@ -50,6 +55,8 @@ public class EmailValidatorService {
             return "SHOP";
         } else if (deliveryRepository.existsByEmail(email)) {
             return "DELIVERY";
+        }else if (assignerRepository.existsByEmail(email)) {
+            return "ASSIGNER";
         }
         return null;
     }

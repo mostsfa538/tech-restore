@@ -3,6 +3,8 @@ package com.techRestore.tech.restore.user.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.techRestore.tech.restore.common.model.entities.RepairRequest;
@@ -28,5 +30,11 @@ public interface RepairRequestRepository extends JpaRepository<RepairRequest, UU
     Page<RepairRequest> findByStatusInAndDeliveryIdIsNull(List<RepairStatus> statuses, Pageable pageable);
 
     Page<RepairRequest> findByDeliveryId(UUID deliveryId, Pageable pageable);
+
+    long countByDeliveryIdAndStatusIn(UUID deliveryId, List<RepairStatus> statuses);
+    
+    @Query("SELECT r FROM RepairRequest r WHERE r.deliveryId = :deliveryId AND r.status IN :statuses")
+    List<RepairRequest> findByDeliveryIdAndStatusIn(@Param("deliveryId") UUID deliveryId, 
+                                                  @Param("statuses") List<RepairStatus> statuses);
 
 }

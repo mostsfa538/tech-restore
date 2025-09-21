@@ -6,9 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.techRestore.tech.restore.common.interfaces.OtpVerifiable;
+import com.techRestore.tech.restore.common.model.entities.Assigner;
 import com.techRestore.tech.restore.common.model.entities.Delivery;
 import com.techRestore.tech.restore.common.model.entities.Shop;
 import com.techRestore.tech.restore.common.model.entities.User;
+import com.techRestore.tech.restore.assigners.repository.AssignerRepository;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
 import com.techRestore.tech.restore.user.repository.UserRepository;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
@@ -26,6 +28,9 @@ public class EntityRepositoryService {
     @Autowired
     private DeliveryRepository deliveryRepository;
 
+    @Autowired
+    private AssignerRepository assignerRepository;
+
     public OtpVerifiable findByEmail(String email) {
         User user = userRepository.findByEmail(email);
         if (user != null) {
@@ -42,6 +47,11 @@ public class EntityRepositoryService {
             return deliveryOpt.get();
         }
 
+        Optional<Assigner> assignerOpt = assignerRepository.findByEmail(email);
+        if (assignerOpt.isPresent()) {
+            return assignerOpt.get();
+        }
+
         throw new NotFoundException("Email not found: " + email);
     }
 
@@ -53,7 +63,9 @@ public class EntityRepositoryService {
             shopRepository.save((Shop) entity);
         } else if (entity instanceof Delivery) {
             deliveryRepository.save((Delivery) entity);
-        } else {
+        } else if (entity instanceof Assigner) {
+            assignerRepository.save((Assigner) entity);
+        }else {
             throw new IllegalArgumentException("Unknown entity type: " + entity.getClass().getSimpleName());
         }
     }

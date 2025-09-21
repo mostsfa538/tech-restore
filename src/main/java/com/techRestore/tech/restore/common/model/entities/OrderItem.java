@@ -14,7 +14,6 @@ import com.github.f4b6a3.uuid.UuidCreator;
 public class OrderItem {
 
     @Id
-    @GeneratedValue
     @Column(name = "id", nullable = false, unique = true)
     private UUID id;
 
@@ -46,6 +45,8 @@ public class OrderItem {
 
     @PrePersist
     protected void onCreate() {
-        id = UuidCreator.getTimeOrderedEpoch();
+        if (id == null) {
+            id = UuidCreator.getTimeOrderedEpoch();
+        }
     }
 }

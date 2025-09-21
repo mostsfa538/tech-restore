@@ -1,10 +1,16 @@
 package com.techRestore.tech.restore.delivery.service;
 
+import com.techRestore.tech.restore.common.exception.AccountNotApprovedException;
+import com.techRestore.tech.restore.common.exception.ActivationException;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
+import com.techRestore.tech.restore.common.model.entities.Address;
 import com.techRestore.tech.restore.common.model.entities.Delivery;
 import com.techRestore.tech.restore.common.model.entities.Order;
-import com.techRestore.tech.restore.common.model.entities.OrderItem;
 import com.techRestore.tech.restore.common.model.entities.Payment;
+import com.techRestore.tech.restore.common.model.entities.Shop;
+import com.techRestore.tech.restore.common.model.entities.ShopAddress;
+import com.techRestore.tech.restore.common.model.entities.User;
+import com.techRestore.tech.restore.common.model.enums.ApprovalStatus;
 import com.techRestore.tech.restore.common.model.enums.OrderStatus;
 import com.techRestore.tech.restore.common.model.enums.PaymentMethod;
 import com.techRestore.tech.restore.common.model.enums.PaymentStatus;
@@ -14,8 +20,9 @@ import com.techRestore.tech.restore.delivery.dto.DeliveryProfileUpdateDto;
 import com.techRestore.tech.restore.delivery.dto.DeliveryStateUpdate;
 import com.techRestore.tech.restore.delivery.dto.OrderDeliveryDto;
 import com.techRestore.tech.restore.delivery.repository.DeliveryRepository;
-import com.techRestore.tech.restore.user.repository.OrderItemRepository;
+import com.techRestore.tech.restore.shop.repository.ShopRepository;
 import com.techRestore.tech.restore.user.repository.OrderRepository;
+import com.techRestore.tech.restore.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,7 +33,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -37,13 +43,21 @@ public class DeliveryService {
     private final OrderRepository orderRepository;
     private final NotificationService notificationService;
     private final PaymentRepository orderPaymentRepository;
-    private final OrderItemRepository orderItemRepository;
+    private final UserRepository userRepository;
+    private final ShopRepository shopRepository;
 
     private UUID getCurrentDeliveryId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         Delivery delivery = deliveryRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("Delivery not found with email: " + email));
+        
+        if (delivery.getStatus() != ApprovalStatus.APPROVED) {
+            throw new AccountNotApprovedException("Your account is not approved. Please wait for admin approval.");
+        }
+        if (!delivery.isActivate()) {
+            throw new ActivationException("Account is not activated. Please check your email for activation instructions");
+        }
         return delivery.getId();
     }
 
@@ -131,20 +145,40 @@ public class DeliveryService {
     }
 
     private OrderDeliveryDto convertToDeliveryDTO(Order order) {
-
-        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
-        if (orderItems == null || orderItems.isEmpty()) {
-            throw new IllegalStateException("Order " + order.getId() + " has no items");
-        }
-        UUID shopId = orderItems.get(0).getShopId();
         OrderDeliveryDto dto = new OrderDeliveryDto();
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());
-        dto.setShopId(shopId);
+        dto.setShopId(order.getShopId());
         dto.setDeliveryId(order.getDeliveryId());
         dto.setStatus(order.getStatus());
         dto.setTotalPrice(order.getTotalPrice());
         dto.setCreatedAt(order.getCreatedAt());
+
+        User user = userRepository.findByIdWithAddresses(order.getUserId())
+                .orElseThrow(() -> new NotFoundException("User not found with ID: " + order.getUserId()));
+        if (user.getAddresses() != null && !user.getAddresses().isEmpty()) {
+            Address userAddress = user.getAddresses().get(0);
+            OrderDeliveryDto.AddressDto userAddressDto = new OrderDeliveryDto.AddressDto();
+            userAddressDto.setId(userAddress.getId());
+            userAddressDto.setStreet(userAddress.getStreet());
+            userAddressDto.setCity(userAddress.getCity());
+            userAddressDto.setState(userAddress.getState());
+            dto.setUserAddress(userAddressDto);
+        }
+
+        Shop shop = shopRepository.findByIdWithAddresses(order.getShopId())
+                .orElseThrow(() -> new NotFoundException("Shop not found with ID: " + order.getShopId()));
+        if (shop.getAddresses() != null && !shop.getAddresses().isEmpty()) {
+            ShopAddress shopAddress = shop.getAddresses().get(0);
+            OrderDeliveryDto.AddressDto shopAddressDto = new OrderDeliveryDto.AddressDto();
+            shopAddressDto.setId(shopAddress.getId());
+            shopAddressDto.setStreet(shopAddress.getStreet());
+            shopAddressDto.setCity(shopAddress.getCity());
+            shopAddressDto.setState(shopAddress.getState());
+            dto.setShopAddress(shopAddressDto);
+        }
         return dto;
     }
+
+
 }

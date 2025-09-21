@@ -9,6 +9,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Service;
 
+import com.techRestore.tech.restore.common.security.userdetails.AssignerPrincipal;
 import com.techRestore.tech.restore.common.security.userdetails.DeliveryPrincipal;
 import com.techRestore.tech.restore.common.security.userdetails.ShopPrincipal;
 import com.techRestore.tech.restore.common.security.userdetails.UserPrincipal;
@@ -58,7 +59,12 @@ public class JwtService {
             roles = deliveryPrincipal.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.toList());
-        } else {
+        } 
+        else if (principal instanceof AssignerPrincipal assignerPrincipal) {
+            roles = assignerPrincipal.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toList());
+        }else {
             roles.add("ROLE_GUEST");
         }
 
