@@ -3,6 +3,7 @@ package com.techRestore.tech.restore.shop.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.techRestore.tech.restore.common.model.entities.Shop;
@@ -32,4 +33,7 @@ public interface ShopRepository extends JpaRepository<Shop, UUID> {
     Page<Shop> findAllVerified(Pageable pageable);
 
     Optional<Shop> findAllByStatus(Status status);
+
+    @Query("SELECT s FROM Shop s LEFT JOIN FETCH s.addresses WHERE s.id = :id")
+    Optional<Shop> findByIdWithAddresses(@Param("id") UUID id);
 }

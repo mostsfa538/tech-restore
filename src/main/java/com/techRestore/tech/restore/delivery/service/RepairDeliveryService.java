@@ -1,5 +1,7 @@
 package com.techRestore.tech.restore.delivery.service;
 
+import com.techRestore.tech.restore.common.exception.AccountNotApprovedException;
+import com.techRestore.tech.restore.common.exception.ActivationException;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
 import com.techRestore.tech.restore.common.model.entities.Address;
 import com.techRestore.tech.restore.common.model.entities.Delivery;
@@ -8,10 +10,10 @@ import com.techRestore.tech.restore.common.model.entities.RepairRequest;
 import com.techRestore.tech.restore.common.model.entities.Shop;
 import com.techRestore.tech.restore.common.model.entities.ShopAddress;
 import com.techRestore.tech.restore.common.model.entities.User;
+import com.techRestore.tech.restore.common.model.enums.ApprovalStatus;
 import com.techRestore.tech.restore.common.model.enums.PaymentMethod;
 import com.techRestore.tech.restore.common.model.enums.PaymentStatus;
 import com.techRestore.tech.restore.common.model.enums.RepairStatus;
-import com.techRestore.tech.restore.common.repository.AddressRepository;
 import com.techRestore.tech.restore.common.repository.PaymentRepository;
 import com.techRestore.tech.restore.common.services.notification.NotificationService;
 import com.techRestore.tech.restore.delivery.dto.DeliveryProfileUpdateDto;
@@ -44,13 +46,19 @@ public class RepairDeliveryService {
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
-    private final AddressRepository addressRepository;
 
     private UUID getCurrentDeliveryId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         Delivery delivery = deliveryRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("Delivery not found with email: " + email));
+        
+        if (delivery.getStatus() != ApprovalStatus.APPROVED) {
+            throw new AccountNotApprovedException("Your account is not approved. Please wait for admin approval.");
+        }
+        if (!delivery.isActivate()) {
+            throw new ActivationException("Account is not activated. Please check your email for activation instructions");
+        }
         return delivery.getId();
     }
 
@@ -180,18 +188,6 @@ public class RepairDeliveryService {
             shopAddressDto.setState(shopAddress.getState());
             dto.setShopAddress(shopAddressDto);
         }
-
-        if (repairRequest.getDeliveryAddress() != null) {
-            Address deliveryAddress = addressRepository.findById(repairRequest.getDeliveryAddress())
-                    .orElseThrow(() -> new NotFoundException("Delivery address not found with ID: " + repairRequest.getDeliveryAddress()));
-            RepairDeliveryDto.AddressDto deliveryAddressDto = new RepairDeliveryDto.AddressDto();
-            deliveryAddressDto.setId(deliveryAddress.getId());
-            deliveryAddressDto.setStreet(deliveryAddress.getStreet());
-            deliveryAddressDto.setCity(deliveryAddress.getCity());
-            deliveryAddressDto.setState(deliveryAddress.getState());
-            dto.setDeliveryAddress(deliveryAddressDto);
-        }
-
         return dto;
     }
 }

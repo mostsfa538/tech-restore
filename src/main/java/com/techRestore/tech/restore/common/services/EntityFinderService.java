@@ -1,5 +1,7 @@
 package com.techRestore.tech.restore.common.services;
 
+import com.techRestore.tech.restore.assigners.repository.AssignerRepository;
+import com.techRestore.tech.restore.common.model.entities.Assigner;
 import com.techRestore.tech.restore.common.model.entities.Delivery;
 import com.techRestore.tech.restore.common.model.entities.Shop;
 import com.techRestore.tech.restore.common.model.entities.User;
@@ -23,6 +25,7 @@ public class EntityFinderService {
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final DeliveryRepository deliveryRepository;
+    private final AssignerRepository assignerRepository;
 
     public Optional<Authentication> findEntityAndCreateAuthentication(String email) {
         User user = userRepository.findByEmail(email);
@@ -46,13 +49,21 @@ public class EntityFinderService {
                     Collections.singletonList(new SimpleGrantedAuthority("ROLE_DELIVERY"))));
         }
 
+        Optional<Assigner> assigner = assignerRepository.findByEmail(email);
+        if (assigner != null) {
+            return Optional.of(new UsernamePasswordAuthenticationToken(
+                    email, null,
+                    Collections.singletonList(new SimpleGrantedAuthority("ROLE_ASSIGNER"))));
+        }
+
         return Optional.empty();
     }
 
     public boolean entityExists(String email) {
         return userRepository.existsByEmail(email) ||
                 shopRepository.existsByEmail(email) ||
-                deliveryRepository.existsByEmail(email);
+                deliveryRepository.existsByEmail(email)||
+                assignerRepository.existsByEmail(email);
     }
 
     public String getEntityType(String email) {
@@ -62,6 +73,9 @@ public class EntityFinderService {
             return "SHOP";
         } else if (deliveryRepository.existsByEmail(email)) {
             return "DELIVERY";
+        }
+        else if (assignerRepository.existsByEmail(email)) {
+            return "ASSIGNER";
         }
         return "UNKNOWN";
     }

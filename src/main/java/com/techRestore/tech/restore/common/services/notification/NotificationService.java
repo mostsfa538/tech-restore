@@ -4,7 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.techRestore.tech.restore.assigners.repository.AssignerRepository;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
+import com.techRestore.tech.restore.common.model.entities.Assigner;
 import com.techRestore.tech.restore.common.model.entities.Delivery;
 import com.techRestore.tech.restore.common.model.entities.Shop;
 import com.techRestore.tech.restore.common.model.entities.User;
@@ -35,6 +37,7 @@ public class NotificationService {
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final DeliveryRepository deliveryRepository;
+    private final AssignerRepository assignerRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional
@@ -63,6 +66,35 @@ public class NotificationService {
             addToHistory(delivery.getNotificationHistory(), message, delivery::setNotificationHistory);
             deliveryRepository.save(delivery);
         }
+    }
+
+    @Transactional
+    public void sendToAssigners(String message) {
+        List<Assigner> assigners = assignerRepository.findAll();
+        for (Assigner assigner : assigners) {
+            messagingTemplate.convertAndSendToUser(assigner.getEmail(), "/queue/notifications", message);
+            addToHistory(assigner.getNotificationHistory(), message, assigner::setNotificationHistory);
+            assignerRepository.save(assigner);
+        }
+    }
+
+    @Transactional
+    public void sendToAssigner(UUID assignerId,String message) {
+        Assigner assigner = assignerRepository.findById(assignerId)
+                .orElseThrow(() -> new NotFoundException("Assigner not found with ID: " + assignerId));
+
+        messagingTemplate.convertAndSendToUser(assigner.getEmail(), "/queue/notifications", message);
+        addToHistory(assigner.getNotificationHistory(), message, assigner::setNotificationHistory);
+        assignerRepository.save(assigner);
+    }
+
+    @Transactional
+    public void sendToDelivery(UUID deliveryId, String message) {
+        Delivery delivery = deliveryRepository.findById(deliveryId)
+                .orElseThrow(() -> new NotFoundException("Delivery person not found with ID: " + deliveryId));
+        messagingTemplate.convertAndSendToUser(delivery.getEmail(), "/queue/notifications", message);
+        addToHistory(delivery.getNotificationHistory(), message, delivery::setNotificationHistory);
+        deliveryRepository.save(delivery);
     }
 
     

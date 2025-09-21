@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.common.controller.auth;
 
+import com.techRestore.tech.restore.assigners.dto.AssignerRegistration;
 import com.techRestore.tech.restore.common.controller.BaseController;
 import com.techRestore.tech.restore.common.dto.auth.LoginDto;
 import com.techRestore.tech.restore.common.dto.auth.ShopRegistrationRequest;
@@ -56,6 +57,14 @@ public class AuthController extends BaseController {
         String result = authServices.registerShop(shopRegistrationRequest);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of("message", result));
+    }
+
+    @PostMapping("/register/assigner")
+    public ResponseEntity<Map<String, String>> registerAssigner(
+            @Valid @RequestBody AssignerRegistration assignerRegistration) {
+        String assignerId = authServices.registerAssigner(assignerRegistration);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(Map.of("message", "Assigner registered successfully", "assigner_id", assignerId));
     }
 
     @PostMapping("/login")

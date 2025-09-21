@@ -1,5 +1,7 @@
 package com.techRestore.tech.restore.common.services.auth;
 
+import com.techRestore.tech.restore.assigners.components.AssignerRegistrationStrategy;
+import com.techRestore.tech.restore.assigners.dto.AssignerRegistration;
 import com.techRestore.tech.restore.common.dto.auth.LoginDto;
 import com.techRestore.tech.restore.common.dto.auth.ShopRegistrationRequest;
 import com.techRestore.tech.restore.common.dto.auth.TokenResponse;
@@ -9,6 +11,7 @@ import com.techRestore.tech.restore.common.exception.NotFoundException;
 import com.techRestore.tech.restore.common.security.config.CustomAuthenticationManager;
 import com.techRestore.tech.restore.common.security.jwt.JwtService;
 import com.techRestore.tech.restore.common.security.jwt.RefreshTokenService;
+import com.techRestore.tech.restore.common.security.userdetails.AssignerPrincipal;
 import com.techRestore.tech.restore.common.security.userdetails.DeliveryPrincipal;
 import com.techRestore.tech.restore.common.security.userdetails.ShopPrincipal;
 import com.techRestore.tech.restore.common.security.userdetails.UserPrincipal;
@@ -47,6 +50,7 @@ public class AuthServices {
     private final UserRegistrationStrategy userRegistrationStrategy;
     private final DeliveryRegistrationStrategy deliveryRegistrationStrategy;
     private final ShopRegistrationStrategy shopRegistrationStrategy;
+    private final AssignerRegistrationStrategy assignerRegistrationStrategy;
 
     public void registerUser(UserRegistration userRegistration) {
         unifiedRegistrationService.register(userRegistration, userRegistrationStrategy);
@@ -58,6 +62,10 @@ public class AuthServices {
 
     public String registerShop(ShopRegistrationRequest shopRegistrationRequest) {
         return unifiedRegistrationService.register(shopRegistrationRequest, shopRegistrationStrategy);
+    }
+
+    public String registerAssigner(AssignerRegistration assignerRegistration) {
+        return unifiedRegistrationService.register(assignerRegistration, assignerRegistrationStrategy);
     }
 
     public Map<String, Object> login(LoginDto loginDto, HttpServletRequest request, HttpServletResponse response) {
@@ -91,6 +99,13 @@ public class AuthServices {
                     .toList());
         } else if (principal instanceof DeliveryPrincipal deliveryPrincipal) {
             responseData.put("id", deliveryPrincipal.getDelivery().getId());
+            responseData.put("role", authentication.getAuthorities()
+                    .stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .toList());
+        }
+        else if (principal instanceof AssignerPrincipal assignerPrincipal) {
+            responseData.put("id", assignerPrincipal.getAssigner().getId());
             responseData.put("role", authentication.getAuthorities()
                     .stream()
                     .map(GrantedAuthority::getAuthority)

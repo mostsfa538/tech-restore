@@ -3,6 +3,7 @@ package com.techRestore.tech.restore.common.security.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.expression.spel.ast.Assign;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -19,6 +20,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import com.techRestore.tech.restore.common.security.filter.JWTAuthenticationFilter;
 import com.techRestore.tech.restore.common.security.jwt.JwtService;
 import com.techRestore.tech.restore.common.security.jwt.RefreshTokenService;
+import com.techRestore.tech.restore.common.security.userdetails.AssignerDetailsServiceImpl;
 import com.techRestore.tech.restore.common.security.userdetails.DeliveryDetailsServiceImpl;
 import com.techRestore.tech.restore.common.security.userdetails.ShopDetailsServiceImpl;
 import com.techRestore.tech.restore.common.security.userdetails.UserDetailsServiceImpl;
@@ -38,6 +40,7 @@ public class AppConfig {
     private final UserDetailsServiceImpl userDetailsService;
     private final ShopDetailsServiceImpl shopDetailsService;
     private final DeliveryDetailsServiceImpl deliveryDetailsService;
+    private final AssignerDetailsServiceImpl assignerDetailsService;
     private final JWTAuthenticationFilter jwtAuthenticationFilter;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final JwtService jwtService;
@@ -56,8 +59,10 @@ public class AppConfig {
                                 "/api/auth/test-cookie",
                                 "/api/auth/register/shop",
                                 "/api/auth/register/delivery",
+                                "/api/auth/register/assigner",
                                 "api/auth/reset-password")
                         .permitAll()
+                        .requestMatchers("/api/assigner/**").hasAnyRole("ASSIGNER")
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/payments/**").hasAnyRole("GUEST")
                         .requestMatchers("/shops/connected").hasRole("GUEST")
@@ -131,6 +136,7 @@ public class AppConfig {
                 userDetailsService,
                 shopDetailsService,
                 deliveryDetailsService,
+                assignerDetailsService,
                 passwordEncoder());
     }
 
