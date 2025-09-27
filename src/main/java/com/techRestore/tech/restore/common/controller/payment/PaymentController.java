@@ -20,10 +20,8 @@ import com.techRestore.tech.restore.common.dto.payment.PaymentDto;
 import com.techRestore.tech.restore.common.dto.payment.PaymentInitiationDto;
 import com.techRestore.tech.restore.common.exception.ActivationException;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
-import com.techRestore.tech.restore.common.model.entities.Payment;
 import com.techRestore.tech.restore.common.model.entities.User;
 import com.techRestore.tech.restore.common.model.enums.PaymentType;
-import com.techRestore.tech.restore.common.repository.PaymentRepository;
 import com.techRestore.tech.restore.common.services.payment.PaymentService;
 import com.techRestore.tech.restore.user.repository.UserRepository;
 

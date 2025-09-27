@@ -160,6 +160,11 @@ public class ShopOrderService extends BaseService<Order, UUID> {
 
     private OrderResponseDTO mapToOrderResponseDTO(Order order) {
         List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
-        return DTOConverter.convertToOrderResponseDTO(order, orderItems);
+        String shopName =null;
+        Shop shop = shopRepository.findById(order.getShopId()).orElseThrow(() -> new NotFoundException("Shop not found"));;
+        if (shop != null) {
+            shopName = shop.getName();
+        }
+        return DTOConverter.convertToOrderResponseDTO(order, orderItems,shopName);
     }
 }
