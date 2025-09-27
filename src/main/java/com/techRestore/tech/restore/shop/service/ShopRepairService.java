@@ -48,8 +48,10 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
 
     public Page<RepairRequestDto> getAllRepairRequest(Pageable pageable) {
         UUID shopId = getCurrentShopId();
-        return ((RepairRequestRepository) repository).findAllByShopId(shopId, pageable)
-                .map(DTOConverter::convertToRepairRequestDTO);
+        Shop shop = shopRepository.findById(shopId).orElse(null);
+        return ((RepairRequestRepository) repository)
+                .findAllByShopId(shopId, pageable)
+                .map(repairRequest -> DTOConverter.convertToRepairRequestDTO(repairRequest, shop));
     }
 
     @PreAuthorize("hasRole('SHOP_OWNER')")
@@ -77,14 +79,16 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
         RepairRequest repairRequest = ((RepairRequestRepository) repository)
                 .findByIdAndShopId(id, shopId)
                 .orElseThrow(() -> new NotFoundException("Repair request not found for this shop"));
-        return DTOConverter.convertToRepairRequestDTO(repairRequest);
+        Shop shop = shopRepository.findById(shopId).orElse(null);
+        return DTOConverter.convertToRepairRequestDTO(repairRequest, shop);
     }
 
     public Page<RepairRequestDto> getRepairsByStatus(RepairStatus status, Pageable pageable) {
         UUID shopId = getCurrentShopId();
+        Shop shop = shopRepository.findById(shopId).orElse(null);
         Page<RepairRequest> repairRequests = ((RepairRequestRepository) repository)
                 .findByShopIdAndStatus(shopId, status, pageable);
-        return repairRequests.map(DTOConverter::convertToRepairRequestDTO);
+        return repairRequests.map(repairRequest -> DTOConverter.convertToRepairRequestDTO(repairRequest, shop));
     }
 
 }

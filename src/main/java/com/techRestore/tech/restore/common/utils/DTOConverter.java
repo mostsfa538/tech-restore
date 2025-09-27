@@ -76,7 +76,7 @@ public class DTOConverter {
         return dto;
     }
 
-    public static RepairRequestDto convertToRepairRequestDTO(RepairRequest repairRequest) {
+    public static RepairRequestDto convertToRepairRequestDTO(RepairRequest repairRequest, Shop shop) {
         return new RepairRequestDto(
                 repairRequest.getId(),
                 null,
@@ -89,12 +89,16 @@ public class DTOConverter {
                 repairRequest.getCategoryId(),
                 repairRequest.getPaymentMethod().name(),
                 repairRequest.isConfirmed(),
-                repairRequest.getStatus());
+                repairRequest.getStatus(),
+                shop.getName()
+        );
     }
 
-    public static RepairRequestDto convertToRepairRequestDto(RepairRequest repairRequest) {
-        return convertToRepairRequestDTO(repairRequest);
+
+    public static RepairRequestDto convertToRepairRequestDto(RepairRequest repairRequest, Shop shop) {
+        return convertToRepairRequestDTO(repairRequest, shop);
     }
+
 
     public static OrderResponseDTO convertToOrderResponseDTO(Order order,String shopName) {
         OrderResponseDTO dto = new OrderResponseDTO();

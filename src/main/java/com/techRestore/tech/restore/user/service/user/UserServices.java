@@ -152,7 +152,10 @@ public class UserServices {
     public Page<RepairRequestDto> getUserRepairRequests(Pageable pageable) {
         User user = getCurrentUser();
         return repairRequestRepository.getAllRepairRequestByUserId(user.getId(), pageable)
-                .map(DTOConverter::convertToRepairRequestDto);
+            .map(rr -> {
+                Shop shop = shopRepository.findById(rr.getShopId()).orElse(null);
+                return DTOConverter.convertToRepairRequestDTO(rr, shop);
+            });   
     }
 
     public Page<OrderResponseDTO> getUserOrders(Pageable pageable) {
