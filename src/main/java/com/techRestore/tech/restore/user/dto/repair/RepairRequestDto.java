@@ -16,5 +16,7 @@ public record RepairRequestDto(
         UUID deviceCategory,
         String paymentMethod,
         boolean confirmed,
-        RepairStatus status) {
+        RepairStatus status,
+        String shopName
+        ) {
 }

@@ -72,12 +72,18 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         Page<RepairRequest> repairRequests = ((RepairRequestRepository) repository)
                 .getAllRepairRequestByUserId(userId, pageable);
 
-        return repairRequests.map(DTOConverter::convertToRepairRequestDTO);
+        return repairRequests.map(rr -> {
+                Shop shop = shopRepository.findById(rr.getShopId()).orElse(null);
+                return DTOConverter.convertToRepairRequestDTO(rr, shop);
+            });
     }
 
     public Page<RepairRequestDto> getAllRepairRequest(Pageable pageable) {
         return repository.findAll(pageable)
-                .map(DTOConverter::convertToRepairRequestDTO);
+            .map(rr -> {
+                Shop shop = shopRepository.findById(rr.getShopId()).orElse(null);
+                return DTOConverter.convertToRepairRequestDTO(rr, shop);
+            });
     }
 
     public RepairRequestDto createRepairRequest(UUID shopId, RepairRequestCreateDto requestCreateDto) {
@@ -117,12 +123,13 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
 
         notificationService.sendToShop(shopId, "New repair request received: Request ID " + savedRepairRequest.getId());
 
-        return DTOConverter.convertToRepairRequestDTO(savedRepairRequest);
+       return DTOConverter.convertToRepairRequestDTO(savedRepairRequest, shop);
     }
 
     public RepairRequestDto getRepairRequestById(UUID id) {
         RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
-        return DTOConverter.convertToRepairRequestDTO(repairRequest);
+        Shop shop = shopRepository.findById(repairRequest.getShopId()).orElse(null);
+        return DTOConverter.convertToRepairRequestDTO(repairRequest, shop);
     }
 
     public RepairRequestDto updateRepairRequest(UUID shopId, UUID requestId, RepairRequestUpdateDto requestUpdateDto) {
@@ -155,7 +162,8 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
 
         RepairRequest updatedRepairRequest = repository.save(repairRequest);
         notificationService.sendToShop(shopId, "Repair request updated: Request ID " + requestId);
-        return DTOConverter.convertToRepairRequestDTO(updatedRepairRequest);
+        Shop shop = shopRepository.findById(repairRequest.getShopId()).orElse(null);
+        return DTOConverter.convertToRepairRequestDTO(updatedRepairRequest, shop);
     }
 
     @PreAuthorize("hasRole('GUEST')")
