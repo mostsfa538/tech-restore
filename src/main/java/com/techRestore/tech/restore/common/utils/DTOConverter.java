@@ -92,12 +92,11 @@ public class DTOConverter {
                 repairRequest.getStatus());
     }
 
-    // Alias method to match the method name used in UserServices
     public static RepairRequestDto convertToRepairRequestDto(RepairRequest repairRequest) {
         return convertToRepairRequestDTO(repairRequest);
     }
 
-    public static OrderResponseDTO convertToOrderResponseDTO(Order order) {
+    public static OrderResponseDTO convertToOrderResponseDTO(Order order,String shopName) {
         OrderResponseDTO dto = new OrderResponseDTO();
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());
@@ -107,8 +106,7 @@ public class DTOConverter {
         dto.setPaymentMethod(order.getPaymentMethod());
         dto.setCreatedAt(order.getCreatedAt());
         dto.setPaymentId(order.getPaymentId());
-
-        // Convert order items if they are loaded
+        dto.setShopName(shopName);
         try {
             if (order.getOrderItems() != null) {
                 List<OrderItemResponseDTO> itemDTOs = order.getOrderItems().stream()
@@ -117,7 +115,6 @@ public class DTOConverter {
                 dto.setOrderItems(itemDTOs);
             }
         } catch (LazyInitializationException e) {
-            // Items were not loaded, set empty list
             dto.setOrderItems(new ArrayList<>());
         }
 
@@ -132,7 +129,6 @@ public class DTOConverter {
         dto.setPriceAtCheckout(item.getPriceAtCheckout());
         dto.setShopId(item.getShopId());
 
-        // Calculate subtotal
         if (item.getQuantity() != null && item.getPriceAtCheckout() != null) {
             dto.setSubtotal(item.getPriceAtCheckout().multiply(new BigDecimal(item.getQuantity())));
         }
@@ -140,7 +136,7 @@ public class DTOConverter {
         return dto;
     }
 
-    public static OrderResponseDTO convertToOrderResponseDTO(Order order, List<OrderItem> orderItems) {
+    public static OrderResponseDTO convertToOrderResponseDTO(Order order, List<OrderItem> orderItems, String shopName) {
         OrderResponseDTO dto = new OrderResponseDTO();
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());
@@ -155,9 +151,11 @@ public class DTOConverter {
                 .map(DTOConverter::convertToOrderItemResponseDTO)
                 .collect(Collectors.toList());
         dto.setOrderItems(itemDTOs);
+        dto.setShopName(shopName);
 
         return dto;
     }
+
 
     public static OfferResponseDTO convertToOfferResponseDTO(Offer offer) {
         OfferResponseDTO dto = new OfferResponseDTO();

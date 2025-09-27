@@ -4,6 +4,8 @@ import com.techRestore.tech.restore.admin.repository.CategoryRepository;
 import com.techRestore.tech.restore.common.dto.address.AddressResponse;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
 import com.techRestore.tech.restore.common.model.entities.Address;
+import com.techRestore.tech.restore.common.model.entities.OrderItem;
+import com.techRestore.tech.restore.common.model.entities.Shop;
 import com.techRestore.tech.restore.common.model.entities.User;
 import com.techRestore.tech.restore.common.utils.DTOConverter;
 import com.techRestore.tech.restore.shop.dto.offers.OfferResponseDTO;
@@ -16,10 +18,12 @@ import com.techRestore.tech.restore.user.dto.order.OrderResponseDTO;
 import com.techRestore.tech.restore.user.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.user.dto.user.UserProfileDTO;
 import com.techRestore.tech.restore.user.dto.user.UserProfileUpdateDTO;
+import com.techRestore.tech.restore.user.repository.OrderItemRepository;
 import com.techRestore.tech.restore.user.repository.OrderRepository;
 import com.techRestore.tech.restore.user.repository.RepairRequestRepository;
 import com.techRestore.tech.restore.user.repository.UserRepository;
 
+import org.hibernate.LazyInitializationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -29,7 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,6 +60,9 @@ public class UserServices {
 
     @Autowired
     private OffersRepository offersRepository;
+
+    @Autowired
+    private OrderItemRepository orderItemRepository;
 
     public Page<ProductResponseDTO> getProductsByCategory(UUID shopId, UUID categoryId, Pageable pageable) {
         categoryRepository.findById(categoryId)
@@ -151,7 +158,30 @@ public class UserServices {
     public Page<OrderResponseDTO> getUserOrders(Pageable pageable) {
         User user = getCurrentUser();
         return orderRepository.findByUserId(user.getId(), pageable)
-                .map(DTOConverter::convertToOrderResponseDTO);
+                .map(order -> {
+                    String shopName = "";
+                    List<OrderItem> items = new ArrayList<>();
+                    try {
+                        items = order.getOrderItems();
+                        if (!items.isEmpty()) {
+                            UUID shopId = items.get(0).getShopId();
+                            Shop shop = shopRepository.findById(shopId).orElseThrow(() -> new NotFoundException("Shop not found"));;
+                            if (shop != null) {
+                                shopName = shop.getName();
+                            }
+                        }
+                    } catch (LazyInitializationException e) {
+                        items = orderItemRepository.findByOrderId(order.getId());
+                        if (!items.isEmpty()) {
+                            UUID shopId = items.get(0).getShopId();
+                            Shop shop = shopRepository.findById(shopId).orElseThrow(() -> new NotFoundException("Shop not found"));;
+                            if (shop != null) {
+                                shopName = shop.getName();
+                            }
+                        }
+                    }
+                    return DTOConverter.convertToOrderResponseDTO(order, items, shopName);
+                });
     }
 
     public Page<ShopResponseDto> getAllShops(Pageable pageable) {

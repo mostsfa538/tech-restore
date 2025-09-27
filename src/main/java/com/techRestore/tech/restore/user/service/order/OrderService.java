@@ -133,7 +133,7 @@ public class OrderService {
 
         cartItemRepository.deleteAll(cartItems);
 
-        return DTOConverter.convertToOrderResponseDTO(order, orderItems);
+        return DTOConverter.convertToOrderResponseDTO(order, orderItems,shop.getName());
     }
 
 
@@ -143,7 +143,12 @@ public class OrderService {
         Page<Order> ordersPage = orderRepository.findByUserId(userId, pageable);
         return ordersPage.map(order -> {
             List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
-            return DTOConverter.convertToOrderResponseDTO(order, items);
+            String shoName=null;
+            Shop shopId=shopRepository.findById(order.getShopId()).orElseThrow(()->new NotFoundException("Shop not found"));
+            if(shopId!=null){
+                shoName=shopId.getName();
+            }
+            return DTOConverter.convertToOrderResponseDTO(order, items,shoName);
         });
     }
 
@@ -152,7 +157,12 @@ public class OrderService {
         UUID userId = getCurrentUserId();
         Order order = orderRepository.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
-        return DTOConverter.convertToOrderResponseDTO(order);
+        String shopName=null;
+        Shop shopId=shopRepository.findById(order.getShopId()).orElseThrow(()->new NotFoundException("Shop not found"));
+        if(shopId!=null){
+            shopName=shopId.getName();
+        }   
+        return DTOConverter.convertToOrderResponseDTO(order,shopName);
     }
 
     @Transactional
