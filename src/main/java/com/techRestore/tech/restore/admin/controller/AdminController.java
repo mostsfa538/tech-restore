@@ -17,6 +17,7 @@ import com.techRestore.tech.restore.shop.dto.shop.ShopResponseDto;
 import com.techRestore.tech.restore.user.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.user.dto.user.ResponseUsersDto;
 import com.techRestore.tech.restore.user.dto.user.UpdateRoleRequest;
+import com.techRestore.tech.restore.user.service.order.OrderService;
 import com.techRestore.tech.restore.user.service.user.RepairRequestService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PathVariable;
+
 
 @RestController
 @RequestMapping("/api/admin")
@@ -42,6 +47,9 @@ public class AdminController extends BaseController {
 
 	@Autowired
 	private AssignerService assignerService;
+
+	@Autowired
+	private OrderService orderService;
 
 	@GetMapping("/repair-requests")
 	public ResponseEntity<Page<RepairRequestDto>> getAllRepairRequests(Pageable pageable) {
@@ -259,5 +267,11 @@ public class AdminController extends BaseController {
   public ResponseEntity<Void> deleteAssigner(@PathVariable UUID assignerId) {
       adminServices.deleteAssigner(assignerId);
       return deletedResponse();
+	}
+
+	@PutMapping("/payment-refund/{orderId}")
+	public ResponseEntity<Void> updateRefundStatus(@PathVariable UUID orderId) {
+		orderService.updateRefundStatus(orderId);
+		return updatedResponse();
 	}
 }
