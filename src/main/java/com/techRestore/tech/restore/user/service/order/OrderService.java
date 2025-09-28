@@ -165,6 +165,17 @@ public class OrderService {
         return DTOConverter.convertToOrderResponseDTO(order,shopName);
     }
 
+    public String updateRefundStatus(UUID orderId) {
+        Payment payment = orderPaymentRepository.findByOrderId(orderId)
+                .orElseThrow(() -> new NotFoundException("Payment not found"));
+        if(payment.getPaymentStatus() != PaymentStatus.NEEDREFUND) {
+            throw new IllegalArgumentException("Payment is not in NEEDREFUND status");
+        }
+        payment.setPaymentStatus(PaymentStatus.REFUNDED);
+        orderPaymentRepository.save(payment);
+        return "Refund status updated successfully.";
+    }
+
     @Transactional
     public void cancelOrder(UUID orderId) {
         UUID userId = getCurrentUserId();
@@ -178,7 +189,11 @@ public class OrderService {
 
         Payment payment = orderPaymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new NotFoundException("Payment not found"));
-        payment.setPaymentStatus(PaymentStatus.REFUNDED);
+        if(payment.getPaymentStatus() == PaymentStatus.COMPLETED) {
+            payment.setPaymentStatus(PaymentStatus.NEEDREFUND);
+        } else {
+            payment.setPaymentStatus(PaymentStatus.REFUNDED);
+        }
         orderPaymentRepository.save(payment);
     }
 
