@@ -19,7 +19,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AdminReviewService {
 
-    private AdminReviewRepository reviewRepository;
+    private final AdminReviewRepository reviewRepository;
 
     @PreAuthorize("hasRole('ADMIN')")
     public Page<ReviewResponseDTO> getAllReviews(Pageable pageable) {

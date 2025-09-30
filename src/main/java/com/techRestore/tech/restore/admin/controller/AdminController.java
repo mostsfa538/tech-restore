@@ -32,7 +32,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
 
-
 @RestController
 @RequestMapping("/api/admin")
 public class AdminController extends BaseController {
@@ -154,119 +153,117 @@ public class AdminController extends BaseController {
 		return successResponse(transactions);
 	}
 
+	@GetMapping("/assignment-logs")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Page<AssignmentLogDto>> getAllAssignmentLogs(Pageable pageable) {
+		return successResponse(assignerService.getAllAssignmentLogs(pageable));
+	}
 
-  @GetMapping("/assignment-logs")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Page<AssignmentLogDto>> getAllAssignmentLogs(Pageable pageable) {
-      return successResponse(assignerService.getAllAssignmentLogs(pageable));
-  }
+	@GetMapping("/deliveries")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Page<DeliveryResponseDto>> getAllDeliveries(Pageable pageable) {
+		return successResponse(adminServices.getAllDeliveries(pageable));
+	}
 
-  @GetMapping("/deliveries")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Page<DeliveryResponseDto>> getAllDeliveries(Pageable pageable) {
-      return successResponse(adminServices.getAllDeliveries(pageable));
-  }
+	@GetMapping("/deliveries/{deliveryId}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<DeliveryResponseDto> getDeliveryById(@PathVariable UUID deliveryId) {
+		return successResponse(adminServices.getDeliveryById(deliveryId));
+	}
 
-  @GetMapping("/deliveries/{deliveryId}")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<DeliveryResponseDto> getDeliveryById(@PathVariable UUID deliveryId) {
-      return successResponse(adminServices.getDeliveryById(deliveryId));
-  }
+	@GetMapping("/deliveries/pending")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Page<DeliveryResponseDto>> getPendingDeliveries(Pageable pageable) {
+		return successResponse(adminServices.getPendingDeliveries(pageable));
+	}
 
-  @GetMapping("/deliveries/pending")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Page<DeliveryResponseDto>> getPendingDeliveries(Pageable pageable) {
-      return successResponse(adminServices.getPendingDeliveries(pageable));
-  }
+	@GetMapping("/deliveries/approved")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Page<DeliveryResponseDto>> getApprovedDeliveries(Pageable pageable) {
+		return successResponse(adminServices.getApprovedDeliveries(pageable));
+	}
 
-  @GetMapping("/deliveries/approved")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Page<DeliveryResponseDto>> getApprovedDeliveries(Pageable pageable) {
-      return successResponse(adminServices.getApprovedDeliveries(pageable));
-  }
+	@GetMapping("/deliveries/suspended")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Page<DeliveryResponseDto>> getSuspendedDeliveries(Pageable pageable) {
+		return successResponse(adminServices.getSuspendedDeliveries(pageable));
+	}
 
-  @GetMapping("/deliveries/suspended")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Page<DeliveryResponseDto>> getSuspendedDeliveries(Pageable pageable) {
-      return successResponse(adminServices.getSuspendedDeliveries(pageable));
-  }
+	@PutMapping("/deliveries/{deliveryId}/approve")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Void> approveDelivery(@PathVariable UUID deliveryId) {
+		adminServices.approveDelivery(deliveryId);
+		return updatedResponse();
+	}
 
-  @PutMapping("/deliveries/{deliveryId}/approve")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Void> approveDelivery(@PathVariable UUID deliveryId) {
-      adminServices.approveDelivery(deliveryId);
-      return updatedResponse();
-  }
+	@PutMapping("/deliveries/{deliveryId}/suspend")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Void> suspendDelivery(@PathVariable UUID deliveryId) {
+		adminServices.suspendDelivery(deliveryId);
+		return updatedResponse();
+	}
 
-  @PutMapping("/deliveries/{deliveryId}/suspend")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Void> suspendDelivery(@PathVariable UUID deliveryId) {
-      adminServices.suspendDelivery(deliveryId);
-      return updatedResponse();
-  }
-
-  @DeleteMapping("/deliveries/{deliveryId}")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Void> deleteDelivery(@PathVariable UUID deliveryId) {
-      adminServices.deleteDelivery(deliveryId);
-       return deletedResponse();
-  }
+	@DeleteMapping("/deliveries/{deliveryId}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Void> deleteDelivery(@PathVariable UUID deliveryId) {
+		adminServices.deleteDelivery(deliveryId);
+		return deletedResponse();
+	}
 
 	@GetMapping("/stats")
 	public ResponseEntity<AdminStatsDto> getAdminStats() {
 		return ResponseEntity.ok(adminServices.getAdminStats());
 	}
 
+	@GetMapping("/assigners")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Page<AssignerResponseDto>> getAllAssigners(Pageable pageable) {
+		return successResponse(adminServices.getAllAssigners(pageable));
+	}
 
-  @GetMapping("/assigners")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Page<AssignerResponseDto>> getAllAssigners(Pageable pageable) {
-      return successResponse(adminServices.getAllAssigners(pageable));
-  }
+	@GetMapping("/assigners/{assignerId}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<AssignerResponseDto> getAssignerById(@PathVariable UUID assignerId) {
+		return successResponse(adminServices.getAssignerById(assignerId));
+	}
 
-  @GetMapping("/assigners/{assignerId}")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<AssignerResponseDto> getAssignerById(@PathVariable UUID assignerId) {
-      return successResponse(adminServices.getAssignerById(assignerId));
-  }
+	@GetMapping("/assigners/pending")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Page<AssignerResponseDto>> getPendingAssigners(Pageable pageable) {
+		return successResponse(adminServices.getPendingAssigners(pageable));
+	}
 
-  @GetMapping("/assigners/pending")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Page<AssignerResponseDto>> getPendingAssigners(Pageable pageable) {
-      return successResponse(adminServices.getPendingAssigners(pageable));
-  }
+	@GetMapping("/assigners/approved")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Page<AssignerResponseDto>> getApprovedAssigners(Pageable pageable) {
+		return successResponse(adminServices.getApprovedAssigners(pageable));
+	}
 
-  @GetMapping("/assigners/approved")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Page<AssignerResponseDto>> getApprovedAssigners(Pageable pageable) {
-      return successResponse(adminServices.getApprovedAssigners(pageable));
-  }
+	@GetMapping("/assigners/suspended")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Page<AssignerResponseDto>> getSuspendedAssigners(Pageable pageable) {
+		return successResponse(adminServices.getSuspendedAssigners(pageable));
+	}
 
-  @GetMapping("/assigners/suspended")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Page<AssignerResponseDto>> getSuspendedAssigners(Pageable pageable) {
-      return successResponse(adminServices.getSuspendedAssigners(pageable));
-  }
+	@PutMapping("/assigners/{assignerId}/approve")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Void> approveAssigner(@PathVariable UUID assignerId) {
+		adminServices.approveAssigner(assignerId);
+		return updatedResponse();
+	}
 
-  @PutMapping("/assigners/{assignerId}/approve")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Void> approveAssigner(@PathVariable UUID assignerId) {
-      adminServices.approveAssigner(assignerId);
-      return updatedResponse();
-  }
+	@PutMapping("/assigners/{assignerId}/suspend")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Void> suspendAssigner(@PathVariable UUID assignerId) {
+		adminServices.suspendAssigner(assignerId);
+		return updatedResponse();
+	}
 
-  @PutMapping("/assigners/{assignerId}/suspend")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Void> suspendAssigner(@PathVariable UUID assignerId) {
-      adminServices.suspendAssigner(assignerId);
-      return updatedResponse();
-  }
-
-  @DeleteMapping("/assigners/{assignerId}")
-  @PreAuthorize("hasRole('ADMIN')")
-  public ResponseEntity<Void> deleteAssigner(@PathVariable UUID assignerId) {
-      adminServices.deleteAssigner(assignerId);
-      return deletedResponse();
+	@DeleteMapping("/assigners/{assignerId}")
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Void> deleteAssigner(@PathVariable UUID assignerId) {
+		adminServices.deleteAssigner(assignerId);
+		return deletedResponse();
 	}
 
 	@PutMapping("/payment-refund/{orderId}")
