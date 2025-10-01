@@ -147,8 +147,9 @@ public class ShopOrderService extends BaseService<Order, UUID> {
             notificationService.sendToUser(order.getUserId(),
                     "Your order " + orderId + " is now being processed by the shop");
         } else if (statusDto.getStatus() == OrderStatus.FINISHPROCESSING) {
-            notificationService
-                    .sendToAllDelivery("Order " + orderId + " has finished processing and is ready for delivery");
+            notificationService.sendToAllDelivery("Order " + orderId + " has finished processing and is ready for delivery");
+
+            notificationService.sendToAssigners("Order " + orderId + " has finished processing and is ready for assignment");
         }
     }
 

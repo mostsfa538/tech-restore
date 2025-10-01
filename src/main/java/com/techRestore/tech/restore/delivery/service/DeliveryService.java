@@ -149,7 +149,6 @@ public class DeliveryService {
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());
         dto.setShopId(order.getShopId());
-        dto.setDeliveryId(order.getDeliveryId());
         dto.setStatus(order.getStatus());
         dto.setTotalPrice(order.getTotalPrice());
         dto.setCreatedAt(order.getCreatedAt());
