@@ -53,6 +53,9 @@ public class Offer {
 
     @PrePersist
     protected void onCreate() {
+        if (this.id == null) {
+            this.id = UuidCreator.getTimeOrderedEpoch();
+        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }

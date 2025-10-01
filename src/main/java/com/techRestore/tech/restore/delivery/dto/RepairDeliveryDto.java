@@ -1,7 +1,11 @@
 package com.techRestore.tech.restore.delivery.dto;
 
 import com.techRestore.tech.restore.common.model.enums.RepairStatus;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
@@ -10,6 +14,9 @@ import java.util.UUID;
 
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RepairDeliveryDto {
     private UUID id;
     private UUID userId;

@@ -12,14 +12,14 @@ public class OrderDeliveryDto {
     private UUID id;
     private UUID userId;
     private UUID shopId;
-    private UUID deliveryId;
+    // private UUID deliveryId;
     private OrderStatus status;
     private BigDecimal totalPrice;
     private String paymentMethod;
     private LocalDateTime createdAt;
     private AddressDto shopAddress;
     private AddressDto userAddress;
-    private AddressDto deliveryAddress;
+    // private AddressDto deliveryAddress;
 
     @Data
     public static class AddressDto {

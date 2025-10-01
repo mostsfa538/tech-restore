@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.techRestore.tech.restore.common.exception.NotFoundException;
 import com.techRestore.tech.restore.common.model.entities.Review;
@@ -34,6 +35,7 @@ public class ReviewService {
   private final RepairRequestRepository repairRequestRepository;
 
   @PreAuthorize("hasRole('GUEST')")
+  @Transactional
   public ReviewResponseDTO createReview(UUID shopId, ReviewRequestDTO reviewRequestDTO) {
 
       Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

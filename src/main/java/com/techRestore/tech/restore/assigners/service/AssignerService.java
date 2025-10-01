@@ -86,6 +86,7 @@ public class AssignerService {
         return deliveries.map(this::convertToDeliveryPersonDto);
     }
 
+    @Transactional(readOnly = true)
     public Page<OrderDeliveryDto> getOrdersForAssignment(Pageable pageable) {
         Page<Order> orders = orderRepository.findByStatusAndDeliveryIdIsNull(OrderStatus.FINISHPROCESSING, pageable);
         return orders.map(this::convertToOrderDeliveryDto);
@@ -111,7 +112,6 @@ public class AssignerService {
             throw new IllegalStateException("Order is not available for assignment");
         }
         
-        // Fetch User and Shop for AssignmentLog
         User user = userRepository.findById(order.getUserId())
                 .orElseThrow(() -> new NotFoundException("User not found"));
         Shop shop = shopRepository.findById(order.getShopId())
@@ -121,7 +121,6 @@ public class AssignerService {
         order.setStatus(OrderStatus.SHIPPED);
         orderRepository.save(order);
         
-        // Create AssignmentLog entry
         AssignmentLog assignmentLog = new AssignmentLog();
         assignmentLog.setAssigner(assigner);
         assignmentLog.setShop(shop);
@@ -158,7 +157,6 @@ public class AssignerService {
             throw new IllegalStateException("Repair request is not available for assignment");
         }
         
-        // Fetch User and Shop for AssignmentLog
         User user = userRepository.findById(repairRequest.getUserId())
                 .orElseThrow(() -> new NotFoundException("User not found"));
         Shop shop = shopRepository.findById(repairRequest.getShopId())
@@ -168,7 +166,6 @@ public class AssignerService {
         repairRequest.setStatus(RepairStatus.DEVICE_DELIVERED);
         repairRequestRepository.save(repairRequest);
         
-        // Create AssignmentLog entry
         AssignmentLog assignmentLog = new AssignmentLog();
         assignmentLog.setAssigner(assigner);
         assignmentLog.setShop(shop);
@@ -190,6 +187,7 @@ public class AssignerService {
                 "Repair request " + repairRequest.getId() + " has been assigned to delivery person " + delivery.getName());
     }
 
+    @Transactional(readOnly = true)
     public Page<OrderDeliveryDto> getAssignedOrdersByDelivery(UUID deliveryId, Pageable pageable) {
         getCurrentAssigner(); 
         
@@ -223,7 +221,6 @@ public class AssignerService {
             throw new IllegalStateException("Order is already assigned to this delivery person");
         }
         
-        // Fetch User and Shop for AssignmentLog
         User user = userRepository.findById(order.getUserId())
                 .orElseThrow(() -> new NotFoundException("User not found"));
         Shop shop = shopRepository.findById(order.getShopId())
@@ -232,7 +229,6 @@ public class AssignerService {
         order.setDeliveryId(newDeliveryId);
         orderRepository.save(order);
         
-        // Create AssignmentLog entry for reassignment
         AssignmentLog assignmentLog = new AssignmentLog();
         assignmentLog.setAssigner(assigner);
         assignmentLog.setShop(shop);
@@ -275,7 +271,6 @@ public class AssignerService {
             throw new IllegalStateException("Repair request is already assigned to this delivery person");
         }
         
-        // Fetch User and Shop for AssignmentLog
         User user = userRepository.findById(repairRequest.getUserId())
                 .orElseThrow(() -> new NotFoundException("User not found"));
         Shop shop = shopRepository.findById(repairRequest.getShopId())
@@ -284,7 +279,6 @@ public class AssignerService {
         repairRequest.setDeliveryId(newDeliveryId);
         repairRequestRepository.save(repairRequest);
         
-        // Create AssignmentLog entry for reassignment
         AssignmentLog assignmentLog = new AssignmentLog();
         assignmentLog.setAssigner(assigner);
         assignmentLog.setShop(shop);
@@ -328,8 +322,6 @@ public class AssignerService {
         return logs.map(this::convertToAssignmentLogDto);
     }
 
-
-
     private DeliveryPersonDto convertToDeliveryPersonDto(Delivery delivery) {
         DeliveryPersonDto dto = new DeliveryPersonDto();
         dto.setId(delivery.getId());
@@ -350,17 +342,92 @@ public class AssignerService {
         return dto;
     }
 
+    private OrderDeliveryDto.AddressDto toOrderAddressDto(ShopAddress address) {
+    if (address == null) return null;
+    OrderDeliveryDto.AddressDto dto = new OrderDeliveryDto.AddressDto();
+    dto.setId(address.getId());
+    dto.setStreet(address.getStreet());
+    dto.setCity(address.getCity());
+    dto.setState(address.getState());
+    return dto;
+}
+
+    private OrderDeliveryDto.AddressDto toOrderAddressDto(Address address) {
+        if (address == null) return null;
+        OrderDeliveryDto.AddressDto dto = new OrderDeliveryDto.AddressDto();
+        dto.setId(address.getId());
+        dto.setStreet(address.getStreet());
+        dto.setCity(address.getCity());
+        dto.setState(address.getState());
+        return dto;
+    }
+
+
+    private RepairDeliveryDto.AddressDto toRepairAddressDto(ShopAddress address) {
+        if (address == null) return null;
+        RepairDeliveryDto.AddressDto dto = new RepairDeliveryDto.AddressDto();
+        dto.setId(address.getId());
+        dto.setStreet(address.getStreet());
+        dto.setCity(address.getCity());
+        dto.setState(address.getState());
+        return dto;
+    }
+
+    private RepairDeliveryDto.AddressDto toRepairAddressDto(Address address) {
+        if (address == null) return null;
+        RepairDeliveryDto.AddressDto dto = new RepairDeliveryDto.AddressDto();
+        dto.setId(address.getId());
+        dto.setStreet(address.getStreet());
+        dto.setCity(address.getCity());
+        dto.setState(address.getState());
+        return dto;
+    }
+
+
     private OrderDeliveryDto convertToOrderDeliveryDto(Order order) {
         OrderDeliveryDto dto = new OrderDeliveryDto();
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());
-        dto.setDeliveryId(order.getDeliveryId());
+        // dto.setDeliveryId(order.getDeliveryId());
         dto.setShopId(order.getShopId());
         dto.setStatus(order.getStatus());
         dto.setTotalPrice(order.getTotalPrice());
         dto.setCreatedAt(order.getCreatedAt());
+
+        if (order.getShopId() != null) {
+            shopRepository.findById(order.getShopId()).ifPresent(shop -> {
+                ShopAddress shopAddress = shop.getAddresses()
+                                            .stream()
+                                            .filter(ShopAddress::isDefault)
+                                            .findFirst()
+                                            .orElse(null);
+                dto.setShopAddress(toOrderAddressDto(shopAddress));
+            });
+        }
+
+        if (order.getUserId() != null) {
+            userRepository.findById(order.getUserId()).ifPresent(user -> {
+                Address userAddress = user.getAddresses()
+                                        .stream()
+                                        .filter(Address::isDefault)
+                                        .findFirst()
+                                        .orElse(null);
+                dto.setUserAddress(toOrderAddressDto(userAddress));
+            });
+        }
+
+        // if (order.getDeliveryId() != null) {
+        //     deliveryRepository.findById(order.getDeliveryId()).ifPresent(delivery -> {
+        //         OrderDeliveryDto.AddressDto deliveryAdr = new OrderDeliveryDto.AddressDto();
+        //         deliveryAdr.setId(delivery.getId());
+        //         deliveryAdr.setStreet(delivery.getAddress());
+        //         dto.setDeliveryAddress(deliveryAdr);
+        //     });
+        // }
+
         return dto;
     }
+
 
     private RepairDeliveryDto convertToRepairDeliveryDto(RepairRequest repairRequest) {
         RepairDeliveryDto dto = new RepairDeliveryDto();
@@ -371,6 +438,38 @@ public class AssignerService {
         dto.setStatus(repairRequest.getStatus());
         dto.setPrice(repairRequest.getPrice());
         dto.setCreatedAt(repairRequest.getCreatedAt());
+
+        if (repairRequest.getShopId() != null) {
+            shopRepository.findById(repairRequest.getShopId()).ifPresent(shop -> {
+                ShopAddress shopAddress = shop.getAddresses()
+                                            .stream()
+                                            .filter(ShopAddress::isDefault)
+                                            .findFirst()
+                                            .orElse(null);
+                dto.setShopAddress(toRepairAddressDto(shopAddress));
+            });
+        }
+
+        if (repairRequest.getUserId() != null) {
+            userRepository.findById(repairRequest.getUserId()).ifPresent(user -> {
+                Address userAddress = user.getAddresses()
+                                        .stream()
+                                        .filter(Address::isDefault)
+                                        .findFirst()
+                                        .orElse(null);
+                dto.setUserAddress(toRepairAddressDto(userAddress));
+            });
+        }
+
+        if (repairRequest.getDeliveryId() != null) {
+            deliveryRepository.findById(repairRequest.getDeliveryId()).ifPresent(delivery -> {
+                RepairDeliveryDto.AddressDto deliveryAdr = new RepairDeliveryDto.AddressDto();
+                deliveryAdr.setId(delivery.getId());
+                deliveryAdr.setStreet(delivery.getAddress());
+                dto.setDeliveryAddress(deliveryAdr);
+            });
+        }
+
         return dto;
     }
 
