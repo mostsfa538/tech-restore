@@ -39,7 +39,8 @@ public class DTOConverter {
                 product.getImageUrl(),
                 product.getCondition(),
                 product.getCreatedAt(),
-                categoryName);
+                categoryName,
+                product.isDeleted());
     }
 
     public static CategoryDTO convertToCategoryDTO(Category category) {
@@ -90,17 +91,14 @@ public class DTOConverter {
                 repairRequest.getPaymentMethod().name(),
                 repairRequest.isConfirmed(),
                 repairRequest.getStatus(),
-                shop.getName()
-        );
+                shop.getName());
     }
-
 
     public static RepairRequestDto convertToRepairRequestDto(RepairRequest repairRequest, Shop shop) {
         return convertToRepairRequestDTO(repairRequest, shop);
     }
 
-
-    public static OrderResponseDTO convertToOrderResponseDTO(Order order,String shopName) {
+    public static OrderResponseDTO convertToOrderResponseDTO(Order order, String shopName) {
         OrderResponseDTO dto = new OrderResponseDTO();
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());
@@ -159,7 +157,6 @@ public class DTOConverter {
 
         return dto;
     }
-
 
     public static OfferResponseDTO convertToOfferResponseDTO(Offer offer) {
         OfferResponseDTO dto = new OfferResponseDTO();

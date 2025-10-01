@@ -12,9 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.techRestore.tech.restore.common.model.entities.Order;
-import com.techRestore.tech.restore.common.model.entities.RepairRequest;
 import com.techRestore.tech.restore.common.model.enums.OrderStatus;
-import com.techRestore.tech.restore.common.model.enums.RepairStatus;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, UUID> {
@@ -49,9 +47,9 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
   Page<Order> findByDeliveryId(UUID deliveryId, Pageable pageable);
 
   long countByDeliveryIdAndStatusIn(UUID deliveryId, List<OrderStatus> statuses);
-    
-    @Query("SELECT r FROM RepairRequest r WHERE r.deliveryId = :deliveryId AND r.status IN :statuses")
-    List<Order> findByDeliveryIdAndStatusIn(@Param("deliveryId") UUID deliveryId, 
-                                                  @Param("statuses") List<OrderStatus> statuses);
+
+  @Query("SELECT r FROM RepairRequest r WHERE r.deliveryId = :deliveryId AND r.status IN :statuses")
+  List<Order> findByDeliveryIdAndStatusIn(@Param("deliveryId") UUID deliveryId,
+      @Param("statuses") List<OrderStatus> statuses);
 
 }

@@ -45,6 +45,7 @@ public class AdminServices extends BaseService<User, UUID> {
     @Autowired
     private ShopRepository shopRepository;
 
+    @Autowired
     private OffersRepository offersRepository;
 
     @Autowired
@@ -59,16 +60,14 @@ public class AdminServices extends BaseService<User, UUID> {
     @Autowired
     private OrderRepository orderRepository;
 
-
     @Autowired
-    private RepairRequestRepository repairRequestRepository;  
+    private RepairRequestRepository repairRequestRepository;
 
     @Autowired
     private AssignmentLogRepository assignmentLogRepository;
 
     @Autowired
     private NotificationService notificationService;
-
 
     public AdminServices(UserRepository userRepository) {
         super(userRepository);
@@ -197,13 +196,13 @@ public class AdminServices extends BaseService<User, UUID> {
     public void approveDelivery(UUID deliveryId) {
         Delivery delivery = deliveryRepository.findById(deliveryId)
                 .orElseThrow(() -> new NotFoundException("Delivery not found with ID: " + deliveryId));
-        
+
         delivery.setStatus(ApprovalStatus.APPROVED);
         delivery.setActivate(true);
         delivery.setVerified(true);
         deliveryRepository.save(delivery);
-        
-        notificationService.sendToDelivery(deliveryId, 
+
+        notificationService.sendToDelivery(deliveryId,
                 "Congratulations! Your delivery account has been approved by admin. You can now start accepting deliveries.");
     }
 
@@ -211,12 +210,12 @@ public class AdminServices extends BaseService<User, UUID> {
     public void suspendDelivery(UUID deliveryId) {
         Delivery delivery = deliveryRepository.findById(deliveryId)
                 .orElseThrow(() -> new NotFoundException("Delivery not found with ID: " + deliveryId));
-        
+
         delivery.setStatus(ApprovalStatus.SUSPENDED);
         delivery.setActivate(false);
         deliveryRepository.save(delivery);
-        
-        notificationService.sendToDelivery(deliveryId, 
+
+        notificationService.sendToDelivery(deliveryId,
                 "Your delivery account has been suspended by admin. Please contact support for more information.");
     }
 
@@ -224,21 +223,18 @@ public class AdminServices extends BaseService<User, UUID> {
     public void deleteDelivery(UUID deliveryId) {
         Delivery delivery = deliveryRepository.findById(deliveryId)
                 .orElseThrow(() -> new NotFoundException("Delivery not found with ID: " + deliveryId));
-        
+
         long activeAssignments = orderRepository.countByDeliveryIdAndStatusIn(
                 deliveryId, List.of(OrderStatus.SHIPPED)) +
                 repairRequestRepository.countByDeliveryIdAndStatusIn(
-                deliveryId, List.of(RepairStatus.DEVICE_COLLECTED, RepairStatus.DEVICE_DELIVERED));
-        
+                        deliveryId, List.of(RepairStatus.DEVICE_COLLECTED, RepairStatus.DEVICE_DELIVERED));
+
         if (activeAssignments > 0) {
             throw new IllegalStateException("Cannot delete delivery person with active assignments");
         }
-        
+
         deliveryRepository.delete(delivery);
     }
-
-
-
 
     public Page<AssignerResponseDto> getAllAssigners(Pageable pageable) {
         Page<Assigner> assigners = assignerRepository.findAll(pageable);
@@ -270,13 +266,13 @@ public class AdminServices extends BaseService<User, UUID> {
     public void approveAssigner(UUID assignerId) {
         Assigner assigner = assignerRepository.findById(assignerId)
                 .orElseThrow(() -> new NotFoundException("Assigner not found with ID: " + assignerId));
-        
+
         assigner.setStatus(ApprovalStatus.APPROVED);
         assigner.setActivate(true);
         assigner.setVerified(true);
         assignerRepository.save(assigner);
-        
-        notificationService.sendToAssigner(assignerId, 
+
+        notificationService.sendToAssigner(assignerId,
                 "Congratulations! Your assigner account has been approved by admin. You can now start managing delivery assignments.");
     }
 
@@ -284,12 +280,12 @@ public class AdminServices extends BaseService<User, UUID> {
     public void suspendAssigner(UUID assignerId) {
         Assigner assigner = assignerRepository.findById(assignerId)
                 .orElseThrow(() -> new NotFoundException("Assigner not found with ID: " + assignerId));
-        
+
         assigner.setStatus(ApprovalStatus.SUSPENDED);
         assigner.setActivate(false);
         assignerRepository.save(assigner);
-        
-        notificationService.sendToAssigner(assignerId, 
+
+        notificationService.sendToAssigner(assignerId,
                 "Your assigner account has been suspended by admin. Please contact support for more information.");
     }
 
@@ -297,12 +293,12 @@ public class AdminServices extends BaseService<User, UUID> {
     public void deleteAssigner(UUID assignerId) {
         Assigner assigner = assignerRepository.findById(assignerId)
                 .orElseThrow(() -> new NotFoundException("Assigner not found with ID: " + assignerId));
-        
+
         long activeAssignments = assignmentLogRepository.countByAssignerId(assignerId);
         if (activeAssignments > 0) {
             throw new IllegalStateException("Cannot delete assigner with active assignments");
         }
-        
+
         assignerRepository.delete(assigner);
     }
 
@@ -318,7 +314,7 @@ public class AdminServices extends BaseService<User, UUID> {
         dto.setVerified(delivery.getVerified());
         dto.setCreatedAt(delivery.getCreatedAt());
         dto.setNotificationHistory(delivery.getNotificationHistory());
-        
+
         long activeOrderDeliveries = orderRepository.countByDeliveryIdAndStatusIn(
                 delivery.getId(), List.of(OrderStatus.SHIPPED));
         long activeRepairDeliveries = repairRequestRepository.countByDeliveryIdAndStatusIn(
@@ -326,11 +322,11 @@ public class AdminServices extends BaseService<User, UUID> {
         long totalCompleted = orderRepository.countByDeliveryIdAndStatusIn(
                 delivery.getId(), List.of(OrderStatus.DELIVERED)) +
                 repairRequestRepository.countByDeliveryIdAndStatusIn(
-                delivery.getId(), List.of(RepairStatus.REPAIR_COMPLETED));
+                        delivery.getId(), List.of(RepairStatus.REPAIR_COMPLETED));
         dto.setActiveOrderDeliveries((int) activeOrderDeliveries);
         dto.setActiveRepairDeliveries((int) activeRepairDeliveries);
         dto.setTotalCompletedDeliveries((int) totalCompleted);
-        
+
         return dto;
     }
 
@@ -348,7 +344,7 @@ public class AdminServices extends BaseService<User, UUID> {
         dto.setNotificationHistory(assigner.getNotificationHistory());
         dto.setTotalAssignmentsHandled(0);
         dto.setPendingAssignments(0);
-        
+
         return dto;
     }
 

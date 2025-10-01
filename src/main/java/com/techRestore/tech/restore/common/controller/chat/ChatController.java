@@ -37,9 +37,9 @@ public class ChatController {
     public ResponseEntity<ChatResponse> startChat(@RequestBody StartChatRequest request) {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            
+
             AuthInfo authInfo = extractAuthInfo(auth);
-            
+
             if (!authInfo.getUserType().equals("USER")) {
                 return ResponseEntity.badRequest()
                         .body(ChatResponse.error("Only users can start chats with shops"));
@@ -47,7 +47,7 @@ public class ChatController {
 
             ChatResponse response = chatService.startChat(authInfo.getUserId(), request.getShopId());
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ChatResponse.error("Failed to start chat: " + e.getMessage()));
@@ -68,7 +68,7 @@ public class ChatController {
             }
 
             return ResponseEntity.ok(sessions);
-            
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(List.of());
@@ -78,17 +78,17 @@ public class ChatController {
     @GetMapping("/{sessionId}/messages")
     public ResponseEntity<List<ChatMessageDTO>> getSessionMessages(@PathVariable UUID sessionId) {
         try {
-            
+
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             AuthInfo authInfo = extractAuthInfo(auth);
-            
+
             if (!chatService.hasAccessToSession(sessionId, authInfo.getUserId(), authInfo.getUserType())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(List.of());
             }
 
             List<ChatMessageDTO> messages = chatService.getSessionMessages(sessionId);
             return ResponseEntity.ok(messages);
-            
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(List.of());
@@ -103,7 +103,7 @@ public class ChatController {
 
             ChatResponse response = chatService.endChat(authInfo.getUserId(), authInfo.getUserType(), sessionId);
             return ResponseEntity.ok(response);
-            
+
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ChatResponse.error("Failed to end chat: " + e.getMessage()));
@@ -114,42 +114,38 @@ public class ChatController {
     public void sendMessage(@Payload SendMessageRequest request, SimpMessageHeaderAccessor headerAccessor) {
         try {
             System.out.println("WebSocket sendMessage - Session attributes: " + headerAccessor.getSessionAttributes());
-            
+
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            System.out.println("WebSocket sendMessage - SecurityContext Authentication: " + (auth != null ? auth.getName() : "null"));
-            
+            System.out.println("WebSocket sendMessage - SecurityContext Authentication: "
+                    + (auth != null ? auth.getName() : "null"));
+
             if (auth == null || !auth.isAuthenticated()) {
                 System.out.println("WebSocket sendMessage - SecurityContext empty, checking session attributes");
-                
+
                 String userEmail = (String) headerAccessor.getSessionAttributes().get("userEmail");
                 String userId = (String) headerAccessor.getSessionAttributes().get("userId");
                 String userType = (String) headerAccessor.getSessionAttributes().get("userType");
-                
-                // System.out.println("WebSocket sendMessage - Session userEmail: " + userEmail);
-                // System.out.println("WebSocket sendMessage - Session userId: " + userId);
-                // System.out.println("WebSocket sendMessage - Session userType: " + userType);
-                
+
                 if (userEmail != null && userId != null && userType != null) {
                     AuthInfo authInfo = new AuthInfo(UUID.fromString(userId), userType, userEmail);
-                    System.out.println("WebSocket sendMessage - Using session AuthInfo: " + authInfo.getUserId() + ", " + authInfo.getUserType());
-                    
+                    System.out.println("WebSocket sendMessage - Using session AuthInfo: " + authInfo.getUserId() + ", "
+                            + authInfo.getUserType());
+
                     chatService.sendMessage(authInfo.getUserId(), authInfo.getUserType(), request);
                     System.out.println("WebSocket sendMessage - Message sent successfully using session data");
                     return;
                 } else {
-                    System.err.println("WebSocket sendMessage - No authentication found in SecurityContext or session attributes");
+                    System.err.println(
+                            "WebSocket sendMessage - No authentication found in SecurityContext or session attributes");
                     return;
                 }
             }
-            
+
             AuthInfo authInfo = extractAuthInfo(auth);
-            // System.out.println("WebSocket sendMessage - AuthInfo: " + authInfo.getUserId() + ", " + authInfo.getUserType());
 
             chatService.sendMessage(authInfo.getUserId(), authInfo.getUserType(), request);
-            // System.out.println("WebSocket sendMessage - Message sent successfully");
-            
+
         } catch (Exception e) {
-            // System.err.println("Failed to send message: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -161,7 +157,7 @@ public class ChatController {
 
         String username = auth.getName();
         Object principal = auth.getPrincipal();
-        
+
         UUID userId;
         String userType;
 
@@ -201,8 +197,16 @@ public class ChatController {
             this.username = username;
         }
 
-        public UUID getUserId() { return userId; }
-        public String getUserType() { return userType; }
-        public String getUsername() { return username; }
+        public UUID getUserId() {
+            return userId;
+        }
+
+        public String getUserType() {
+            return userType;
+        }
+
+        public String getUsername() {
+            return username;
+        }
     }
 }

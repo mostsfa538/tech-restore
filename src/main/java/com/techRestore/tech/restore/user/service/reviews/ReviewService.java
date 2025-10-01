@@ -38,41 +38,41 @@ public class ReviewService {
   @Transactional
   public ReviewResponseDTO createReview(UUID shopId, ReviewRequestDTO reviewRequestDTO) {
 
-      Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-      String email = authentication.getName();
-      User user = userRepository.findByEmail(email);
-      if (user == null) {
-          throw new NotFoundException("User not found with email: " + email);
-      }
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    String email = authentication.getName();
+    User user = userRepository.findByEmail(email);
+    if (user == null) {
+      throw new NotFoundException("User not found with email: " + email);
+    }
 
-      boolean hasDeliveredOrder = orderRepository.findByUserId(user.getId()).stream()
-          .filter(order -> order.getStatus() == OrderStatus.DELIVERED)
-          .flatMap(order -> order.getOrderItems().stream())
-          .anyMatch(item -> item.getShopId().equals(shopId));
+    boolean hasDeliveredOrder = orderRepository.findByUserId(user.getId()).stream()
+        .filter(order -> order.getStatus() == OrderStatus.DELIVERED)
+        .flatMap(order -> order.getOrderItems().stream())
+        .anyMatch(item -> item.getShopId().equals(shopId));
 
-      boolean hasDeliveredRepair = repairRequestRepository.findAllByShopId(shopId, Pageable.unpaged())
-          .stream()
-          .anyMatch(request -> request.getUserId().equals(user.getId())
-                  && request.getStatus() == RepairStatus.DEVICE_DELIVERED);
+    boolean hasDeliveredRepair = repairRequestRepository.findAllByShopId(shopId, Pageable.unpaged())
+        .stream()
+        .anyMatch(request -> request.getUserId().equals(user.getId())
+            && request.getStatus() == RepairStatus.DEVICE_DELIVERED);
 
-      if (!hasDeliveredOrder && !hasDeliveredRepair) {
-          throw new IllegalArgumentException(
-              "You can only review a shop after an order or repair has been delivered.");
-      }
+    if (!hasDeliveredOrder && !hasDeliveredRepair) {
+      throw new IllegalArgumentException(
+          "You can only review a shop after an order or repair has been delivered.");
+    }
 
-      if (reviewRepository.existsByUserIdAndShopId(user.getId(), shopId)) {
-          throw new IllegalArgumentException("You have already submitted a review for this shop.");
-      }
+    if (reviewRepository.existsByUserIdAndShopId(user.getId(), shopId)) {
+      throw new IllegalArgumentException("You have already submitted a review for this shop.");
+    }
 
-      Review review = new Review();
-      review.setUserId(user.getId());
-      review.setShopId(shopId);
-      review.setRating(reviewRequestDTO.getRating());
-      review.setComment(reviewRequestDTO.getComment());
-      review.setCreatedAt(LocalDateTime.now());
+    Review review = new Review();
+    review.setUserId(user.getId());
+    review.setShopId(shopId);
+    review.setRating(reviewRequestDTO.getRating());
+    review.setComment(reviewRequestDTO.getComment());
+    review.setCreatedAt(LocalDateTime.now());
 
-      review = reviewRepository.save(review);
-      return DTOConverter.toReviewResponseDTO(review);
+    review = reviewRepository.save(review);
+    return DTOConverter.toReviewResponseDTO(review);
   }
 
   public ReviewResponseDTO getReviewById(UUID id) {
