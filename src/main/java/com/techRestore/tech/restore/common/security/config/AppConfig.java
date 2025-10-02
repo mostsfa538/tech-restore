@@ -59,7 +59,8 @@ public class AppConfig {
                                 "/api/auth/register/shop",
                                 "/api/auth/register/delivery",
                                 "/api/auth/register/assigner",
-                                "api/auth/reset-password")
+                                "api/auth/reset-password",
+                                "/api/categories")
                         .permitAll()
                         .requestMatchers("/api/assigner/**").hasAnyRole("ASSIGNER")
                         .requestMatchers("/ws/**").permitAll()

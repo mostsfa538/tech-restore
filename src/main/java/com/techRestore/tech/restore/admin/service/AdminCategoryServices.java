@@ -13,9 +13,9 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 @Service
-public class CategoryServices extends BaseService<Category, UUID> {
+public class AdminCategoryServices extends BaseService<Category, UUID> {
 
-    public CategoryServices(CategoryRepository categoryRepository) {
+    public AdminCategoryServices(CategoryRepository categoryRepository) {
         super(categoryRepository);
     }
 

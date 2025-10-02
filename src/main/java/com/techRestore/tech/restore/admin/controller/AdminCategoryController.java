@@ -1,7 +1,7 @@
 package com.techRestore.tech.restore.admin.controller;
 
 import com.techRestore.tech.restore.admin.dto.CategoryDTO;
-import com.techRestore.tech.restore.admin.service.CategoryServices;
+import com.techRestore.tech.restore.admin.service.AdminCategoryServices;
 import com.techRestore.tech.restore.common.controller.BaseController;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,9 +14,9 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/categories")
-public class CategoryController extends BaseController {
+public class AdminCategoryController extends BaseController {
     @Autowired
-    private CategoryServices categoryServices;
+    private AdminCategoryServices categoryServices;
 
     @GetMapping
     public ResponseEntity<Page<CategoryDTO>> getAllCategories(Pageable pageable) {
