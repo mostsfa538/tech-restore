@@ -62,6 +62,10 @@ public class AppConfig {
                                 "api/auth/reset-password",
                                 "/api/categories")
                         .permitAll()
+                        .requestMatchers("/api/notifications/delivery").hasAnyRole("DELIVERY")
+                        .requestMatchers("/api/notifications/assigner").hasAnyRole("ASSIGNER")
+                        .requestMatchers("/api/notifications/shops").hasAnyRole("SELLER", "BOTH", "REPAIRER")
+                        .requestMatchers("/api/users/notifications/users").hasAnyRole("GUEST")
                         .requestMatchers("/api/assigner/**").hasAnyRole("ASSIGNER")
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/payments/**").hasAnyRole("GUEST")

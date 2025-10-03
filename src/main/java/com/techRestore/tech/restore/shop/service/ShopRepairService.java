@@ -71,6 +71,8 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
             notificationService.sendToAllDelivery(
                     "Repair request " + id + " is now REPAIR_COMPLETED and ready for delivery."
             );
+
+            notificationService.sendToAssigners("Repair request " + id + " is now REPAIR_COMPLETED and ready To Be Assigned.");
         }
     }
 
