@@ -7,6 +7,7 @@ import com.techRestore.tech.restore.common.model.entities.Shop;
 import com.techRestore.tech.restore.common.model.entities.User;
 import com.techRestore.tech.restore.common.model.enums.PaymentStatus;
 import com.techRestore.tech.restore.common.model.enums.PaymentType;
+import com.techRestore.tech.restore.common.model.enums.RepairStatus;
 import com.techRestore.tech.restore.common.repository.AddressRepository;
 import com.techRestore.tech.restore.common.repository.PaymentRepository;
 import com.techRestore.tech.restore.common.services.BaseService;
@@ -17,6 +18,7 @@ import com.techRestore.tech.restore.user.dto.repair.RepairRequestCreateDto;
 import com.techRestore.tech.restore.user.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.user.dto.repair.RepairRequestUpdateDto;
 import com.techRestore.tech.restore.user.dto.repair.RepairStatusDto;
+import com.techRestore.tech.restore.user.dto.repair.UserRepairDetailsDto;
 import com.techRestore.tech.restore.user.repository.RepairRequestRepository;
 import com.techRestore.tech.restore.user.repository.UserRepository;
 
@@ -24,8 +26,10 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -36,6 +40,7 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
     private final AddressRepository addressRepository;
     private final PaymentRepository paymentRepository;
     private final NotificationService notificationService;
+    private final RepairRequestRepository repairRequestRepository = (RepairRequestRepository) this.repository;
     private final AuthUtil authUtil;
 
     public RepairRequestService(RepairRequestRepository repairRequestRepository, PaymentRepository paymentRepository,
@@ -109,7 +114,7 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         payment.setPaymentMethod(requestCreateDto.paymentMethod());
         payment.setPaymentStatus(PaymentStatus.PENDING);
         payment.setPaymentType(PaymentType.REPAIR_PAYMENT);
-        payment.setAmount(BigDecimal.ZERO);
+        payment.setAmount(repairRequest.getPrice());
         payment.setPaymentReference(UUID.randomUUID().toString());
 
         paymentRepository.save(payment);
@@ -180,4 +185,63 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         notificationService.sendToShop(repairRequest.getShopId(),
                 "Repair request status updated: Request ID " + id + " to " + repairStatusDto.status());
     }
+
+    @PreAuthorize("hasRole('USER')")
+    @Transactional
+    public RepairRequestDto confirmingShopOffer(UUID repairId, UserRepairDetailsDto userRepairDetailsDto) {
+        UUID userId = getCurrentUserId();
+        RepairRequest repairRequest = findByIdOrThrow(repairId, "Repair request");
+        if (!repairRequest.getUserId().equals(userId)) {
+            throw new SecurityException("You are not authorized to accept this offer");
+        }
+        if (repairRequest.getStatus() != RepairStatus.QUOTE_APPROVED) {
+            throw new IllegalStateException("You can only confirm offers that are approved.");
+        }
+        if(repairRequest.isConfirmed()){
+            throw new IllegalStateException("You have already confirmed this offer.");
+        }
+
+        UUID shopId = repairRequest.getShopId();
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> new NotFoundException("Shop not found"));
+
+        
+
+        repairRequest.setConfirmed(true);
+        repairRequest.setDeliveryAddress(userRepairDetailsDto.deliveryAddress());
+        repairRequest.setDeliveryMethod(userRepairDetailsDto.deliveryMethod());
+        repairRequest.setPaymentMethod(userRepairDetailsDto.paymentMethod());
+        repairRequest.setStatus(RepairStatus.QUOTE_APPROVED);
+        RepairRequest savedRepair=repairRequestRepository.save(repairRequest);
+        
+
+        Payment payment = new Payment();
+        payment.setUser(user);
+        payment.setShop(shop);
+        payment.setRepairRequestId(savedRepair.getId());
+        payment.setPaymentMethod(userRepairDetailsDto.paymentMethod());
+        payment.setPaymentStatus(PaymentStatus.PENDING);
+        payment.setPaymentType(PaymentType.REPAIR_PAYMENT);
+        payment.setAmount(repairRequest.getPrice());
+        payment.setPaymentReference(UUID.randomUUID().toString());
+
+        Payment savedPayment=paymentRepository.save(payment);
+        
+        
+        savedRepair.setPaymentId(savedPayment.getId());
+        repairRequestRepository.save(savedRepair);
+
+        notificationService.sendToShop(shopId,"Customer confirmed the offer for Repair Request ID " + repairId +" with price " + repairRequest.getPrice());
+
+
+
+        return DTOConverter.convertToRepairRequestDto(repairRequest,
+                shopRepository.findById(repairRequest.getShopId()).orElse(null));
+
+        
+    }
+
 }

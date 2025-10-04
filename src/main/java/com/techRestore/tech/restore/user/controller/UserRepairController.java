@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,6 +21,7 @@ import com.techRestore.tech.restore.user.dto.repair.RepairRequestCreateDto;
 import com.techRestore.tech.restore.user.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.user.dto.repair.RepairRequestUpdateDto;
 import com.techRestore.tech.restore.user.dto.repair.RepairStatusDto;
+import com.techRestore.tech.restore.user.dto.repair.UserRepairDetailsDto;
 import com.techRestore.tech.restore.user.service.RepairRequestService;
 
 @RestController
@@ -68,4 +70,15 @@ public class UserRepairController extends BaseController {
         repairRequestService.setStatus(requestId, repairStatusDto);
         return updatedResponse();
     }
+
+    @PostMapping("/repairs/{repairId}/confirm")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<RepairRequestDto> confirmShopOffer(
+            @PathVariable UUID repairId,
+            @RequestBody UserRepairDetailsDto userRepairDetailsDto) {
+
+        RepairRequestDto response = repairRequestService.confirmingShopOffer(repairId, userRepairDetailsDto);
+        return ResponseEntity.ok(response);
+    }
+
 }

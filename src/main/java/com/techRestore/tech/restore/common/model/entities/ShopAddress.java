@@ -6,11 +6,13 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.github.f4b6a3.uuid.UuidCreator;
 
 @Entity
 @Table(name = "shop_address")
 @Data
+@JsonIgnoreProperties({"shop"})
 public class ShopAddress {
     @Id
     @Column(name = "id", nullable = false, unique = true)

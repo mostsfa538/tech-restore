@@ -66,7 +66,7 @@ public class ShopServices extends BaseService<Shop, UUID> {
         }
         repository.save(shop);
 
-        return DTOConverter.convertToShopyDTO(shop);
+        return DTOConverter.convertToShopDTO(shop);
     }
 
     public void addAddress(AddressRequest addressRequest) {
@@ -122,7 +122,7 @@ public class ShopServices extends BaseService<Shop, UUID> {
 
     public ShopResponseDto getShopById(UUID shopId) {
         Shop shop = findByIdOrThrow(repository, shopId, "Shop");
-        return DTOConverter.convertToShopyDTO(shop);
+        return DTOConverter.convertToShopDTO(shop);
     }
 
 }

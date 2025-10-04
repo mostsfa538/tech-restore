@@ -15,6 +15,7 @@ public record ProductResponseDTO(
                 String imageUrl,
                 ProductCondition condition,
                 LocalDateTime createdAt,
+                UUID categoryId,
                 String categoryName,
                 boolean deleted) {
 }
