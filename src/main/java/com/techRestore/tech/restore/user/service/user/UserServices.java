@@ -152,10 +152,10 @@ public class UserServices {
     public Page<RepairRequestDto> getUserRepairRequests(Pageable pageable) {
         User user = getCurrentUser();
         return repairRequestRepository.getAllRepairRequestByUserId(user.getId(), pageable)
-            .map(rr -> {
-                Shop shop = shopRepository.findById(rr.getShopId()).orElse(null);
-                return DTOConverter.convertToRepairRequestDTO(rr, shop);
-            });   
+                .map(rr -> {
+                    Shop shop = shopRepository.findById(rr.getShopId()).orElse(null);
+                    return DTOConverter.convertToRepairRequestDTO(rr, shop);
+                });
     }
 
     public Page<OrderResponseDTO> getUserOrders(Pageable pageable) {
@@ -168,7 +168,9 @@ public class UserServices {
                         items = order.getOrderItems();
                         if (!items.isEmpty()) {
                             UUID shopId = items.get(0).getShopId();
-                            Shop shop = shopRepository.findById(shopId).orElseThrow(() -> new NotFoundException("Shop not found"));;
+                            Shop shop = shopRepository.findById(shopId)
+                                    .orElseThrow(() -> new NotFoundException("Shop not found"));
+                            ;
                             if (shop != null) {
                                 shopName = shop.getName();
                             }
@@ -177,7 +179,9 @@ public class UserServices {
                         items = orderItemRepository.findByOrderId(order.getId());
                         if (!items.isEmpty()) {
                             UUID shopId = items.get(0).getShopId();
-                            Shop shop = shopRepository.findById(shopId).orElseThrow(() -> new NotFoundException("Shop not found"));;
+                            Shop shop = shopRepository.findById(shopId)
+                                    .orElseThrow(() -> new NotFoundException("Shop not found"));
+                            ;
                             if (shop != null) {
                                 shopName = shop.getName();
                             }
@@ -201,6 +205,16 @@ public class UserServices {
         return offersRepository.findById(offerId)
                 .map(DTOConverter::convertToOfferResponseDTO)
                 .orElseThrow(() -> new NotFoundException("Offer not found"));
+    }
+
+    public Page<ProductResponseDTO> getShopsByCategory(UUID categoryId, UUID shopId, Pageable pageable) {
+        categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Category not Found"));
+        shopRepository.findById(shopId)
+                .orElseThrow(() -> new NotFoundException("Shop not Found"));
+
+        return productRepository.findProductByCategoryId(shopId, categoryId, pageable)
+                .map(DTOConverter::convertToProductDTO);
     }
 
 }

@@ -2,6 +2,7 @@ package com.techRestore.tech.restore.user.controller;
 
 import com.techRestore.tech.restore.common.controller.BaseController;
 import com.techRestore.tech.restore.shop.dto.offers.OfferResponseDTO;
+import com.techRestore.tech.restore.shop.dto.product.ProductResponseDTO;
 import com.techRestore.tech.restore.shop.dto.shop.ShopResponseDto;
 import com.techRestore.tech.restore.user.dto.user.UserProfileDTO;
 import com.techRestore.tech.restore.user.dto.user.UserProfileUpdateDTO;
@@ -56,6 +57,13 @@ public class UserController extends BaseController {
     public ResponseEntity<OfferResponseDTO> getOfferById(@PathVariable UUID offerId) {
         OfferResponseDTO offer = userServices.getOfferById(offerId);
         return successResponse(offer);
+    }
+
+    @GetMapping("{shopId}/{categoryId}")
+    public ResponseEntity<Page<ProductResponseDTO>> getShopsByCategory(@PathVariable UUID categoryId,
+            @PathVariable UUID shopId, Pageable pageable) {
+        Page<ProductResponseDTO> shops = userServices.getShopsByCategory(categoryId, shopId, pageable);
+        return successResponse(shops);
     }
 
 }
