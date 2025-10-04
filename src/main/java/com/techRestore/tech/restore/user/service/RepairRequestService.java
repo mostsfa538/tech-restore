@@ -1,4 +1,4 @@
-package com.techRestore.tech.restore.user.service.user;
+package com.techRestore.tech.restore.user.service;
 
 import com.techRestore.tech.restore.common.exception.NotFoundException;
 import com.techRestore.tech.restore.common.model.entities.Payment;
@@ -23,8 +23,6 @@ import com.techRestore.tech.restore.user.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -38,33 +36,28 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
     private final AddressRepository addressRepository;
     private final PaymentRepository paymentRepository;
     private final NotificationService notificationService;
+    private final AuthUtil authUtil;
 
     public RepairRequestService(RepairRequestRepository repairRequestRepository, PaymentRepository paymentRepository,
             UserRepository userRepository,
             ShopRepository shopRepository,
             AddressRepository addressRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            AuthUtil authUtil) {
         super(repairRequestRepository);
         this.userRepository = userRepository;
         this.shopRepository = shopRepository;
         this.addressRepository = addressRepository;
         this.paymentRepository = paymentRepository;
         this.notificationService = notificationService;
+        this.authUtil = authUtil;
     }
 
     /**
      * Get current authenticated user ID
      */
     private UUID getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
-
-        if (user == null) {
-            throw new NotFoundException("User not found with email: " + email);
-        }
-
-        return user.getId();
+        return authUtil.getCurrentUser().getId();
     }
 
     public Page<RepairRequestDto> getAllRepairRequestByUserId(Pageable pageable) {
@@ -73,17 +66,17 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
                 .getAllRepairRequestByUserId(userId, pageable);
 
         return repairRequests.map(rr -> {
-                Shop shop = shopRepository.findById(rr.getShopId()).orElse(null);
-                return DTOConverter.convertToRepairRequestDTO(rr, shop);
-            });
+            Shop shop = shopRepository.findById(rr.getShopId()).orElse(null);
+            return DTOConverter.convertToRepairRequestDTO(rr, shop);
+        });
     }
 
     public Page<RepairRequestDto> getAllRepairRequest(Pageable pageable) {
         return repository.findAll(pageable)
-            .map(rr -> {
-                Shop shop = shopRepository.findById(rr.getShopId()).orElse(null);
-                return DTOConverter.convertToRepairRequestDTO(rr, shop);
-            });
+                .map(rr -> {
+                    Shop shop = shopRepository.findById(rr.getShopId()).orElse(null);
+                    return DTOConverter.convertToRepairRequestDTO(rr, shop);
+                });
     }
 
     public RepairRequestDto createRepairRequest(UUID shopId, RepairRequestCreateDto requestCreateDto) {
@@ -123,7 +116,7 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
 
         notificationService.sendToShop(shopId, "New repair request received: Request ID " + savedRepairRequest.getId());
 
-       return DTOConverter.convertToRepairRequestDTO(savedRepairRequest, shop);
+        return DTOConverter.convertToRepairRequestDTO(savedRepairRequest, shop);
     }
 
     public RepairRequestDto getRepairRequestById(UUID id) {
@@ -184,6 +177,7 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
         repairRequest.setStatus(repairStatusDto.status());
         repository.save(repairRequest);
-        notificationService.sendToShop(repairRequest.getShopId(), "Repair request status updated: Request ID " + id + " to " + repairStatusDto.status());
+        notificationService.sendToShop(repairRequest.getShopId(),
+                "Repair request status updated: Request ID " + id + " to " + repairStatusDto.status());
     }
 }

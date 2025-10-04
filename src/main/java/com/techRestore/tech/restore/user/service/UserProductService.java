@@ -1,4 +1,4 @@
-package com.techRestore.tech.restore.user.service.product;
+package com.techRestore.tech.restore.user.service;
 
 import com.techRestore.tech.restore.admin.repository.CategoryRepository;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
@@ -20,9 +20,12 @@ public class UserProductService extends BaseService<Product, UUID> {
 
     private final CategoryRepository categoryRepository;
 
+    private final ProductRepository productRepository;
+
     public UserProductService(ProductRepository productRepository, CategoryRepository categoryRepository) {
         super(productRepository);
         this.categoryRepository = categoryRepository;
+        this.productRepository = productRepository;
     }
 
     public Page<ProductResponseDTO> getAllProducts(Pageable pageable) {
@@ -56,6 +59,14 @@ public class UserProductService extends BaseService<Product, UUID> {
                 .orElseThrow(() -> new NotFoundException("Category not Found"));
 
         return ((ProductRepository) repository).findByCategoryId(categoryId, pageable)
+                .map(DTOConverter::convertToProductDTO);
+    }
+
+    public Page<ProductResponseDTO> getProductsByCategory(UUID shopId, UUID categoryId, Pageable pageable) {
+        categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Category not Found"));
+
+        return productRepository.findProductByCategoryId(shopId, categoryId, pageable)
                 .map(DTOConverter::convertToProductDTO);
     }
 }

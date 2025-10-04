@@ -3,7 +3,7 @@ package com.techRestore.tech.restore.user.controller;
 import com.techRestore.tech.restore.user.dto.order.OrderRequestDTO;
 import com.techRestore.tech.restore.user.dto.order.OrderResponseDTO;
 import com.techRestore.tech.restore.user.dto.order.TrackingResponseDTO;
-import com.techRestore.tech.restore.user.service.order.OrderService;
+import com.techRestore.tech.restore.user.service.UserOrderService;
 
 import java.util.UUID;
 
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class OrderController {
 
-	private final OrderService orderService;
+	private final UserOrderService orderService;
 
 	@PostMapping
 	public ResponseEntity<OrderResponseDTO> createOrder(@RequestBody @Valid OrderRequestDTO request) {

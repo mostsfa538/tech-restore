@@ -76,6 +76,6 @@ public interface ShopRepository extends JpaRepository<Shop, UUID> {
         Long countRepairsByShopId(@Param("shopId") UUID shopId,
                         @Param("date") LocalDate date);
 
-    @Query("SELECT s FROM Shop s LEFT JOIN FETCH s.addresses WHERE s.id = :id")
-    Optional<Shop> findByIdWithAddresses(@Param("id") UUID id);
+        @Query("SELECT s FROM Shop s LEFT JOIN FETCH s.addresses WHERE s.id = :id")
+        Optional<Shop> findByIdWithAddresses(@Param("id") UUID id);
 }

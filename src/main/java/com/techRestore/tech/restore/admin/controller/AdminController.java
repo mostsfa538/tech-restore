@@ -17,8 +17,8 @@ import com.techRestore.tech.restore.shop.dto.shop.ShopResponseDto;
 import com.techRestore.tech.restore.user.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.user.dto.user.ResponseUsersDto;
 import com.techRestore.tech.restore.user.dto.user.UpdateRoleRequest;
-import com.techRestore.tech.restore.user.service.order.OrderService;
-import com.techRestore.tech.restore.user.service.user.RepairRequestService;
+import com.techRestore.tech.restore.user.service.RepairRequestService;
+import com.techRestore.tech.restore.user.service.UserOrderService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -48,7 +48,7 @@ public class AdminController extends BaseController {
 	private AssignerService assignerService;
 
 	@Autowired
-	private OrderService orderService;
+	private UserOrderService orderService;
 
 	@GetMapping("/repair-requests")
 	public ResponseEntity<Page<RepairRequestDto>> getAllRepairRequests(Pageable pageable) {

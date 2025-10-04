@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.techRestore.tech.restore.user.dto.reviews.ReviewRequestDTO;
 import com.techRestore.tech.restore.user.dto.reviews.ReviewResponseDTO;
-import com.techRestore.tech.restore.user.service.reviews.ReviewService;
+import com.techRestore.tech.restore.user.service.UserReviewService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 @RequiredArgsConstructor
 public class ReviewController {
 
-  private final ReviewService reviewService;
+  private final UserReviewService reviewService;
 
   @PostMapping("/{shopId}")
   @PreAuthorize("hasRole('GUEST')")

@@ -1,27 +1,20 @@
-package com.techRestore.tech.restore.user.service.cart;
+package com.techRestore.tech.restore.user.service;
 
-import com.techRestore.tech.restore.common.exception.ActivationException;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
 import com.techRestore.tech.restore.common.model.entities.CartItem;
 import com.techRestore.tech.restore.common.model.entities.Product;
-import com.techRestore.tech.restore.common.model.entities.User;
 import com.techRestore.tech.restore.shop.repository.ProductRepository;
 import com.techRestore.tech.restore.user.dto.cart.AddToCartRequestDTO;
 import com.techRestore.tech.restore.user.dto.cart.CartItemResponseDTO;
 import com.techRestore.tech.restore.user.dto.cart.CartResponseDTO;
 import com.techRestore.tech.restore.user.dto.cart.UpdateCartItemRequestDTO;
 import com.techRestore.tech.restore.user.repository.CartItemRepository;
-import com.techRestore.tech.restore.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -29,29 +22,14 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class CartService {
+public class UserCartService {
 
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
-    private final UserRepository userRepository;
+    private final AuthUtil authUtil;
 
     private UUID getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No authenticated user found");
-        }
-
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
-
-        if (user == null) {
-            throw new NotFoundException("User not found: " + email);
-        }
-        if (!user.isActivate()) {
-            throw new ActivationException("User account is deactivated: " + email);
-        }
-
-        return user.getId();
+        return authUtil.getCurrentUser().getId();
     }
 
     @Transactional(readOnly = true)

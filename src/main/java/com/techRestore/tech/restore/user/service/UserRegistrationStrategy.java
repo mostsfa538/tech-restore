@@ -1,4 +1,4 @@
-package com.techRestore.tech.restore.user.service.user;
+package com.techRestore.tech.restore.user.service;
 
 import com.techRestore.tech.restore.common.dto.auth.UserRegistration;
 import com.techRestore.tech.restore.common.interfaces.RegistrationStrategy;

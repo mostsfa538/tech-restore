@@ -20,7 +20,7 @@ import com.techRestore.tech.restore.common.utils.CookieUtil;
 import com.techRestore.tech.restore.delivery.dto.DeliveryRegistration;
 import com.techRestore.tech.restore.delivery.service.DeliveryRegistrationStrategy;
 import com.techRestore.tech.restore.shop.service.ShopRegistrationStrategy;
-import com.techRestore.tech.restore.user.service.user.UserRegistrationStrategy;
+import com.techRestore.tech.restore.user.service.UserRegistrationStrategy;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -103,8 +103,7 @@ public class AuthServices {
                     .stream()
                     .map(GrantedAuthority::getAuthority)
                     .toList());
-        }
-        else if (principal instanceof AssignerPrincipal assignerPrincipal) {
+        } else if (principal instanceof AssignerPrincipal assignerPrincipal) {
             responseData.put("id", assignerPrincipal.getAssigner().getId());
             responseData.put("role", authentication.getAuthorities()
                     .stream()

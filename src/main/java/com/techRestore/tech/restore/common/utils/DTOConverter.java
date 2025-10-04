@@ -10,6 +10,7 @@ import com.techRestore.tech.restore.user.dto.order.OrderItemResponseDTO;
 import com.techRestore.tech.restore.user.dto.order.OrderResponseDTO;
 import com.techRestore.tech.restore.user.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.user.dto.reviews.ReviewResponseDTO;
+import com.techRestore.tech.restore.user.dto.user.UserProfileDTO;
 
 import org.hibernate.LazyInitializationException;
 
@@ -73,6 +74,20 @@ public class DTOConverter {
         dto.setNotes(address.getNotes());
         dto.setDefault(address.isDefault());
         dto.setUserId(address.getShop().getId());
+        dto.setCreatedAt(address.getCreatedAt());
+        return dto;
+    }
+
+    public static AddressResponse convertToUserAddressDTO(Address address) {
+        AddressResponse dto = new AddressResponse();
+        dto.setId(address.getId());
+        dto.setState(address.getState());
+        dto.setCity(address.getCity());
+        dto.setStreet(address.getStreet());
+        dto.setBuilding(address.getBuilding());
+        dto.setNotes(address.getNotes());
+        dto.setDefault(address.isDefault());
+        dto.setUserId(address.getUser().getId());
         dto.setCreatedAt(address.getCreatedAt());
         return dto;
     }
@@ -183,6 +198,28 @@ public class DTOConverter {
         dto.setComment(review.getComment());
         dto.setCreatedAt(review.getCreatedAt());
         return dto;
+    }
+
+    public static UserProfileDTO convertToUserProfileDTO(User user) {
+        UserProfileDTO profileDTO = new UserProfileDTO();
+        profileDTO.setId(user.getId());
+        profileDTO.setFirst_name(user.getFirst_name());
+        profileDTO.setLast_name(user.getLast_name());
+        profileDTO.setEmail(user.getEmail());
+        profileDTO.setPhone(user.getPhone());
+        profileDTO.setActivate(user.isActivate());
+        profileDTO.setRole(user.getRole());
+        profileDTO.setCreatedAt(user.getCreatedAt());
+        profileDTO.setUpdatedAt(user.getUpdatedAt());
+
+        if (user.getAddresses() != null) {
+            profileDTO.setAddresses(
+                    user.getAddresses().stream()
+                            .map(DTOConverter::convertToUserAddressDTO)
+                            .toList());
+        }
+
+        return profileDTO;
     }
 
 }

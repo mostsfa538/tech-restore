@@ -1,11 +1,10 @@
-package com.techRestore.tech.restore.user.service.order;
+package com.techRestore.tech.restore.user.service;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import com.techRestore.tech.restore.common.exception.ActivationException;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
 import com.techRestore.tech.restore.common.model.entities.*;
 import com.techRestore.tech.restore.common.model.enums.OrderStatus;
@@ -17,9 +16,6 @@ import com.techRestore.tech.restore.common.utils.DTOConverter;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,11 +30,10 @@ import com.techRestore.tech.restore.user.repository.OrderRepository;
 import com.techRestore.tech.restore.user.repository.UserRepository;
 
 import lombok.AllArgsConstructor;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @AllArgsConstructor
-public class OrderService {
+public class UserOrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final PaymentRepository orderPaymentRepository;
@@ -47,24 +42,10 @@ public class OrderService {
     private final NotificationService notificationService;
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
+    private final AuthUtil authUtil;
 
     private UUID getCurrentUserId() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "No authenticated user found");
-        }
-
-        String email = authentication.getName();
-        User user = userRepository.findByEmail(email);
-
-        if (user == null) {
-            throw new NotFoundException("User not found: " + email);
-        }
-        if (!user.isActivate()) {
-            throw new ActivationException("User account is deactivated: " + email);
-        }
-
-        return user.getId();
+        return authUtil.getCurrentUser().getId();
     }
 
     @Transactional
@@ -133,9 +114,8 @@ public class OrderService {
 
         cartItemRepository.deleteAll(cartItems);
 
-        return DTOConverter.convertToOrderResponseDTO(order, orderItems,shop.getName());
+        return DTOConverter.convertToOrderResponseDTO(order, orderItems, shop.getName());
     }
-
 
     @Transactional(readOnly = true)
     public Page<OrderResponseDTO> getUserOrders(Pageable pageable) {
@@ -143,12 +123,13 @@ public class OrderService {
         Page<Order> ordersPage = orderRepository.findByUserId(userId, pageable);
         return ordersPage.map(order -> {
             List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
-            String shoName=null;
-            Shop shopId=shopRepository.findById(order.getShopId()).orElseThrow(()->new NotFoundException("Shop not found"));
-            if(shopId!=null){
-                shoName=shopId.getName();
+            String shoName = null;
+            Shop shopId = shopRepository.findById(order.getShopId())
+                    .orElseThrow(() -> new NotFoundException("Shop not found"));
+            if (shopId != null) {
+                shoName = shopId.getName();
             }
-            return DTOConverter.convertToOrderResponseDTO(order, items,shoName);
+            return DTOConverter.convertToOrderResponseDTO(order, items, shoName);
         });
     }
 
@@ -157,18 +138,19 @@ public class OrderService {
         UUID userId = getCurrentUserId();
         Order order = orderRepository.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
-        String shopName=null;
-        Shop shopId=shopRepository.findById(order.getShopId()).orElseThrow(()->new NotFoundException("Shop not found"));
-        if(shopId!=null){
-            shopName=shopId.getName();
-        }   
-        return DTOConverter.convertToOrderResponseDTO(order,shopName);
+        String shopName = null;
+        Shop shopId = shopRepository.findById(order.getShopId())
+                .orElseThrow(() -> new NotFoundException("Shop not found"));
+        if (shopId != null) {
+            shopName = shopId.getName();
+        }
+        return DTOConverter.convertToOrderResponseDTO(order, shopName);
     }
 
     public String updateRefundStatus(UUID orderId) {
         Payment payment = orderPaymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new NotFoundException("Payment not found"));
-        if(payment.getPaymentStatus() != PaymentStatus.NEEDREFUND) {
+        if (payment.getPaymentStatus() != PaymentStatus.NEEDREFUND) {
             throw new IllegalArgumentException("Payment is not in NEEDREFUND status");
         }
         payment.setPaymentStatus(PaymentStatus.REFUNDED);
@@ -189,7 +171,7 @@ public class OrderService {
 
         Payment payment = orderPaymentRepository.findByOrderId(orderId)
                 .orElseThrow(() -> new NotFoundException("Payment not found"));
-        if(payment.getPaymentStatus() == PaymentStatus.COMPLETED) {
+        if (payment.getPaymentStatus() == PaymentStatus.COMPLETED) {
             payment.setPaymentStatus(PaymentStatus.NEEDREFUND);
         } else {
             payment.setPaymentStatus(PaymentStatus.REFUNDED);

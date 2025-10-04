@@ -1,4 +1,4 @@
-package com.techRestore.tech.restore.user.service.reviews;
+package com.techRestore.tech.restore.user.service;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -6,7 +6,6 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,29 +20,22 @@ import com.techRestore.tech.restore.user.dto.reviews.ReviewResponseDTO;
 import com.techRestore.tech.restore.user.repository.OrderRepository;
 import com.techRestore.tech.restore.user.repository.RepairRequestRepository;
 import com.techRestore.tech.restore.user.repository.ReviewRepository;
-import com.techRestore.tech.restore.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
 
 @Service
 @RequiredArgsConstructor
-public class ReviewService {
+public class UserReviewService {
   private final ReviewRepository reviewRepository;
-  private final UserRepository userRepository;
   private final OrderRepository orderRepository;
   private final RepairRequestRepository repairRequestRepository;
+  private final AuthUtil authUtil;
 
   @PreAuthorize("hasRole('GUEST')")
   @Transactional
   public ReviewResponseDTO createReview(UUID shopId, ReviewRequestDTO reviewRequestDTO) {
 
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    String email = authentication.getName();
-    User user = userRepository.findByEmail(email);
-    if (user == null) {
-      throw new NotFoundException("User not found with email: " + email);
-    }
+    User user = authUtil.getCurrentUser();
 
     boolean hasDeliveredOrder = orderRepository.findByUserId(user.getId()).stream()
         .filter(order -> order.getStatus() == OrderStatus.DELIVERED)
@@ -86,9 +78,7 @@ public class ReviewService {
     Review review = reviewRepository.findById(reviewId)
         .orElseThrow(() -> new NotFoundException("Review not found with id: " + reviewId));
 
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    String email = authentication.getName();
-    User user = userRepository.findByEmail(email);
+    User user = authUtil.getCurrentUser();
 
     if (!review.getUserId().equals(user.getId())) {
       throw new IllegalArgumentException("You can only update your own reviews.");
@@ -110,9 +100,8 @@ public class ReviewService {
     Review review = reviewRepository.findById(id)
         .orElseThrow(() -> new NotFoundException("Review not found with id: " + id));
 
-    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-    String email = authentication.getName();
-    User user = userRepository.findByEmail(email);
+    User user = authUtil.getCurrentUser();
+
     if (!review.getUserId().equals(user.getId())) {
       throw new IllegalArgumentException("You can only delete your own reviews.");
     }

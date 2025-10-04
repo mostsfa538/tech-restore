@@ -2,7 +2,7 @@ package com.techRestore.tech.restore.user.controller;
 
 import com.techRestore.tech.restore.common.controller.BaseController;
 import com.techRestore.tech.restore.shop.dto.product.ProductResponseDTO;
-import com.techRestore.tech.restore.user.service.product.UserProductService;
+import com.techRestore.tech.restore.user.service.UserProductService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -55,5 +55,12 @@ public class ProductController extends BaseController {
             Pageable pageable) {
         Page<ProductResponseDTO> products = productServices.getProductsByPriceRange(minPrice, maxPrice, pageable);
         return successResponse(products);
+    }
+
+    @GetMapping("{shopId}/{categoryId}")
+    public ResponseEntity<Page<ProductResponseDTO>> getProductsByCategory(@PathVariable UUID categoryId,
+            @PathVariable UUID shopId, Pageable pageable) {
+        Page<ProductResponseDTO> shops = productServices.getProductsByCategory(categoryId, shopId, pageable);
+        return successResponse(shops);
     }
 }

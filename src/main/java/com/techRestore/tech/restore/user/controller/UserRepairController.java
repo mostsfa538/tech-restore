@@ -20,7 +20,7 @@ import com.techRestore.tech.restore.user.dto.repair.RepairRequestCreateDto;
 import com.techRestore.tech.restore.user.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.user.dto.repair.RepairRequestUpdateDto;
 import com.techRestore.tech.restore.user.dto.repair.RepairStatusDto;
-import com.techRestore.tech.restore.user.service.user.RepairRequestService;
+import com.techRestore.tech.restore.user.service.RepairRequestService;
 
 @RestController
 @RequestMapping("/api/users/repair-request")

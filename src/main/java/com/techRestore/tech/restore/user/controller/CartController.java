@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.techRestore.tech.restore.user.dto.cart.AddToCartRequestDTO;
 import com.techRestore.tech.restore.user.dto.cart.CartResponseDTO;
 import com.techRestore.tech.restore.user.dto.cart.UpdateCartItemRequestDTO;
-import com.techRestore.tech.restore.user.service.cart.CartService;
+import com.techRestore.tech.restore.user.service.UserCartService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CartController {
 
-    private final CartService cartService;
+    private final UserCartService cartService;
 
     @GetMapping
     public ResponseEntity<CartResponseDTO> getCart(
