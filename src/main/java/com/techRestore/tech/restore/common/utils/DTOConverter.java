@@ -17,6 +17,7 @@ import org.hibernate.LazyInitializationException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class DTOConverter {
@@ -31,6 +32,15 @@ public class DTOConverter {
             categoryName = null;
         }
 
+        UUID categoryId = null;
+        try {
+            if (product.getCategory() != null) {
+                categoryId = product.getCategory().getId();
+            }
+        } catch (LazyInitializationException e) {
+            categoryId = null;
+        }
+
         return new ProductResponseDTO(
                 product.getId(),
                 product.getName(),
@@ -40,6 +50,7 @@ public class DTOConverter {
                 product.getImageUrl(),
                 product.getCondition(),
                 product.getCreatedAt(),
+                categoryId,
                 categoryName,
                 product.isDeleted());
     }
@@ -48,7 +59,7 @@ public class DTOConverter {
         return new CategoryDTO(category.getId(), category.getName());
     }
 
-    public static ShopResponseDto convertToShopyDTO(Shop shop) {
+    public static ShopResponseDto convertToShopDTO(Shop shop) {
         ShopResponseDto dto = new ShopResponseDto();
         dto.setId(shop.getId());
         dto.setEmail(shop.getEmail());
@@ -61,8 +72,14 @@ public class DTOConverter {
         dto.setUpdatedAt(shop.getUpdatedAt());
         dto.setActivate(shop.isActivate());
         dto.setShopType(shop.getShopType() != null ? shop.getShopType().toString() : null);
+
+        if (shop.getAddresses() != null && !shop.getAddresses().isEmpty()) {
+            dto.setShopAddress(shop.getAddresses().get(0));
+        }
+
         return dto;
     }
+
 
     public static AddressResponse convertToAddressDTO(ShopAddress address) {
         AddressResponse dto = new AddressResponse();
@@ -105,6 +122,7 @@ public class DTOConverter {
                 repairRequest.getCategoryId(),
                 repairRequest.getPaymentMethod().name(),
                 repairRequest.isConfirmed(),
+                repairRequest.getPrice(),
                 repairRequest.getStatus(),
                 shop.getName());
     }

@@ -96,24 +96,24 @@ public class AdminServices extends BaseService<User, UUID> {
 
     public Page<ShopResponseDto> getShops(Pageable pageable) {
         return shopRepository.findAll(pageable)
-                .map(DTOConverter::convertToShopyDTO);
+                .map(DTOConverter::convertToShopDTO);
     }
 
     public Page<ShopResponseDto> getApprovedShops(Pageable pageable) {
         return shopRepository.findAllApprovedShops(pageable)
-                .map(DTOConverter::convertToShopyDTO);
+                .map(DTOConverter::convertToShopDTO);
     }
 
     public Page<ShopResponseDto> getSuspendedShops(Pageable pageable) {
         return shopRepository.findAllSuspendedShops(pageable)
-                .map(DTOConverter::convertToShopyDTO);
+                .map(DTOConverter::convertToShopDTO);
     }
 
     public ShopResponseDto getShopById(UUID shopId) {
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new NotFoundException("Shop not Found"));
 
-        return DTOConverter.convertToShopyDTO(shop);
+        return DTOConverter.convertToShopDTO(shop);
     }
 
     public void deleteShop(UUID id) {
