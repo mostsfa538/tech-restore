@@ -38,6 +38,21 @@ public class CookieUtil {
         response.addCookie(cookie);
     }
 
+    public void addAccessTokenCookie(HttpServletResponse response, String accessToken) {
+        Cookie cookie = new Cookie("access_token", accessToken);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(isSecure);
+        cookie.setPath("/");
+        cookie.setMaxAge(60 * 60);
+        cookie.setAttribute("SameSite", "Strict");
+
+        if (!cookieDomain.isEmpty()) {
+            cookie.setDomain(cookieDomain);
+        }
+
+        response.addCookie(cookie);
+    }
+
     public Optional<String> getRefreshTokenFromCookie(HttpServletRequest request) {
         if (request.getCookies() == null) {
             return Optional.empty();

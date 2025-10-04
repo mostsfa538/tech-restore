@@ -153,13 +153,10 @@ public class AppConfig {
 
                 refreshTokenService.saveRefreshToken(authentication.getName(), refreshToken, request);
 
+                cookieUtil.addAccessTokenCookie(response, accessToken);
                 cookieUtil.addRefreshTokenCookie(response, refreshToken);
+                response.sendRedirect("http://localhost:3000/oauth2/success");
 
-                response.setContentType("application/json");
-                response.setCharacterEncoding("UTF-8");
-                response.getWriter().write(
-                        String.format("{\"access_token\":\"%s\",\"token_type\":\"Bearer\",\"expires_in\":%d}",
-                                accessToken, 60 * 60));
             } catch (Exception e) {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 response.setContentType("application/json");
