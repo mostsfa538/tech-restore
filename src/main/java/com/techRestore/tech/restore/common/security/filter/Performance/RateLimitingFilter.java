@@ -33,9 +33,9 @@ public class RateLimitingFilter implements Filter {
     private final Map<String, AtomicInteger> loginFailureCounts = new ConcurrentHashMap<>();
     private final Map<String, Long> loginFailureBlockTime = new ConcurrentHashMap<>();
     
-    private static final int MAX_REQUESTS_PER_MINUTE = 20;
+    private static final int MAX_REQUESTS_PER_MINUTE = 500;
     private static final long TIME_WINDOW_MILLIS = 60000;
-    private static final int MAX_LOGIN_FAILURES = 5;
+    private static final int MAX_LOGIN_FAILURES = 50;
     private static final long LOGIN_BLOCK_DURATION_MILLIS = 600000;
     private static final String LOGIN_ENDPOINT = "/api/auth/login";
     private static final int TOO_MANY_REQUESTS = 429;
