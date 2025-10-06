@@ -21,6 +21,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -120,6 +121,7 @@ public class ShopServices extends BaseService<Shop, UUID> {
                 .map(DTOConverter::toReviewResponseDTO);
     }
 
+    @Transactional(readOnly = true)
     public ShopResponseDto getShopById(UUID shopId) {
         Shop shop = findByIdOrThrow(repository, shopId, "Shop");
         return DTOConverter.convertToShopDTO(shop);
