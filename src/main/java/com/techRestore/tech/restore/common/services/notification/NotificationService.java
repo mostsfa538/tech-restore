@@ -45,7 +45,6 @@ public class NotificationService {
     private final AssignerRepository assignerRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-
     private UUID getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -102,6 +101,7 @@ public class NotificationService {
 
         return delivery.getId();
     }
+
     private UUID getCurrentAssignerId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -160,7 +160,7 @@ public class NotificationService {
     }
 
     @Transactional
-    public void sendToAssigner(UUID assignerId,String message) {
+    public void sendToAssigner(UUID assignerId, String message) {
         Assigner assigner = assignerRepository.findById(assignerId)
                 .orElseThrow(() -> new NotFoundException("Assigner not found with ID: " + assignerId));
 
@@ -190,8 +190,8 @@ public class NotificationService {
     }
 
     public JsonNode getShopNotifications() {
-        UUID shopId=getCurrentshopId();
-        Shop shop=shopRepository.findById(shopId).orElse(null);
+        UUID shopId = getCurrentshopId();
+        Shop shop = shopRepository.findById(shopId).orElse(null);
         try {
             return objectMapper.readTree(shop.getNotificationHistory());
         } catch (Exception e) {
@@ -199,10 +199,9 @@ public class NotificationService {
         }
     }
 
-
     public JsonNode getDeliveryNotifications() {
-        UUID deliveryId=getCurrentDeliveryId();
-        Delivery delivery=deliveryRepository.findById(deliveryId).orElse(null);
+        UUID deliveryId = getCurrentDeliveryId();
+        Delivery delivery = deliveryRepository.findById(deliveryId).orElse(null);
         try {
             return objectMapper.readTree(delivery.getNotificationHistory());
         } catch (Exception e) {
@@ -211,8 +210,8 @@ public class NotificationService {
     }
 
     public JsonNode getAssignerNotifications() {
-        UUID assignerId=getCurrentAssignerId();
-        Assigner assigner=assignerRepository.findById(assignerId).orElse(null);
+        UUID assignerId = getCurrentAssignerId();
+        Assigner assigner = assignerRepository.findById(assignerId).orElse(null);
         try {
             return objectMapper.readTree(assigner.getNotificationHistory());
         } catch (Exception e) {
@@ -240,6 +239,7 @@ public class NotificationService {
             throw new RuntimeException("Invalid notification history format", e);
         }
     }
+
     public JsonNode getٍShopNotificationById(String notifId) {
         UUID currentShopId = getCurrentshopId();
         Shop shop = shopRepository.findById(currentShopId)
@@ -261,10 +261,9 @@ public class NotificationService {
         }
     }
 
-
     public JsonNode getDeliveryNotificationById(String notifId) {
-        UUID deliveryId=getCurrentDeliveryId();
-        Delivery delivery=deliveryRepository.findById(deliveryId).orElse(null);
+        UUID deliveryId = getCurrentDeliveryId();
+        Delivery delivery = deliveryRepository.findById(deliveryId).orElse(null);
         try {
             JsonNode historyNode = objectMapper.readTree(delivery.getNotificationHistory());
             if (!historyNode.isArray()) {
@@ -281,10 +280,9 @@ public class NotificationService {
         }
     }
 
-
     public JsonNode getAssignerNotificationById(String notifId) {
-        UUID assignerId=getCurrentAssignerId();
-        Assigner assigner=assignerRepository.findById(assignerId).orElse(null);
+        UUID assignerId = getCurrentAssignerId();
+        Assigner assigner = assignerRepository.findById(assignerId).orElse(null);
         try {
             JsonNode historyNode = objectMapper.readTree(assigner.getNotificationHistory());
             if (!historyNode.isArray()) {
@@ -300,10 +298,6 @@ public class NotificationService {
             throw new RuntimeException("Invalid notification history format", e);
         }
     }
-
-
-
-    
 
     private void addToHistory(String currentHistory, String message, Consumer<String> setter) {
         try {

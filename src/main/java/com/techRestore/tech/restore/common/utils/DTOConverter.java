@@ -80,7 +80,6 @@ public class DTOConverter {
         return dto;
     }
 
-
     public static AddressResponse convertToAddressDTO(ShopAddress address) {
         AddressResponse dto = new AddressResponse();
         dto.setId(address.getId());
@@ -118,17 +117,13 @@ public class DTOConverter {
                 repairRequest.getDeliveryAddress(),
                 repairRequest.getPaymentId(),
                 repairRequest.getDescription(),
-                repairRequest.getDeliveryMethod().name(),
+                repairRequest.getDeliveryMethod() != null ? repairRequest.getDeliveryMethod().name() : null,
                 repairRequest.getCategoryId(),
-                repairRequest.getPaymentMethod().name(),
+                repairRequest.getPaymentMethod() != null ? repairRequest.getPaymentMethod().name() : null,
                 repairRequest.isConfirmed(),
                 repairRequest.getPrice(),
                 repairRequest.getStatus(),
-                shop.getName());
-    }
-
-    public static RepairRequestDto convertToRepairRequestDto(RepairRequest repairRequest, Shop shop) {
-        return convertToRepairRequestDTO(repairRequest, shop);
+                shop != null ? shop.getName() : null);
     }
 
     public static OrderResponseDTO convertToOrderResponseDTO(Order order, String shopName) {

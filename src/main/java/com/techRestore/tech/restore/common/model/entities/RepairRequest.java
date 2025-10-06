@@ -34,7 +34,7 @@ public class RepairRequest {
 
     private String description;
 
-    @Column(name = "delivery_address_id", nullable = false)
+    @Column(name = "delivery_address_id")
     private UUID deliveryAddress;
 
     @Enumerated(EnumType.STRING)

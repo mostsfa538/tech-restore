@@ -136,4 +136,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "OTP_001");
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(
+                "ACCESS_DENIED",
+                ex.getMessage(),
+                "AUTH_001");
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
+    }
 }

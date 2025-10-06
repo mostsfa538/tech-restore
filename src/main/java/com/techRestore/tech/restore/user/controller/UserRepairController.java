@@ -17,9 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.techRestore.tech.restore.common.controller.BaseController;
-import com.techRestore.tech.restore.user.dto.repair.RepairRequestCreateDto;
 import com.techRestore.tech.restore.user.dto.repair.RepairRequestDto;
-import com.techRestore.tech.restore.user.dto.repair.RepairRequestUpdateDto;
+import com.techRestore.tech.restore.user.dto.repair.RepairRequestDtoRequest;
 import com.techRestore.tech.restore.user.dto.repair.RepairStatusDto;
 import com.techRestore.tech.restore.user.dto.repair.UserRepairDetailsDto;
 import com.techRestore.tech.restore.user.service.RepairRequestService;
@@ -38,7 +37,7 @@ public class UserRepairController extends BaseController {
     @PostMapping("/{shopId}")
     public ResponseEntity<RepairRequestDto> createRepairRequest(
             @PathVariable UUID shopId,
-            @RequestBody RepairRequestCreateDto repairRequest) {
+            @RequestBody RepairRequestDtoRequest repairRequest) {
         RepairRequestDto createdRequest = repairRequestService.createRepairRequest(shopId, repairRequest);
         return createdResponse(createdRequest);
     }
@@ -53,7 +52,7 @@ public class UserRepairController extends BaseController {
     public ResponseEntity<RepairRequestDto> updateRepairRequest(
             @PathVariable UUID shopId,
             @PathVariable UUID requestId,
-            @RequestBody RepairRequestUpdateDto repairRequest) {
+            @RequestBody RepairRequestDtoRequest repairRequest) {
         RepairRequestDto updatedRequest = repairRequestService.updateRepairRequest(shopId, requestId, repairRequest);
         return updatedResponse(updatedRequest);
     }
@@ -77,7 +76,7 @@ public class UserRepairController extends BaseController {
             @PathVariable UUID repairId,
             @RequestBody UserRepairDetailsDto userRepairDetailsDto) {
 
-        RepairRequestDto response = repairRequestService.confirmingShopOffer(repairId, userRepairDetailsDto);
+        RepairRequestDto response = repairRequestService.confirmShopOffer(repairId, userRepairDetailsDto);
         return ResponseEntity.ok(response);
     }
 
