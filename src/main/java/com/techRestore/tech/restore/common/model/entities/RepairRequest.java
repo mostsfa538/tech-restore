@@ -16,6 +16,7 @@ import com.techRestore.tech.restore.common.model.enums.RepairStatus;
 @Table(name = "repair_request")
 @Data
 public class RepairRequest {
+
     @Id
     @Column(name = "id", nullable = false, unique = true)
     private UUID id;
@@ -34,7 +35,7 @@ public class RepairRequest {
 
     private String description;
 
-    @Column(name = "delivery_address_id")
+    @Column(name = "delivery_address_id", nullable = true)
     private UUID deliveryAddress;
 
     @Enumerated(EnumType.STRING)
@@ -69,7 +70,7 @@ public class RepairRequest {
     private Shop shop;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "delivery_address", insertable = false, updatable = false)
+    @JoinColumn(name = "delivery_address_id", insertable = false, updatable = false, nullable = true)
     private Address deliveryAddressEntity;
 
     @OneToOne(mappedBy = "repairRequest", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

@@ -144,7 +144,7 @@ public class UserOrderService {
         if (shopId != null) {
             shopName = shopId.getName();
         }
-        return DTOConverter.convertToOrderResponseDTO(order, shopName);
+        return DTOConverter.convertToOrderResponseDTO(order);
     }
 
     public String updateRefundStatus(UUID orderId) {

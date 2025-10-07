@@ -19,6 +19,7 @@ public record RepairRequestDto(
         boolean confirmed,
         BigDecimal price,
         RepairStatus status,
-        String shopName
+        String shopName,
+        String deliveryAddressDetails
         ) {
 }

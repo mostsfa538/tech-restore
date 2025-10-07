@@ -13,5 +13,8 @@ public class OrderItemResponseDTO {
     private BigDecimal priceAtCheckout;
     private UUID shopId;
     private BigDecimal subtotal;
+    private String productNAme;
+    private BigDecimal price;
+    private String shopName;
 
 }
