@@ -53,6 +53,7 @@ public class ShopOrderService extends BaseService<Order, UUID> {
         return shop.getId();
     }
 
+    @Transactional
     public Page<OrderResponseDTO> getAllShopOrders(Pageable pageable) {
         UUID shopId = getCurrentShopId();
         Page<Order> orders = ((OrderRepository) repository).findByShopId(shopId, pageable);
