@@ -126,7 +126,8 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         req.setDescription(dto.description());
         req.setCategoryId(dto.deviceCategory());
         req.setConfirmed(false);
-
+        req.setDeliveryAddress(null);
+        req.setDeliveryAddressEntity(null);
         RepairRequest savedReq = repository.save(req);
 
         notificationService.sendToShop(shopId,
@@ -211,4 +212,5 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
 
         return DTOConverter.convertToRepairRequestDTO(req, shop);
     }
+    
 }

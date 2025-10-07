@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.techRestore.tech.restore.common.exception.NotFoundException;
 import com.techRestore.tech.restore.common.model.entities.RepairRequest;
@@ -46,6 +47,7 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
         return shop.getId();
     }
 
+    @Transactional
     public Page<RepairRequestDto> getAllRepairRequest(Pageable pageable) {
         UUID shopId = getCurrentShopId();
         Shop shop = shopRepository.findById(shopId).orElse(null);

@@ -21,5 +21,4 @@ public class OrderResponseDTO {
     private LocalDateTime createdAt;
     private UUID paymentId;
     private List<OrderItemResponseDTO> orderItems;
-    private String shopName;
 }

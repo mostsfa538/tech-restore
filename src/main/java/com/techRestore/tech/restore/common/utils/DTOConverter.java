@@ -109,6 +109,13 @@ public class DTOConverter {
     }
 
     public static RepairRequestDto convertToRepairRequestDTO(RepairRequest repairRequest, Shop shop) {
+        String addressDetails = null;
+        if (repairRequest.getDeliveryAddressEntity() != null) {
+            Address addr = repairRequest.getDeliveryAddressEntity();
+            addressDetails = String.format("%s, %s, %s, %s", 
+                addr.getStreet(), addr.getCity(), addr.getState(), addr.getBuilding());
+        }
+        
         return new RepairRequestDto(
                 repairRequest.getId(),
                 null,
@@ -123,10 +130,12 @@ public class DTOConverter {
                 repairRequest.isConfirmed(),
                 repairRequest.getPrice(),
                 repairRequest.getStatus(),
-                shop != null ? shop.getName() : null);
+                shop != null ? shop.getName() : null,
+                addressDetails
+        );
     }
 
-    public static OrderResponseDTO convertToOrderResponseDTO(Order order, String shopName) {
+    public static OrderResponseDTO convertToOrderResponseDTO(Order order) {
         OrderResponseDTO dto = new OrderResponseDTO();
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());
@@ -136,7 +145,6 @@ public class DTOConverter {
         dto.setPaymentMethod(order.getPaymentMethod());
         dto.setCreatedAt(order.getCreatedAt());
         dto.setPaymentId(order.getPaymentId());
-        dto.setShopName(shopName);
         try {
             if (order.getOrderItems() != null) {
                 List<OrderItemResponseDTO> itemDTOs = order.getOrderItems().stream()
@@ -158,11 +166,17 @@ public class DTOConverter {
         dto.setQuantity(item.getQuantity());
         dto.setPriceAtCheckout(item.getPriceAtCheckout());
         dto.setShopId(item.getShopId());
-
+        dto.setShopName(item.getShop().getName());
+        
+        if (item.getProduct() != null) {
+            dto.setProductNAme(item.getProduct().getName());
+            dto.setPrice(item.getProduct().getPrice());
+        }
+        
         if (item.getQuantity() != null && item.getPriceAtCheckout() != null) {
             dto.setSubtotal(item.getPriceAtCheckout().multiply(new BigDecimal(item.getQuantity())));
         }
-
+        
         return dto;
     }
 
@@ -176,16 +190,12 @@ public class DTOConverter {
         dto.setPaymentMethod(order.getPaymentMethod());
         dto.setCreatedAt(order.getCreatedAt());
         dto.setPaymentId(order.getPaymentId());
-
         List<OrderItemResponseDTO> itemDTOs = orderItems.stream()
                 .map(DTOConverter::convertToOrderItemResponseDTO)
                 .collect(Collectors.toList());
         dto.setOrderItems(itemDTOs);
-        dto.setShopName(shopName);
-
         return dto;
     }
-
     public static OfferResponseDTO convertToOfferResponseDTO(Offer offer) {
         OfferResponseDTO dto = new OfferResponseDTO();
         dto.setId(offer.getId());
