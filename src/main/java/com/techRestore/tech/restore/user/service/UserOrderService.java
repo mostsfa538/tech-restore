@@ -120,7 +120,7 @@ public class UserOrderService {
     @Transactional(readOnly = true)
     public Page<OrderResponseDTO> getUserOrders(Pageable pageable) {
         UUID userId = getCurrentUserId();
-        Page<Order> ordersPage = orderRepository.findByUserId(userId, pageable);
+       Page<Order> ordersPage = orderRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
         return ordersPage.map(order -> {
             List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
             String shoName = null;
@@ -138,14 +138,12 @@ public class UserOrderService {
         UUID userId = getCurrentUserId();
         Order order = orderRepository.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
-        String shopName = null;
-        Shop shopId = shopRepository.findById(order.getShopId())
+        Shop shop = shopRepository.findById(order.getShopId())
                 .orElseThrow(() -> new NotFoundException("Shop not found"));
-        if (shopId != null) {
-            shopName = shopId.getName();
-        }
-        return DTOConverter.convertToOrderResponseDTO(order);
+        List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
+        return DTOConverter.convertToOrderResponseDTO(order, orderItems, shop.getName());
     }
+
 
     public String updateRefundStatus(UUID orderId) {
         Payment payment = orderPaymentRepository.findByOrderId(orderId)

@@ -49,7 +49,9 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
   long countByDeliveryIdAndStatusIn(UUID deliveryId, List<OrderStatus> statuses);
 
   @Query("SELECT r FROM RepairRequest r WHERE r.deliveryId = :deliveryId AND r.status IN :statuses")
-  List<Order> findByDeliveryIdAndStatusIn(@Param("deliveryId") UUID deliveryId,
-      @Param("statuses") List<OrderStatus> statuses);
+  List<Order> findByDeliveryIdAndStatusIn(@Param("deliveryId") UUID deliveryId,@Param("statuses") List<OrderStatus> statuses);
+
+    Page<Order> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
+
 
 }
