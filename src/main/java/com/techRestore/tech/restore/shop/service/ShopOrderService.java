@@ -1,6 +1,8 @@
 package com.techRestore.tech.restore.shop.service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -67,38 +69,52 @@ public class ShopOrderService extends BaseService<Order, UUID> {
         return mapToOrderResponseDTO(order);
     }
 
+    @Transactional
     public void acceptOrder(UUID orderId) {
         UUID shopId = getCurrentShopId();
+        
         Order order = ((OrderRepository) repository).findByIdAndShopId(orderId, shopId)
                 .orElseThrow(() -> new NotFoundException("Order not found for shop"));
+        
         if (order.getStatus() != OrderStatus.PENDING) {
             throw new IllegalStateException("Only PENDING orders can be accepted");
         }
-
+        
         List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
         if (orderItems.isEmpty()) {
             throw new IllegalStateException("No items found for order");
         }
-
+        
+        Map<UUID, Product> productMap = new HashMap<>();
         for (OrderItem orderItem : orderItems) {
             Product product = productRepository.findById(orderItem.getProductId())
                     .orElseThrow(() -> new NotFoundException("Product not found: " + orderItem.getProductId()));
-
+            
             int currentStock = product.getStock();
             int orderedQuantity = orderItem.getQuantity();
+            
+            if (productMap.containsKey(product.getId())) {
+                orderedQuantity += productMap.get(product.getId()).getStock() - currentStock;
+            }
+            
             if (currentStock < orderedQuantity) {
                 throw new IllegalArgumentException("Insufficient stock for product: " + product.getName() +
                         ". Available: " + currentStock + ", Requested: " + orderedQuantity);
             }
-
-            product.setStock(currentStock - orderedQuantity);
-            order.setShopId(shopId);
-            order.setStatus(OrderStatus.CONFIRMED);
-            repository.save(order);
-            productRepository.save(product);
-            notificationService.sendToUser(order.getUserId(),
-                    "Your order " + orderId + " has been accepted by the shop");
+            
+            product.setStock(currentStock - orderItem.getQuantity());
+            productMap.put(product.getId(), product);
         }
+        
+        order.setShopId(shopId);
+        order.setStatus(OrderStatus.CONFIRMED);
+        repository.save(order);
+        
+        productRepository.saveAll(productMap.values());
+        
+        notificationService.sendToUser(order.getUserId(),
+                "Your order " + orderId + " has been accepted by the shop");
+        
     }
 
     @PreAuthorize("hasRole('SHOP_OWNER')")

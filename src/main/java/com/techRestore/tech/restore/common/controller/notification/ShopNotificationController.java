@@ -26,7 +26,7 @@ public class ShopNotificationController {
 
   @GetMapping("/{notificationId}")
   public ResponseEntity<JsonNode>getNotificationById(@PathVariable String notificationId) {
-    return ResponseEntity.ok(notificationService.getٍShopNotificationById(notificationId));
+    return ResponseEntity.ok(notificationService.getShopNotificationById(notificationId));
   }
 
 

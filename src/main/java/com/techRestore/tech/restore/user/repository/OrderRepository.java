@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -54,6 +55,12 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     Page<Order> findByUserIdOrderByCreatedAtDesc(UUID userId, Pageable pageable);
 
     Page<Order> findByShopIdOrderByCreatedAtDesc(UUID shopId, Pageable pageable);
+
+    @Modifying
+    @Query("UPDATE Order o SET o.deliveryId = :deliveryId, o.status = :status WHERE o.id = :id AND o.status = :expectedStatus AND o.deliveryId IS NULL")
+    int assignOrderIfAvailable(@Param("id") UUID id, @Param("deliveryId") UUID deliveryId,
+                              @Param("status") OrderStatus status, @Param("expectedStatus") OrderStatus expected);
+
 
 
 }
