@@ -56,7 +56,7 @@ public class ShopOrderService extends BaseService<Order, UUID> {
     @Transactional
     public Page<OrderResponseDTO> getAllShopOrders(Pageable pageable) {
         UUID shopId = getCurrentShopId();
-        Page<Order> orders = ((OrderRepository) repository).findByShopId(shopId, pageable);
+        Page<Order> orders = ((OrderRepository) repository).findByShopIdOrderByCreatedAtDesc(shopId, pageable);
         return orders.map(this::mapToOrderResponseDTO);
     }
 
