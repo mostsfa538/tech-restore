@@ -104,7 +104,8 @@ public class CustomAuthenticationManager implements AuthenticationManager {
                     throw new BadCredentialsException("Invalid username or password");
                 }
                 if (!deliveryDetails.isEnabled()) {
-                    throw new ActivationException("Account is not activated. Please check your email for activation instructions");
+                    throw new ActivationException(
+                            "Account is not activated. Please check your email for activation instructions");
                 }
 
                 if (deliveryDetails instanceof DeliveryPrincipal deliveryPrincipal) {
@@ -120,14 +121,15 @@ public class CustomAuthenticationManager implements AuthenticationManager {
                     }
 
                     if (!delivery.isActivate()) {
-                         throw new ActivationException("Account is not activated. Please check your email for activation instructions");
+                        throw new ActivationException(
+                                "Account is not activated. Please check your email for activation instructions");
                     }
                 }
 
                 return new UsernamePasswordAuthenticationToken(
-                    deliveryDetails,
-                    password,
-                    deliveryDetails.getAuthorities());
+                        deliveryDetails,
+                        password,
+                        deliveryDetails.getAuthorities());
             }
         } catch (UsernameNotFoundException e) {
         }
@@ -139,7 +141,8 @@ public class CustomAuthenticationManager implements AuthenticationManager {
                     throw new BadCredentialsException("Invalid username or password");
                 }
                 if (!assignerDetails.isEnabled()) {
-                    throw new ActivationException("Account is not activated. Please check your email for activation instructions");
+                    throw new ActivationException(
+                            "Account is not activated. Please check your email for activation instructions");
                 }
 
                 if (assignerDetails instanceof AssignerPrincipal assignerPrincipal) {
@@ -155,14 +158,15 @@ public class CustomAuthenticationManager implements AuthenticationManager {
                     }
 
                     if (!assigner.isActivate()) {
-                        throw new ActivationException("Account is not activated. Please check your email for activation instructions");
+                        throw new ActivationException(
+                                "Account is not activated. Please check your email for activation instructions");
                     }
                 }
 
                 return new UsernamePasswordAuthenticationToken(
-                    assignerDetails,
-                    password,
-                    assignerDetails.getAuthorities());
+                        assignerDetails,
+                        password,
+                        assignerDetails.getAuthorities());
             }
         } catch (UsernameNotFoundException e) {
         }
