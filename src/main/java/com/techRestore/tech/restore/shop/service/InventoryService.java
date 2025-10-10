@@ -6,10 +6,12 @@ import java.io.*;
 import java.util.*;
 
 import com.techRestore.tech.restore.common.exception.NotFoundException;
+import com.techRestore.tech.restore.common.model.entities.Product;
 import com.techRestore.tech.restore.common.model.entities.Shop;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,9 @@ import com.techRestore.tech.restore.common.utils.DTOConverter;
 import com.techRestore.tech.restore.shop.dto.product.ProductResponseDTO;
 import com.techRestore.tech.restore.shop.repository.ProductRepository;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
+import com.techRestore.tech.restore.shop.repository.spec.ProductSpecifications;
+
+import static com.techRestore.tech.restore.shop.repository.spec.ProductSpecifications.*;
 
 import lombok.RequiredArgsConstructor;
 
@@ -40,8 +45,13 @@ public class InventoryService {
 
     public Page<ProductResponseDTO> searchInventory(String query, Pageable pageable) {
         UUID shopId = getCurrentShop();
-        return productRepository.searchByKeywordByShopId(shopId, query, pageable).map(
-                DTOConverter::convertToProductDTO);
+
+        Specification<Product> spec = Specification
+                .allOf(ProductSpecifications.hasShop(shopId))
+                .and(ProductSpecifications.nameOrDescriptionContains(query));
+
+        return productRepository.findAll(spec, pageable)
+                .map(DTOConverter::convertToProductDTO);
     }
 
     public Page<ProductResponseDTO> getLowStockProducts(Pageable pageable) {
@@ -58,7 +68,7 @@ public class InventoryService {
 
     public BigDecimal getTotalInventoryValue() {
         UUID shopId = getCurrentShop();
-        return productRepository.findAllByShopId(shopId).stream()
+        return productRepository.findAll(Specification.allOf(hasShop(shopId))).stream()
                 .map(p -> {
                     BigDecimal price = p.getPrice() != null ? p.getPrice() : BigDecimal.ZERO;
                     BigDecimal qty = p.getStock() != null ? BigDecimal.valueOf(p.getStock()) : BigDecimal.ZERO;
@@ -69,7 +79,7 @@ public class InventoryService {
 
     public Long getTotalItemsInInventory() {
         UUID shopId = getCurrentShop();
-        return productRepository.findAllByShopId(shopId).stream()
+        return productRepository.findAll(Specification.allOf(hasShop(shopId).and(shopVerified()))).stream()
                 .mapToLong(p -> p.getStock())
                 .sum();
     }
@@ -80,7 +90,7 @@ public class InventoryService {
                 CSVWriter writer = new CSVWriter(new OutputStreamWriter(out))) {
             String[] header = { "Name", "Description", "Price", "Stock", "ImageUrl" };
             writer.writeNext(header);
-            productRepository.findAllByShopId(shopId).forEach(product -> {
+            productRepository.findAll(Specification.allOf(hasShop(shopId)).and(shopVerified())).forEach(product -> {
                 String[] data = {
                         product.getName(),
                         product.getDescription(),

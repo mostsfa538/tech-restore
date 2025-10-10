@@ -7,9 +7,11 @@ import com.techRestore.tech.restore.common.services.BaseService;
 import com.techRestore.tech.restore.common.utils.DTOConverter;
 import com.techRestore.tech.restore.shop.dto.product.ProductResponseDTO;
 import com.techRestore.tech.restore.shop.repository.ProductRepository;
+import static com.techRestore.tech.restore.shop.repository.spec.ProductSpecifications.*;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +33,7 @@ public class UserProductService extends BaseService<Product, UUID> {
 
     @Transactional(readOnly = true)
     public Page<ProductResponseDTO> getAllProducts(Pageable pageable) {
-        return ((ProductRepository) repository).findAllVerified(pageable)
+        return productRepository.findAll(shopVerified(), pageable)
                 .map(DTOConverter::convertToProductDTO);
     }
 
@@ -41,18 +43,20 @@ public class UserProductService extends BaseService<Product, UUID> {
     }
 
     public Page<ProductResponseDTO> searchProducts(String keyword, Pageable pageable) {
-        return ((ProductRepository) repository).searchByKeyword(keyword, pageable)
+        return productRepository.findAll(Specification.allOf(nameContains(keyword)).and(shopVerified()), pageable)
                 .map(DTOConverter::convertToProductDTO);
     }
 
     public Page<ProductResponseDTO> getProductByShopId(UUID shopId, Pageable pageable) {
-        return ((ProductRepository) repository).findByShopId(shopId, pageable)
+        return productRepository.findAll(Specification.allOf(hasShop(shopId)).and(shopVerified()), pageable)
                 .map(DTOConverter::convertToProductDTO);
     }
 
     public Page<ProductResponseDTO> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice,
             Pageable pageable) {
-        return ((ProductRepository) repository).findByPriceBetween(minPrice, maxPrice, pageable)
+        return productRepository
+                .findAll(Specification.allOf(priceBetween(minPrice.doubleValue(), maxPrice.doubleValue()))
+                        .and(shopVerified()), pageable)
                 .map(DTOConverter::convertToProductDTO);
     }
 
@@ -60,7 +64,7 @@ public class UserProductService extends BaseService<Product, UUID> {
         categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException("Category not Found"));
 
-        return ((ProductRepository) repository).findByCategoryId(categoryId, pageable)
+        return productRepository.findAll(Specification.allOf(hasCategory(categoryId)), pageable)
                 .map(DTOConverter::convertToProductDTO);
     }
 
@@ -68,7 +72,10 @@ public class UserProductService extends BaseService<Product, UUID> {
         categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException("Category not Found"));
 
-        return productRepository.findProductByCategoryId(shopId, categoryId, pageable)
+        return productRepository
+                .findAll(Specification.allOf(hasCategory(categoryId).and(hasShop(shopId)).and(shopVerified())),
+                        pageable)
                 .map(DTOConverter::convertToProductDTO);
     }
+
 }

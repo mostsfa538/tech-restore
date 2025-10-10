@@ -39,7 +39,7 @@ public class ShopProductService extends BaseService<Product, UUID> {
 
     /**
      * Get current authenticated shop ID
-    */
+     */
     private UUID getCurrentShopId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
