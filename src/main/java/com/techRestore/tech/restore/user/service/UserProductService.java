@@ -47,9 +47,15 @@ public class UserProductService extends BaseService<Product, UUID> {
                 .map(DTOConverter::convertToProductDTO);
     }
 
+    @Transactional(readOnly = true)
     public Page<ProductResponseDTO> getProductByShopId(UUID shopId, Pageable pageable) {
-        return productRepository.findAll(Specification.allOf(hasShop(shopId)).and(shopVerified()), pageable)
-                .map(DTOConverter::convertToProductDTO);
+        Page<Product> products = productRepository.findAll(Specification.allOf(hasShop(shopId)).and(shopVerified()), pageable);
+        products.forEach(p -> {
+        if (p.getCategory() != null) {
+                p.getCategory().getName();
+        }
+        });
+        return products.map(DTOConverter::convertToProductDTO);
     }
 
     public Page<ProductResponseDTO> getProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice,
