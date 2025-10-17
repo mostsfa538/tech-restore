@@ -94,6 +94,7 @@ public class AdminServices extends BaseService<User, UUID> {
         repository.save(user);
     }
 
+    @Transactional
     public Page<ShopResponseDto> getShops(Pageable pageable) {
         return shopRepository.findAll(pageable)
                 .map(DTOConverter::convertToShopDTO);
