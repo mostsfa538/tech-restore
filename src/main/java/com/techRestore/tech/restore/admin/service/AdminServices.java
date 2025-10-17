@@ -29,12 +29,12 @@ import com.techRestore.tech.restore.user.repository.OrderRepository;
 import com.techRestore.tech.restore.user.repository.RepairRequestRepository;
 import com.techRestore.tech.restore.user.repository.UserRepository;
 
-import jakarta.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -193,7 +193,7 @@ public class AdminServices extends BaseService<User, UUID> {
         return deliveries.map(this::convertToDeliveryResponseDto);
     }
 
-    @Transactional
+    // @Transactional
     public void approveDelivery(UUID deliveryId) {
         Delivery delivery = deliveryRepository.findById(deliveryId)
                 .orElseThrow(() -> new NotFoundException("Delivery not found with ID: " + deliveryId));
@@ -207,7 +207,7 @@ public class AdminServices extends BaseService<User, UUID> {
                 "Congratulations! Your delivery account has been approved by admin. You can now start accepting deliveries.");
     }
 
-    @Transactional
+    // @Transactional
     public void suspendDelivery(UUID deliveryId) {
         Delivery delivery = deliveryRepository.findById(deliveryId)
                 .orElseThrow(() -> new NotFoundException("Delivery not found with ID: " + deliveryId));
