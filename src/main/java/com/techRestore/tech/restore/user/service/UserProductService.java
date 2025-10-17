@@ -74,6 +74,7 @@ public class UserProductService extends BaseService<Product, UUID> {
                 .map(DTOConverter::convertToProductDTO);
     }
 
+    @Transactional(readOnly = true)
     public Page<ProductResponseDTO> getProductsByCategory(UUID shopId, UUID categoryId, Pageable pageable) {
         categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new NotFoundException("Category not Found"));
