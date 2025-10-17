@@ -57,7 +57,7 @@ public class ProductController extends BaseController {
         return successResponse(products);
     }
 
-    @GetMapping("{shopId}/{categoryId}")
+    @GetMapping("/{shopId}/{categoryId}")
     public ResponseEntity<Page<ProductResponseDTO>> getProductsByCategory(@PathVariable UUID categoryId,
             @PathVariable UUID shopId, Pageable pageable) {
         Page<ProductResponseDTO> shops = productServices.getProductsByCategory(categoryId, shopId, pageable);
