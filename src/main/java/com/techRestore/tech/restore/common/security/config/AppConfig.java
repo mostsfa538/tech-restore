@@ -62,10 +62,12 @@ public class AppConfig {
                                 "api/auth/reset-password",
                                 "/api/categories")
                         .permitAll()
+                        .requestMatchers("/api/admin/**").permitAll()
+
                         .requestMatchers("/api/notifications/delivery").hasAnyRole("DELIVERY")
                         .requestMatchers("/api/notifications/assigner").hasAnyRole("ASSIGNER")
                         .requestMatchers("/api/notifications/shops").hasAnyRole("SELLER", "BOTH", "REPAIRER")
-                        .requestMatchers("/api/users/notifications/users").hasAnyRole("GUEST")
+                        .requestMatchers("/api/notifications/users").hasAnyRole("GUEST")
                         .requestMatchers("/api/assigner/**").hasAnyRole("ASSIGNER")
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/api/payments/**").hasAnyRole("GUEST")
@@ -122,7 +124,7 @@ public class AppConfig {
                 "http://localhost:4200", // Your existing Angular frontend
                 "http://127.0.0.1:5500", // Your HTML file served by Live Server
                 "http://localhost:5500", // Alternative localhost format
-                "http://localhost:3000", // Common React development port
+                "http://localhost:3000",
                 "http://127.0.0.1:3000" // Alternative format
         ));
         corsConfiguration.setAllowCredentials(true);
@@ -155,6 +157,8 @@ public class AppConfig {
 
                 cookieUtil.addAccessTokenCookie(response, accessToken);
                 cookieUtil.addRefreshTokenCookie(response, refreshToken);
+
+                cookieUtil.addClientAccessTokenCookie(response, accessToken);
                 response.sendRedirect("http://localhost:3000/oauth2/success");
 
             } catch (Exception e) {

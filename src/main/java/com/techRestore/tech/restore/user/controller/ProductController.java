@@ -57,10 +57,17 @@ public class ProductController extends BaseController {
         return successResponse(products);
     }
 
+<<<<<<< HEAD
     @GetMapping("/{shopId}/{categoryId}")
     public ResponseEntity<Page<ProductResponseDTO>> getProductsByCategory(@PathVariable UUID categoryId,
             @PathVariable UUID shopId, Pageable pageable) {
         Page<ProductResponseDTO> shops = productServices.getProductsByCategory(categoryId, shopId, pageable);
+=======
+    @GetMapping("{shopId}/{categoryId}")
+    public ResponseEntity<Page<ProductResponseDTO>> getProductsByCategory(@PathVariable UUID shopId,
+            @PathVariable UUID categoryId, Pageable pageable) {
+        Page<ProductResponseDTO> shops = productServices.getProductsByCategory(shopId, categoryId, pageable);
+>>>>>>> 3f6b76fd1110b22890441cef200b9345a4896efa
         return successResponse(shops);
     }
 }

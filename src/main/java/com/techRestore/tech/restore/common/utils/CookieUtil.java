@@ -63,6 +63,15 @@ public class CookieUtil {
                 .map(Cookie::getValue)
                 .findFirst();
     }
+    // New method for non-HttpOnly client_access_token
+    public void addClientAccessTokenCookie(HttpServletResponse response, String accessToken) {
+        Cookie cookie = new Cookie("client_access_token", accessToken);
+        cookie.setHttpOnly(false); // Accessible by JavaScript
+        cookie.setSecure(true); // Use HTTPS in production
+        cookie.setPath("/"); // Accessible across the app
+        cookie.setMaxAge(3600); // Match access_token expiration (1 hour)
+        response.addCookie(cookie);
+    }
 
     public void deleteRefreshTokenCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE_NAME, "");
