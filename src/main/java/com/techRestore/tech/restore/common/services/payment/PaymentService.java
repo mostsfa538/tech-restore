@@ -355,7 +355,7 @@ public class PaymentService {
         billingData.put("first_name", user.getFirst_name());
         billingData.put("last_name", user.getLast_name());
         billingData.put("phone_number", user.getPhone());
-        billingData.put("apartment", address != null && address.getNotes() != null ? address.getNotes() : "N/A");
+        billingData.put("apartment", address != null && address.getBuilding() != null ? address.getBuilding() : "N/A");
         billingData.put("street", address != null ? address.getStreet() : "Unknown Street");
         billingData.put("building", address != null ? address.getBuilding() : "0");
         billingData.put("floor", "1");
