@@ -402,14 +402,13 @@ public class AssignerService {
         dto.setStatus(order.getStatus());
         dto.setTotalPrice(order.getTotalPrice());
         dto.setCreatedAt(order.getCreatedAt());
+        dto.setPaymentMethod(order.getPaymentMethod().toString());
 
         if (order.getShopId() != null) {
             shopRepository.findById(order.getShopId()).ifPresent(shop -> {
                 ShopAddress shopAddress = shop.getAddresses()
-                        .stream()
-                        .filter(ShopAddress::isDefault)
-                        .findFirst()
-                        .orElse(null);
+                        .stream().filter(ShopAddress::isDefault).findFirst()
+                        .orElse(shop.getAddresses().stream().findFirst().orElse(null));
                 dto.setShopAddress(convertAddressDto(shopAddress, OrderDeliveryDto.AddressDto.class));
             });
         }
@@ -417,10 +416,9 @@ public class AssignerService {
         if (order.getUserId() != null) {
             userRepository.findById(order.getUserId()).ifPresent(user -> {
                 Address userAddress = user.getAddresses()
-                        .stream()
-                        .filter(Address::isDefault)
-                        .findFirst()
-                        .orElse(null);
+                        .stream().filter(Address::isDefault).findFirst()
+                        .orElse(user.getAddresses().stream().findFirst().orElse(null));
+                log.info("🔍 User Address: {}", userAddress != null ? userAddress.getStreet() : "NO ADDRESSES");
                 dto.setUserAddress(convertAddressDto(userAddress, OrderDeliveryDto.AddressDto.class));
             });
         }

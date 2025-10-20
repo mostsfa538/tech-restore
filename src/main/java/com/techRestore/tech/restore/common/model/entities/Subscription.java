@@ -3,6 +3,7 @@ package com.techRestore.tech.restore.common.model.entities;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -33,6 +34,15 @@ public class Subscription {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "months", nullable = false)
+    private Integer months;
+
+    @Column(name = "base_amount", precision = 10, scale = 2)
+    private BigDecimal baseAmount = BigDecimal.valueOf(1000);
+
+    @Column(name = "total_amount", precision = 10, scale = 2)
+    private BigDecimal totalAmount;
+
     @Column(name = "payment_id", nullable = false)
     private UUID paymentId;
 
@@ -48,5 +58,14 @@ public class Subscription {
     protected void onCreate() {
         id = UuidCreator.getTimeOrderedEpoch();
         createdAt = LocalDateTime.now();
+        if (startDate == null) {
+            startDate = LocalDateTime.now();
+        }
+        if (endDate == null) {
+            endDate = startDate.plusMonths(months);
+        }
+        if (totalAmount == null) {
+            totalAmount = baseAmount.multiply(BigDecimal.valueOf(months));
+        }
     }
 }

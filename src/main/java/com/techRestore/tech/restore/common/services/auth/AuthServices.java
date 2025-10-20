@@ -8,6 +8,7 @@ import com.techRestore.tech.restore.common.dto.auth.TokenResponse;
 import com.techRestore.tech.restore.common.dto.auth.UserRegistration;
 import com.techRestore.tech.restore.common.exception.CustomException;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
+import com.techRestore.tech.restore.common.model.entities.Shop;
 import com.techRestore.tech.restore.common.security.config.CustomAuthenticationManager;
 import com.techRestore.tech.restore.common.security.jwt.JwtService;
 import com.techRestore.tech.restore.common.security.jwt.RefreshTokenService;
@@ -69,6 +70,17 @@ public class AuthServices {
     }
 
     public Map<String, Object> login(LoginDto loginDto, HttpServletRequest request, HttpServletResponse response) {
+        Optional<?> entityOpt = entityFinderService.findEntityByEmail(loginDto.email());
+        if (entityOpt.isEmpty()) {
+            throw new CustomException(HttpStatus.NOT_FOUND, "User not found");
+        }
+
+        Object entity = entityOpt.get();
+        if (entity instanceof Shop shop && !shop.isSubscriptionActive()) {
+            throw new CustomException(HttpStatus.FORBIDDEN, 
+                "Subscription expired! Please renew your subscription");
+        }
+        
         Authentication authentication = customAuthenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginDto.email(), loginDto.password()));
 

@@ -63,7 +63,9 @@ public class AppConfig {
                                 "/api/categories")
                         .permitAll()
                         .requestMatchers("/api/admin/**").permitAll()
-
+                        .requestMatchers("/api/subscriptions/renew/**").permitAll()
+                        .requestMatchers("/api/payments/subscription/cash/confirm/{paymentId}/**").hasAnyRole("ADMIN")
+                        .requestMatchers("/api/subscriptions/**").hasAnyRole("SELLER", "BOTH", "REPAIRER")
                         .requestMatchers("/api/notifications/delivery").hasAnyRole("DELIVERY")
                         .requestMatchers("/api/notifications/assigner").hasAnyRole("ASSIGNER")
                         .requestMatchers("/api/notifications/shops").hasAnyRole("SELLER", "BOTH", "REPAIRER")

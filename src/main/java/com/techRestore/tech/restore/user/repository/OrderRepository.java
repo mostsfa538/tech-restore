@@ -60,6 +60,13 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     @Query("UPDATE Order o SET o.deliveryId = :deliveryId, o.status = :status WHERE o.id = :id AND o.status = :expectedStatus AND o.deliveryId IS NULL")
     int assignOrderIfAvailable(@Param("id") UUID id, @Param("deliveryId") UUID deliveryId,
                               @Param("status") OrderStatus status, @Param("expectedStatus") OrderStatus expected);
+    
+    @Query("SELECT o FROM Order o " +
+           "LEFT JOIN FETCH o.user u " +
+           "LEFT JOIN FETCH u.addresses a " +
+           "WHERE o.status = :status AND o.deliveryId IS NULL")
+    Page<Order> findByStatusAndDeliveryIdIsNullWithUserAddress(
+            @Param("status") OrderStatus status, Pageable pageable);
 
 
 

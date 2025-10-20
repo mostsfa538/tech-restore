@@ -26,7 +26,8 @@ public class ShopRegistrationStrategy implements RegistrationStrategy<Shop, Shop
         shop.setDescription(registrationData.description());
         shop.setVerified(registrationData.verified());
         shop.setShopType(registrationData.shopType());
-
+        shop.setSubscriptionMonths(0);
+        shop.setActivate(false);
         ShopAddress address = new ShopAddress();
         address.setState(registrationData.shopAddress().state());
         address.setCity(registrationData.shopAddress().city());
