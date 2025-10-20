@@ -79,4 +79,22 @@ public class EntityFinderService {
         }
         return "UNKNOWN";
     }
+
+
+    public Optional<?> findEntityByEmail(String email) {
+        Optional<User> user = Optional.ofNullable(userRepository.findByEmail(email));
+        if (user.isPresent()) return Optional.of(user.get());
+        
+        Optional<Shop> shop = shopRepository.findByEmail(email);
+        if (shop.isPresent()) return Optional.of(shop.get());
+        
+        Optional<Delivery> delivery = deliveryRepository.findByEmail(email);
+        if (delivery.isPresent()) return Optional.of(delivery.get());
+        
+        Optional<Assigner> assigner = assignerRepository.findByEmail(email);
+        if (assigner.isPresent()) return Optional.of(assigner.get());
+        
+        return Optional.empty();
+}
+
 }

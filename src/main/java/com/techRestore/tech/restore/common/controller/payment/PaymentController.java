@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.common.controller.payment;
 
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -11,8 +12,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 
 import com.techRestore.tech.restore.common.controller.BaseController;
@@ -21,6 +24,7 @@ import com.techRestore.tech.restore.common.dto.payment.PaymentInitiationDto;
 import com.techRestore.tech.restore.common.exception.ActivationException;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
 import com.techRestore.tech.restore.common.model.entities.User;
+import com.techRestore.tech.restore.common.model.enums.PaymentStatus;
 import com.techRestore.tech.restore.common.model.enums.PaymentType;
 import com.techRestore.tech.restore.common.services.payment.PaymentService;
 import com.techRestore.tech.restore.user.repository.UserRepository;
@@ -73,6 +77,15 @@ public class PaymentController extends BaseController{
         UUID userId = getCurrentUserId();
         Page<PaymentDto> transactions = paymentService.getAllUserTransactions(userId, pageable);
         return ResponseEntity.ok(transactions);
+    }
+
+    @PostMapping("/subscription/cash/confirm/{paymentId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, String>> confirmCashSubscriptionPayment(
+            @PathVariable UUID paymentId, @RequestParam String status) {
+        PaymentStatus paymentStatus = PaymentStatus.valueOf(status.toUpperCase());
+        paymentService.updateCashPaymentStatus(paymentId, paymentStatus);
+        return ResponseEntity.ok(Map.of("message", "Cash subscription payment confirmed"));
     }
 
 }

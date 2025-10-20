@@ -121,6 +121,15 @@ public class Shop implements OtpVerifiable {
     @OneToMany(mappedBy = "shop", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<SupportTicket> supportTickets = new ArrayList<>();
 
+    @Column(name = "subscription_months")
+    private Integer subscriptionMonths = 1;
+
+    @Column(name = "subscription_start_date")
+    private LocalDateTime subscriptionStartDate;
+
+    @Column(name = "subscription_end_date")
+    private LocalDateTime subscriptionEndDate;
+
     private Status status;
 
     @PrePersist
@@ -148,5 +157,15 @@ public class Shop implements OtpVerifiable {
     @Override
     public void setActivate(boolean activate) {
         this.activate = activate;
+    }
+
+    public boolean isSubscriptionActive() {
+        if (subscriptionMonths == null || subscriptionMonths == 0) {
+            return false;
+        }
+        if (subscriptionEndDate == null) {
+            return false;
+        }
+        return LocalDateTime.now().isBefore(subscriptionEndDate);
     }
 }
