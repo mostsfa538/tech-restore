@@ -100,16 +100,19 @@ public class AdminServices extends BaseService<User, UUID> {
                 .map(DTOConverter::convertToShopDTO);
     }
 
+    @Transactional
     public Page<ShopResponseDto> getApprovedShops(Pageable pageable) {
         return shopRepository.findAllApprovedShops(pageable)
                 .map(DTOConverter::convertToShopDTO);
     }
 
+    @Transactional
     public Page<ShopResponseDto> getSuspendedShops(Pageable pageable) {
         return shopRepository.findAllSuspendedShops(pageable)
                 .map(DTOConverter::convertToShopDTO);
     }
 
+    @Transactional
     public ShopResponseDto getShopById(UUID shopId) {
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new NotFoundException("Shop not Found"));
