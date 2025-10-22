@@ -66,7 +66,7 @@ public class ShopFinancialService {
     }
 
 
-       @Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     public List<ShopFinancialReportDto.TransactionDto> getRepairPayments() {
         UUID shopId = getCurrentShopId();
         List<Payment> payments = paymentRepository.findByShopIdAndPaymentTypeAndPaymentStatus(

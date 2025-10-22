@@ -62,6 +62,7 @@ public class ShopOrderService extends BaseService<Order, UUID> {
         return orders.map(this::mapToOrderResponseDTO);
     }
 
+    @Transactional
     public OrderResponseDTO getOrderById(UUID orderId) {
         UUID shopId = getCurrentShopId();
         Order order = ((OrderRepository) repository).findByIdAndShopId(orderId, shopId)
@@ -118,6 +119,7 @@ public class ShopOrderService extends BaseService<Order, UUID> {
     }
 
     @PreAuthorize("hasRole('SHOP_OWNER')")
+    @Transactional
     public void rejectOrder(UUID orderId) {
         UUID shopId = getCurrentShopId();
         Order order = ((OrderRepository) repository).findByIdAndShopId(orderId, shopId)
@@ -170,12 +172,14 @@ public class ShopOrderService extends BaseService<Order, UUID> {
         }
     }
 
+    @Transactional
     public Page<OrderResponseDTO> getOrdersByStatus(OrderStatus status, Pageable pageable) {
         UUID shopId = getCurrentShopId();
         Page<Order> orders = ((OrderRepository) repository).findByStatusAndShopId(status, shopId, pageable);
         return orders.map(this::mapToOrderResponseDTO);
     }
 
+    @Transactional
     private OrderResponseDTO mapToOrderResponseDTO(Order order) {
         List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
         String shopName =null;
