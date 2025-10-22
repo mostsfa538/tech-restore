@@ -173,7 +173,7 @@ public class DTOConverter {
         dto.setShopName(shopName);
 
         if (item.getProduct() != null) {
-            dto.setProductNAme(item.getProduct().getName());
+            dto.setProductName(item.getProduct().getName());
             dto.setPrice(item.getProduct().getPrice());
         }
 
