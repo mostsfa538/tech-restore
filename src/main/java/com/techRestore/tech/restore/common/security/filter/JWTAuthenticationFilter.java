@@ -155,7 +155,11 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                 "/api/auth/forgot-password",
                 "/api/auth/reset-password",
                 "/oauth2/authorization/google",
-                "/login/oauth2/code/google");
+                "/login/oauth2/code/google",
+                "/v3/api-docs",
+                "/swagger-ui",
+                "/swagger-resources"
+                );
         return publicPaths.stream().anyMatch(path::startsWith);
     }
 }
