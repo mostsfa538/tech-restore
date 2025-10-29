@@ -60,21 +60,32 @@ public class EntityFinderService {
     }
 
     public boolean entityExists(String email) {
-        return userRepository.existsByEmail(email) ||
-                shopRepository.existsByEmail(email) ||
-                deliveryRepository.existsByEmail(email)||
-                assignerRepository.existsByEmail(email);
+        // Use a single query with OR conditions would be ideal, but since we have separate repositories,
+        // we can at least short-circuit early
+        if (userRepository.existsByEmail(email)) {
+            return true;
+        }
+        if (shopRepository.existsByEmail(email)) {
+            return true;
+        }
+        if (deliveryRepository.existsByEmail(email)) {
+            return true;
+        }
+        return assignerRepository.existsByEmail(email);
     }
 
     public String getEntityType(String email) {
+        // Optimize by combining exists check with type determination
         if (userRepository.existsByEmail(email)) {
             return "USER";
-        } else if (shopRepository.existsByEmail(email)) {
+        }
+        if (shopRepository.existsByEmail(email)) {
             return "SHOP";
-        } else if (deliveryRepository.existsByEmail(email)) {
+        }
+        if (deliveryRepository.existsByEmail(email)) {
             return "DELIVERY";
         }
-        else if (assignerRepository.existsByEmail(email)) {
+        if (assignerRepository.existsByEmail(email)) {
             return "ASSIGNER";
         }
         return "UNKNOWN";

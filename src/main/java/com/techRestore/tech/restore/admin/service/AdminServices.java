@@ -37,6 +37,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -172,7 +174,7 @@ public class AdminServices extends BaseService<User, UUID> {
 
     public Page<DeliveryResponseDto> getAllDeliveries(Pageable pageable) {
         Page<Delivery> deliveries = deliveryRepository.findAll(pageable);
-        return deliveries.map(this::convertToDeliveryResponseDto);
+        return convertDeliveriesToDtos(deliveries);
     }
 
     public DeliveryResponseDto getDeliveryById(UUID deliveryId) {
@@ -183,17 +185,17 @@ public class AdminServices extends BaseService<User, UUID> {
 
     public Page<DeliveryResponseDto> getPendingDeliveries(Pageable pageable) {
         Page<Delivery> deliveries = deliveryRepository.findByStatus(ApprovalStatus.PENDING, pageable);
-        return deliveries.map(this::convertToDeliveryResponseDto);
+        return convertDeliveriesToDtos(deliveries);
     }
 
     public Page<DeliveryResponseDto> getApprovedDeliveries(Pageable pageable) {
         Page<Delivery> deliveries = deliveryRepository.findByStatus(ApprovalStatus.APPROVED, pageable);
-        return deliveries.map(this::convertToDeliveryResponseDto);
+        return convertDeliveriesToDtos(deliveries);
     }
 
     public Page<DeliveryResponseDto> getSuspendedDeliveries(Pageable pageable) {
         Page<Delivery> deliveries = deliveryRepository.findByStatus(ApprovalStatus.SUSPENDED, pageable);
-        return deliveries.map(this::convertToDeliveryResponseDto);
+        return convertDeliveriesToDtos(deliveries);
     }
 
     // @Transactional
@@ -306,6 +308,38 @@ public class AdminServices extends BaseService<User, UUID> {
         assignerRepository.delete(assigner);
     }
 
+    private Page<DeliveryResponseDto> convertDeliveriesToDtos(Page<Delivery> deliveries) {
+        if (deliveries.isEmpty()) {
+            return deliveries.map(this::convertToDeliveryResponseDto);
+        }
+
+        List<UUID> deliveryIds = deliveries.getContent().stream()
+                .map(Delivery::getId)
+                .toList();
+
+        // Batch query for order statistics
+        List<Object[]> orderStats = orderRepository.countByDeliveryIdsGroupedByStatus(deliveryIds);
+        Map<UUID, Map<OrderStatus, Long>> orderStatsMap = new HashMap<>();
+        for (Object[] stat : orderStats) {
+            UUID deliveryId = (UUID) stat[0];
+            OrderStatus status = (OrderStatus) stat[1];
+            Long count = (Long) stat[2];
+            orderStatsMap.computeIfAbsent(deliveryId, k -> new HashMap<>()).put(status, count);
+        }
+
+        // Batch query for repair statistics
+        List<Object[]> repairStats = repairRequestRepository.countByDeliveryIdsGroupedByStatus(deliveryIds);
+        Map<UUID, Map<RepairStatus, Long>> repairStatsMap = new HashMap<>();
+        for (Object[] stat : repairStats) {
+            UUID deliveryId = (UUID) stat[0];
+            RepairStatus status = (RepairStatus) stat[1];
+            Long count = (Long) stat[2];
+            repairStatsMap.computeIfAbsent(deliveryId, k -> new HashMap<>()).put(status, count);
+        }
+
+        return deliveries.map(delivery -> convertToDeliveryResponseDto(delivery, orderStatsMap, repairStatsMap));
+    }
+
     private DeliveryResponseDto convertToDeliveryResponseDto(Delivery delivery) {
         DeliveryResponseDto dto = new DeliveryResponseDto();
         dto.setId(delivery.getId());
@@ -327,6 +361,37 @@ public class AdminServices extends BaseService<User, UUID> {
                 delivery.getId(), List.of(OrderStatus.DELIVERED)) +
                 repairRequestRepository.countByDeliveryIdAndStatusIn(
                         delivery.getId(), List.of(RepairStatus.REPAIR_COMPLETED));
+        dto.setActiveOrderDeliveries((int) activeOrderDeliveries);
+        dto.setActiveRepairDeliveries((int) activeRepairDeliveries);
+        dto.setTotalCompletedDeliveries((int) totalCompleted);
+
+        return dto;
+    }
+
+    private DeliveryResponseDto convertToDeliveryResponseDto(Delivery delivery, 
+            Map<UUID, Map<OrderStatus, Long>> orderStatsMap,
+            Map<UUID, Map<RepairStatus, Long>> repairStatsMap) {
+        DeliveryResponseDto dto = new DeliveryResponseDto();
+        dto.setId(delivery.getId());
+        dto.setEmail(delivery.getEmail());
+        dto.setName(delivery.getName());
+        dto.setAddress(delivery.getAddress());
+        dto.setPhone(delivery.getPhone());
+        dto.setStatus(delivery.getStatus());
+        dto.setActivate(delivery.isActivate());
+        dto.setVerified(delivery.getVerified());
+        dto.setCreatedAt(delivery.getCreatedAt());
+        dto.setNotificationHistory(delivery.getNotificationHistory());
+
+        Map<OrderStatus, Long> orderStats = orderStatsMap.getOrDefault(delivery.getId(), Map.of());
+        Map<RepairStatus, Long> repairStats = repairStatsMap.getOrDefault(delivery.getId(), Map.of());
+
+        long activeOrderDeliveries = orderStats.getOrDefault(OrderStatus.SHIPPED, 0L);
+        long activeRepairDeliveries = repairStats.getOrDefault(RepairStatus.DEVICE_COLLECTED, 0L) +
+                repairStats.getOrDefault(RepairStatus.DEVICE_DELIVERED, 0L);
+        long totalCompleted = orderStats.getOrDefault(OrderStatus.DELIVERED, 0L) +
+                repairStats.getOrDefault(RepairStatus.REPAIR_COMPLETED, 0L);
+
         dto.setActiveOrderDeliveries((int) activeOrderDeliveries);
         dto.setActiveRepairDeliveries((int) activeRepairDeliveries);
         dto.setTotalCompletedDeliveries((int) totalCompleted);

@@ -35,6 +35,8 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.UUID;
 
 @Slf4j
@@ -86,7 +88,7 @@ public class AssignerService {
     @Transactional(readOnly = true)
     public Page<DeliveryPersonDto> getAvailableDeliveryPersons(Pageable pageable) {
         Page<Delivery> deliveries = deliveryRepository.findAll(pageable);
-        return deliveries.map(this::convertToDeliveryPersonDto);
+        return convertDeliveriesToPersonDtos(deliveries);
     }
 
     @Transactional(readOnly = true)
@@ -100,6 +102,41 @@ public class AssignerService {
         Page<RepairRequest> repairRequests = repairRequestRepository.findByStatusInAndDeliveryIdIsNull(
                 List.of(RepairStatus.REPAIR_COMPLETED), pageable);
         return repairRequests.map(this::convertToRepairDeliveryDto);
+    }
+
+    private Page<DeliveryPersonDto> convertDeliveriesToPersonDtos(Page<Delivery> deliveries) {
+        if (deliveries.isEmpty()) {
+            return deliveries.map(this::convertToDeliveryPersonDto);
+        }
+
+        List<UUID> deliveryIds = deliveries.getContent().stream()
+                .map(Delivery::getId)
+                .toList();
+
+        // Batch query for statistics
+        List<Object[]> orderStats = orderRepository.countByDeliveryIdsGroupedByStatus(deliveryIds);
+        Map<UUID, Long> orderCountMap = new HashMap<>();
+        for (Object[] stat : orderStats) {
+            UUID deliveryId = (UUID) stat[0];
+            OrderStatus status = (OrderStatus) stat[1];
+            Long count = (Long) stat[2];
+            if (status == OrderStatus.SHIPPED) {
+                orderCountMap.put(deliveryId, count);
+            }
+        }
+
+        List<Object[]> repairStats = repairRequestRepository.countByDeliveryIdsGroupedByStatus(deliveryIds);
+        Map<UUID, Long> repairCountMap = new HashMap<>();
+        for (Object[] stat : repairStats) {
+            UUID deliveryId = (UUID) stat[0];
+            RepairStatus status = (RepairStatus) stat[1];
+            Long count = (Long) stat[2];
+            if (status == RepairStatus.DEVICE_DELIVERED || status == RepairStatus.DEVICE_COLLECTED) {
+                repairCountMap.merge(deliveryId, count, Long::sum);
+            }
+        }
+
+        return deliveries.map(delivery -> convertToDeliveryPersonDto(delivery, orderCountMap, repairCountMap));
     }
 
     @Transactional
@@ -343,6 +380,25 @@ public class AssignerService {
                 delivery.getId(), List.of(OrderStatus.SHIPPED));
         long repairCount = repairRequestRepository.countByDeliveryIdAndStatusIn(
                 delivery.getId(), List.of(RepairStatus.DEVICE_DELIVERED, RepairStatus.DEVICE_COLLECTED));
+
+        dto.setActiveAssignments((int) (orderCount + repairCount));
+        dto.setAvailable(dto.getActiveAssignments() < 5);
+
+        return dto;
+    }
+
+    private DeliveryPersonDto convertToDeliveryPersonDto(Delivery delivery, 
+            Map<UUID, Long> orderCountMap, Map<UUID, Long> repairCountMap) {
+        DeliveryPersonDto dto = new DeliveryPersonDto();
+        dto.setId(delivery.getId());
+        dto.setName(delivery.getName());
+        dto.setEmail(delivery.getEmail());
+        dto.setPhone(delivery.getPhone());
+        dto.setAddress(delivery.getAddress());
+        dto.setCreatedAt(delivery.getCreatedAt());
+
+        long orderCount = orderCountMap.getOrDefault(delivery.getId(), 0L);
+        long repairCount = repairCountMap.getOrDefault(delivery.getId(), 0L);
 
         dto.setActiveAssignments((int) (orderCount + repairCount));
         dto.setAvailable(dto.getActiveAssignments() < 5);

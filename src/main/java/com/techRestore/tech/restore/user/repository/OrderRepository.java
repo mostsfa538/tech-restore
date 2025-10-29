@@ -68,6 +68,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID> {
     Page<Order> findByStatusAndDeliveryIdIsNullWithUserAddress(
             @Param("status") OrderStatus status, Pageable pageable);
 
-
+    @Query("SELECT o.deliveryId, o.status, COUNT(o) FROM Order o WHERE o.deliveryId IN :deliveryIds GROUP BY o.deliveryId, o.status")
+    List<Object[]> countByDeliveryIdsGroupedByStatus(@Param("deliveryIds") List<UUID> deliveryIds);
 
 }
