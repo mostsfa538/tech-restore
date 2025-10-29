@@ -192,40 +192,58 @@ public class NotificationService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     protected void sendToAllDeliverySync(String message) {
-        List<Delivery> deliveries = deliveryRepository.findAll();
-        List<Delivery> updatedDeliveries = new ArrayList<>();
+        int page = 0;
+        Slice<Delivery> deliveriesSlice;
+        int totalSent = 0;
         
-        for (Delivery delivery : deliveries) {
-            try {
-                messagingTemplate.convertAndSendToUser(delivery.getEmail(), "/queue/notifications", message);
-                addToHistory(delivery.getNotificationHistory(), message, delivery::setNotificationHistory);
-                updatedDeliveries.add(delivery);
-            } catch (Exception e) {
-                logger.error("Failed to send notification to delivery {}: {}", delivery.getId(), e.getMessage());
+        do {
+            deliveriesSlice = deliveryRepository.findAll(PageRequest.of(page, CLEANUP_BATCH_SIZE));
+            List<Delivery> updatedDeliveries = new ArrayList<>();
+            
+            for (Delivery delivery : deliveriesSlice.getContent()) {
+                try {
+                    messagingTemplate.convertAndSendToUser(delivery.getEmail(), "/queue/notifications", message);
+                    addToHistory(delivery.getNotificationHistory(), message, delivery::setNotificationHistory);
+                    updatedDeliveries.add(delivery);
+                } catch (Exception e) {
+                    logger.error("Failed to send notification to delivery {}: {}", delivery.getId(), e.getMessage());
+                }
             }
-        }
+            
+            deliveryRepository.saveAll(updatedDeliveries);
+            totalSent += updatedDeliveries.size();
+            page++;
+        } while (deliveriesSlice.hasNext());
         
-        deliveryRepository.saveAll(updatedDeliveries);
-        logger.info("Notification sent to {} deliveries", updatedDeliveries.size());
+        logger.info("Notification sent to {} deliveries", totalSent);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     protected void sendToAssignersSync(String message) {
-        List<Assigner> assigners = assignerRepository.findAll();
-        List<Assigner> updatedAssigners = new ArrayList<>();
+        int page = 0;
+        Slice<Assigner> assignersSlice;
+        int totalSent = 0;
         
-        for (Assigner assigner : assigners) {
-            try {
-                messagingTemplate.convertAndSendToUser(assigner.getEmail(), "/queue/notifications", message);
-                addToHistory(assigner.getNotificationHistory(), message, assigner::setNotificationHistory);
-                updatedAssigners.add(assigner);
-            } catch (Exception e) {
-                logger.error("Failed to send notification to assigner {}: {}", assigner.getId(), e.getMessage());
+        do {
+            assignersSlice = assignerRepository.findAll(PageRequest.of(page, CLEANUP_BATCH_SIZE));
+            List<Assigner> updatedAssigners = new ArrayList<>();
+            
+            for (Assigner assigner : assignersSlice.getContent()) {
+                try {
+                    messagingTemplate.convertAndSendToUser(assigner.getEmail(), "/queue/notifications", message);
+                    addToHistory(assigner.getNotificationHistory(), message, assigner::setNotificationHistory);
+                    updatedAssigners.add(assigner);
+                } catch (Exception e) {
+                    logger.error("Failed to send notification to assigner {}: {}", assigner.getId(), e.getMessage());
+                }
             }
-        }
+            
+            assignerRepository.saveAll(updatedAssigners);
+            totalSent += updatedAssigners.size();
+            page++;
+        } while (assignersSlice.hasNext());
         
-        assignerRepository.saveAll(updatedAssigners);
-        logger.info("Notification sent to {} assigners", updatedAssigners.size());
+        logger.info("Notification sent to {} assigners", totalSent);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

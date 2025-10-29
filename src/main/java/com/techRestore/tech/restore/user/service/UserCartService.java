@@ -36,8 +36,18 @@ public class UserCartService {
     public CartResponseDTO getCart(Pageable pageable) {
         UUID userId = getCurrentUserId();
         Page<CartItem> items = cartItemRepository.findByUserId(userId, pageable);
+        
+        // Batch fetch products to avoid N+1 query problem
+        List<UUID> productIds = items.getContent().stream()
+                .map(CartItem::getProductId)
+                .distinct()
+                .toList();
+        
+        java.util.Map<UUID, Product> productsMap = productRepository.findAllById(productIds).stream()
+                .collect(java.util.stream.Collectors.toMap(Product::getId, p -> p));
+        
         List<CartItemResponseDTO> itemDTOs = items
-                .map(this::mapToCartItemResponseDTO)
+                .map(item -> mapToCartItemResponseDTO(item, productsMap))
                 .getContent();
 
         CartResponseDTO dto = new CartResponseDTO();
@@ -113,19 +123,40 @@ public class UserCartService {
         cartItemRepository.deleteAll(items);
     }
 
+    /**
+     * Converts a single CartItem to DTO.
+     * Note: This method performs a database query. Use the batch version 
+     * mapToCartItemResponseDTO(CartItem, Map) when converting multiple items.
+     */
     private CartItemResponseDTO mapToCartItemResponseDTO(CartItem cartItem) {
+        Product product = productRepository.findById(cartItem.getProductId())
+                .orElseThrow(() -> new NotFoundException("Product not found"));
+        return mapToCartItemResponseDTO(cartItem, product);
+    }
+
+    /**
+     * Batch-optimized version that uses a pre-loaded products map.
+     */
+    private CartItemResponseDTO mapToCartItemResponseDTO(CartItem cartItem, java.util.Map<UUID, Product> productsMap) {
+        Product product = productsMap.get(cartItem.getProductId());
+        if (product == null) {
+            throw new NotFoundException("Product not found");
+        }
+        return mapToCartItemResponseDTO(cartItem, product);
+    }
+
+    /**
+     * Core conversion logic shared by both single and batch methods.
+     */
+    private CartItemResponseDTO mapToCartItemResponseDTO(CartItem cartItem, Product product) {
         CartItemResponseDTO dto = new CartItemResponseDTO();
         dto.setId(cartItem.getId());
         dto.setProductId(cartItem.getProductId());
         dto.setQuantity(cartItem.getQuantity());
-
-        Product product = productRepository.findById(cartItem.getProductId())
-                .orElseThrow(() -> new NotFoundException("Product not found"));
         dto.setProductName(product.getName());
         dto.setProductPrice(product.getPrice());
         dto.setSubtotal(product.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
         dto.setShopId(cartItem.getShopId());
-
         return dto;
     }
 }

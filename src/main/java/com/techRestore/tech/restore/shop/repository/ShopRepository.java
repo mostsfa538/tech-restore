@@ -14,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -78,4 +79,7 @@ public interface ShopRepository extends JpaRepository<Shop, UUID> {
 
         @Query("SELECT s FROM Shop s LEFT JOIN FETCH s.addresses WHERE s.id = :id")
         Optional<Shop> findByIdWithAddresses(@Param("id") UUID id);
+
+        @Query("SELECT s FROM Shop s LEFT JOIN FETCH s.addresses WHERE s.id IN :ids")
+        List<Shop> findByIdsWithAddresses(@Param("ids") List<UUID> ids);
 }

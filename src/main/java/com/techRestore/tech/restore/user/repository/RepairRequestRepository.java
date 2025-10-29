@@ -38,6 +38,9 @@ public interface RepairRequestRepository extends JpaRepository<RepairRequest, UU
     List<RepairRequest> findByDeliveryIdAndStatusIn(@Param("deliveryId") UUID deliveryId,
             @Param("statuses") List<RepairStatus> statuses);
 
+    @Query("SELECT r.deliveryId, r.status, COUNT(r) FROM RepairRequest r WHERE r.deliveryId IN :deliveryIds GROUP BY r.deliveryId, r.status")
+    List<Object[]> countByDeliveryIdsGroupedByStatus(@Param("deliveryIds") List<UUID> deliveryIds);
+
     @Modifying
     @Query("""
                 UPDATE RepairRequest r

@@ -35,6 +35,8 @@ import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.UUID;
 
 @Slf4j
@@ -86,20 +88,114 @@ public class AssignerService {
     @Transactional(readOnly = true)
     public Page<DeliveryPersonDto> getAvailableDeliveryPersons(Pageable pageable) {
         Page<Delivery> deliveries = deliveryRepository.findAll(pageable);
-        return deliveries.map(this::convertToDeliveryPersonDto);
+        return convertDeliveriesToPersonDtos(deliveries);
     }
 
     @Transactional(readOnly = true)
     public Page<OrderDeliveryDto> getOrdersForAssignment(Pageable pageable) {
         Page<Order> orders = orderRepository.findByStatusAndDeliveryIdIsNull(OrderStatus.FINISHPROCESSING, pageable);
-        return orders.map(this::convertToOrderDeliveryDto);
+        return convertOrdersToDeliveryDtos(orders);
     }
 
     @Transactional(readOnly = true)
     public Page<RepairDeliveryDto> getRepairRequestsForAssignment(Pageable pageable) {
         Page<RepairRequest> repairRequests = repairRequestRepository.findByStatusInAndDeliveryIdIsNull(
                 List.of(RepairStatus.REPAIR_COMPLETED), pageable);
-        return repairRequests.map(this::convertToRepairDeliveryDto);
+        return convertRepairsToDeliveryDtos(repairRequests);
+    }
+
+    private Page<OrderDeliveryDto> convertOrdersToDeliveryDtos(Page<Order> orders) {
+        if (orders.isEmpty()) {
+            return orders.map(this::convertToOrderDeliveryDto);
+        }
+
+        // Batch fetch shops and users with addresses
+        List<UUID> shopIds = orders.getContent().stream()
+                .map(Order::getShopId)
+                .filter(id -> id != null)
+                .distinct()
+                .toList();
+        List<UUID> userIds = orders.getContent().stream()
+                .map(Order::getUserId)
+                .filter(id -> id != null)
+                .distinct()
+                .toList();
+
+        Map<UUID, Shop> shopsMap = shopRepository.findByIdsWithAddresses(shopIds).stream()
+                .collect(java.util.stream.Collectors.toMap(Shop::getId, shop -> shop));
+        Map<UUID, User> usersMap = userRepository.findByIdsWithAddresses(userIds).stream()
+                .collect(java.util.stream.Collectors.toMap(User::getId, user -> user));
+
+        return orders.map(order -> convertToOrderDeliveryDto(order, shopsMap, usersMap));
+    }
+
+    private Page<RepairDeliveryDto> convertRepairsToDeliveryDtos(Page<RepairRequest> repairRequests) {
+        if (repairRequests.isEmpty()) {
+            return repairRequests.map(this::convertToRepairDeliveryDto);
+        }
+
+        // Batch fetch shops, users, and deliveries with addresses
+        List<UUID> shopIds = repairRequests.getContent().stream()
+                .map(RepairRequest::getShopId)
+                .filter(id -> id != null)
+                .distinct()
+                .toList();
+        List<UUID> userIds = repairRequests.getContent().stream()
+                .map(RepairRequest::getUserId)
+                .filter(id -> id != null)
+                .distinct()
+                .toList();
+        List<UUID> deliveryIds = repairRequests.getContent().stream()
+                .map(RepairRequest::getDeliveryId)
+                .filter(id -> id != null)
+                .distinct()
+                .toList();
+
+        Map<UUID, Shop> shopsMap = shopRepository.findByIdsWithAddresses(shopIds).stream()
+                .collect(java.util.stream.Collectors.toMap(Shop::getId, shop -> shop));
+        Map<UUID, User> usersMap = userRepository.findByIdsWithAddresses(userIds).stream()
+                .collect(java.util.stream.Collectors.toMap(User::getId, user -> user));
+        Map<UUID, Delivery> deliveriesMap = !deliveryIds.isEmpty() 
+                ? deliveryRepository.findAllById(deliveryIds).stream()
+                        .collect(java.util.stream.Collectors.toMap(Delivery::getId, delivery -> delivery))
+                : Map.of();
+
+        return repairRequests.map(repair -> convertToRepairDeliveryDto(repair, shopsMap, usersMap, deliveriesMap));
+    }
+
+    private Page<DeliveryPersonDto> convertDeliveriesToPersonDtos(Page<Delivery> deliveries) {
+        if (deliveries.isEmpty()) {
+            return deliveries.map(this::convertToDeliveryPersonDto);
+        }
+
+        List<UUID> deliveryIds = deliveries.getContent().stream()
+                .map(Delivery::getId)
+                .toList();
+
+        // Batch query for statistics
+        List<Object[]> orderStats = orderRepository.countByDeliveryIdsGroupedByStatus(deliveryIds);
+        Map<UUID, Long> orderCountMap = new HashMap<>();
+        for (Object[] stat : orderStats) {
+            UUID deliveryId = (UUID) stat[0];
+            OrderStatus status = (OrderStatus) stat[1];
+            Long count = (Long) stat[2];
+            if (status == OrderStatus.SHIPPED) {
+                orderCountMap.put(deliveryId, count);
+            }
+        }
+
+        List<Object[]> repairStats = repairRequestRepository.countByDeliveryIdsGroupedByStatus(deliveryIds);
+        Map<UUID, Long> repairCountMap = new HashMap<>();
+        for (Object[] stat : repairStats) {
+            UUID deliveryId = (UUID) stat[0];
+            RepairStatus status = (RepairStatus) stat[1];
+            Long count = (Long) stat[2];
+            if (status == RepairStatus.DEVICE_DELIVERED || status == RepairStatus.DEVICE_COLLECTED) {
+                repairCountMap.merge(deliveryId, count, Long::sum);
+            }
+        }
+
+        return deliveries.map(delivery -> convertToDeliveryPersonDto(delivery, orderCountMap, repairCountMap));
     }
 
     @Transactional
@@ -350,6 +446,25 @@ public class AssignerService {
         return dto;
     }
 
+    private DeliveryPersonDto convertToDeliveryPersonDto(Delivery delivery, 
+            Map<UUID, Long> orderCountMap, Map<UUID, Long> repairCountMap) {
+        DeliveryPersonDto dto = new DeliveryPersonDto();
+        dto.setId(delivery.getId());
+        dto.setName(delivery.getName());
+        dto.setEmail(delivery.getEmail());
+        dto.setPhone(delivery.getPhone());
+        dto.setAddress(delivery.getAddress());
+        dto.setCreatedAt(delivery.getCreatedAt());
+
+        long orderCount = orderCountMap.getOrDefault(delivery.getId(), 0L);
+        long repairCount = repairCountMap.getOrDefault(delivery.getId(), 0L);
+
+        dto.setActiveAssignments((int) (orderCount + repairCount));
+        dto.setAvailable(dto.getActiveAssignments() < 5);
+
+        return dto;
+    }
+
     private <T> T convertAddressDto(ShopAddress address, Class<T> targetClass) {
         if (address == null) return null;
         try {
@@ -426,6 +541,39 @@ public class AssignerService {
         return dto;
     }
 
+    private OrderDeliveryDto convertToOrderDeliveryDto(Order order, Map<UUID, Shop> shopsMap, Map<UUID, User> usersMap) {
+        OrderDeliveryDto dto = new OrderDeliveryDto();
+        dto.setId(order.getId());
+        dto.setUserId(order.getUserId());
+        dto.setShopId(order.getShopId());
+        dto.setStatus(order.getStatus());
+        dto.setTotalPrice(order.getTotalPrice());
+        dto.setCreatedAt(order.getCreatedAt());
+        dto.setPaymentMethod(order.getPaymentMethod().toString());
+
+        if (order.getShopId() != null) {
+            Shop shop = shopsMap.get(order.getShopId());
+            if (shop != null) {
+                ShopAddress shopAddress = shop.getAddresses()
+                        .stream().filter(ShopAddress::isDefault).findFirst()
+                        .orElse(shop.getAddresses().stream().findFirst().orElse(null));
+                dto.setShopAddress(convertAddressDto(shopAddress, OrderDeliveryDto.AddressDto.class));
+            }
+        }
+
+        if (order.getUserId() != null) {
+            User user = usersMap.get(order.getUserId());
+            if (user != null) {
+                Address userAddress = user.getAddresses()
+                        .stream().filter(Address::isDefault).findFirst()
+                        .orElse(user.getAddresses().stream().findFirst().orElse(null));
+                dto.setUserAddress(convertAddressDto(userAddress, OrderDeliveryDto.AddressDto.class));
+            }
+        }
+
+        return dto;
+    }
+
     private RepairDeliveryDto convertToRepairDeliveryDto(RepairRequest repairRequest) {
         RepairDeliveryDto dto = new RepairDeliveryDto();
         dto.setId(repairRequest.getId());
@@ -465,6 +613,54 @@ public class AssignerService {
                 deliveryAdr.setStreet(delivery.getAddress());
                 dto.setDeliveryAddress(deliveryAdr);
             });
+        }
+
+        return dto;
+    }
+
+    private RepairDeliveryDto convertToRepairDeliveryDto(RepairRequest repairRequest, 
+            Map<UUID, Shop> shopsMap, Map<UUID, User> usersMap, Map<UUID, Delivery> deliveriesMap) {
+        RepairDeliveryDto dto = new RepairDeliveryDto();
+        dto.setId(repairRequest.getId());
+        dto.setUserId(repairRequest.getUserId());
+        dto.setShopId(repairRequest.getShopId());
+        dto.setDeliveryId(repairRequest.getDeliveryId());
+        dto.setStatus(repairRequest.getStatus());
+        dto.setPrice(repairRequest.getPrice());
+        dto.setCreatedAt(repairRequest.getCreatedAt());
+
+        if (repairRequest.getShopId() != null) {
+            Shop shop = shopsMap.get(repairRequest.getShopId());
+            if (shop != null) {
+                ShopAddress shopAddress = shop.getAddresses()
+                        .stream()
+                        .filter(ShopAddress::isDefault)
+                        .findFirst()
+                        .orElse(null);
+                dto.setShopAddress(convertAddressDto(shopAddress, RepairDeliveryDto.AddressDto.class));
+            }
+        }
+
+        if (repairRequest.getUserId() != null) {
+            User user = usersMap.get(repairRequest.getUserId());
+            if (user != null) {
+                Address userAddress = user.getAddresses()
+                        .stream()
+                        .filter(Address::isDefault)
+                        .findFirst()
+                        .orElse(null);
+                dto.setUserAddress(convertAddressDto(userAddress, RepairDeliveryDto.AddressDto.class));
+            }
+        }
+
+        if (repairRequest.getDeliveryId() != null) {
+            Delivery delivery = deliveriesMap.get(repairRequest.getDeliveryId());
+            if (delivery != null) {
+                RepairDeliveryDto.AddressDto deliveryAdr = new RepairDeliveryDto.AddressDto();
+                deliveryAdr.setId(delivery.getId());
+                deliveryAdr.setStreet(delivery.getAddress());
+                dto.setDeliveryAddress(deliveryAdr);
+            }
         }
 
         return dto;
