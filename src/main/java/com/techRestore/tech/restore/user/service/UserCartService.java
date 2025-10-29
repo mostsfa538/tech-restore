@@ -123,12 +123,20 @@ public class UserCartService {
         cartItemRepository.deleteAll(items);
     }
 
+    /**
+     * Converts a single CartItem to DTO.
+     * Note: This method performs a database query. Use the batch version 
+     * mapToCartItemResponseDTO(CartItem, Map) when converting multiple items.
+     */
     private CartItemResponseDTO mapToCartItemResponseDTO(CartItem cartItem) {
         Product product = productRepository.findById(cartItem.getProductId())
                 .orElseThrow(() -> new NotFoundException("Product not found"));
         return mapToCartItemResponseDTO(cartItem, product);
     }
 
+    /**
+     * Batch-optimized version that uses a pre-loaded products map.
+     */
     private CartItemResponseDTO mapToCartItemResponseDTO(CartItem cartItem, java.util.Map<UUID, Product> productsMap) {
         Product product = productsMap.get(cartItem.getProductId());
         if (product == null) {
@@ -137,6 +145,9 @@ public class UserCartService {
         return mapToCartItemResponseDTO(cartItem, product);
     }
 
+    /**
+     * Core conversion logic shared by both single and batch methods.
+     */
     private CartItemResponseDTO mapToCartItemResponseDTO(CartItem cartItem, Product product) {
         CartItemResponseDTO dto = new CartItemResponseDTO();
         dto.setId(cartItem.getId());

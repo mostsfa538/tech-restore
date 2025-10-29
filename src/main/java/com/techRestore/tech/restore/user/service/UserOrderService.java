@@ -184,12 +184,7 @@ public class UserOrderService {
         Page<Order> ordersPage = orderRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
         
         if (ordersPage.isEmpty()) {
-            return ordersPage.map(order -> {
-                List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
-                Shop shop = shopRepository.findById(order.getShopId())
-                        .orElseThrow(() -> new NotFoundException("Shop not found"));
-                return DTOConverter.convertToOrderResponseDTO(order, items, shop.getName());
-            });
+            return Page.empty(pageable);
         }
         
         // Batch fetch order items
