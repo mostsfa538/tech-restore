@@ -183,11 +183,38 @@ public class UserOrderService {
         UUID userId = getCurrentUserId();
         Page<Order> ordersPage = orderRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
         
+        if (ordersPage.isEmpty()) {
+            return ordersPage.map(order -> {
+                List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
+                Shop shop = shopRepository.findById(order.getShopId())
+                        .orElseThrow(() -> new NotFoundException("Shop not found"));
+                return DTOConverter.convertToOrderResponseDTO(order, items, shop.getName());
+            });
+        }
+        
+        // Batch fetch order items
+        List<UUID> orderIds = ordersPage.getContent().stream()
+                .map(Order::getId)
+                .toList();
+        List<OrderItem> allItems = orderItemRepository.findByOrderIds(orderIds);
+        Map<UUID, List<OrderItem>> itemsByOrderId = new HashMap<>();
+        for (OrderItem item : allItems) {
+            itemsByOrderId.computeIfAbsent(item.getOrderId(), k -> new ArrayList<>()).add(item);
+        }
+        
+        // Batch fetch shops
+        List<UUID> shopIds = ordersPage.getContent().stream()
+                .map(Order::getShopId)
+                .distinct()
+                .toList();
+        Map<UUID, Shop> shopsMap = shopRepository.findAllById(shopIds).stream()
+                .collect(java.util.stream.Collectors.toMap(Shop::getId, shop -> shop));
+        
         return ordersPage.map(order -> {
-            List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
-            Shop shop = shopRepository.findById(order.getShopId())
-                    .orElseThrow(() -> new NotFoundException("Shop not found"));
-            return DTOConverter.convertToOrderResponseDTO(order, items, shop.getName());
+            List<OrderItem> items = itemsByOrderId.getOrDefault(order.getId(), List.of());
+            Shop shop = shopsMap.get(order.getShopId());
+            String shopName = shop != null ? shop.getName() : "Unknown Shop";
+            return DTOConverter.convertToOrderResponseDTO(order, items, shopName);
         });
     }
 
