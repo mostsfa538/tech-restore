@@ -112,10 +112,10 @@ public class DTOConverter {
         String addressDetails = null;
         if (repairRequest.getDeliveryAddressEntity() != null) {
             Address addr = repairRequest.getDeliveryAddressEntity();
-            addressDetails = String.format("%s, %s, %s, %s", 
-                addr.getStreet(), addr.getCity(), addr.getState(), addr.getBuilding());
+            addressDetails = String.format("%s, %s, %s, %s",
+                    addr.getStreet(), addr.getCity(), addr.getState(), addr.getBuilding());
         }
-        
+
         return new RepairRequestDto(
                 repairRequest.getId(),
                 null,
@@ -131,8 +131,7 @@ public class DTOConverter {
                 repairRequest.getPrice(),
                 repairRequest.getStatus(),
                 shop != null ? shop.getName() : null,
-                addressDetails
-        );
+                addressDetails);
     }
 
     public static OrderResponseDTO convertToOrderResponseDTO(Order order) {
@@ -184,7 +183,6 @@ public class DTOConverter {
         return dto;
     }
 
-
     public static OrderResponseDTO convertToOrderResponseDTO(Order order, List<OrderItem> orderItems, String shopName) {
         OrderResponseDTO dto = new OrderResponseDTO();
         dto.setId(order.getId());
@@ -196,15 +194,17 @@ public class DTOConverter {
         dto.setCreatedAt(order.getCreatedAt());
         dto.setPaymentId(order.getPaymentId());
         List<OrderItemResponseDTO> itemDTOs = orderItems.stream()
-        .map(DTOConverter::convertToOrderItemResponseDTO)
-        .collect(Collectors.toList());
+                .map(DTOConverter::convertToOrderItemResponseDTO)
+                .collect(Collectors.toList());
         dto.setOrderItems(itemDTOs);
         return dto;
     }
+
     public static OfferResponseDTO convertToOfferResponseDTO(Offer offer) {
         OfferResponseDTO dto = new OfferResponseDTO();
         dto.setId(offer.getId());
         dto.setName(offer.getName());
+        dto.setShopName(offer.getShop().getName());
         dto.setDescription(offer.getDescription());
         dto.setDiscountValue(offer.getDiscountValue());
         dto.setDiscountType(offer.getDiscountType());

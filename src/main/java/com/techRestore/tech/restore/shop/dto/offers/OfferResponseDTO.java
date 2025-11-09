@@ -13,6 +13,7 @@ import com.techRestore.tech.restore.common.model.enums.OfferStatus;
 public class OfferResponseDTO {
     private UUID id;
     private String name;
+    private String ShopName;
     private String description;
     private BigDecimal discountValue;
     private DiscountType discountType;
