@@ -5,6 +5,7 @@ import com.techRestore.tech.restore.shop.dto.product.CreateProductDto;
 import com.techRestore.tech.restore.shop.dto.product.ProductResponseDTO;
 import com.techRestore.tech.restore.shop.dto.product.UpdateProductDto;
 import com.techRestore.tech.restore.shop.dto.shop.StockUpdateRequest;
+import com.techRestore.tech.restore.shop.service.ProductImportService;
 import com.techRestore.tech.restore.shop.service.ShopProductService;
 
 import jakarta.validation.Valid;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -23,6 +25,7 @@ import java.util.UUID;
 public class ShopProductController extends BaseController {
 
     private ShopProductService shopProductService;
+    private ProductImportService productImportService;
 
     @GetMapping
     public ResponseEntity<Page<ProductResponseDTO>> getProductsByCurrentShop(Pageable pageable) {
@@ -55,6 +58,12 @@ public class ShopProductController extends BaseController {
             @PathVariable UUID productId,
             @RequestBody @Valid StockUpdateRequest request) {
         return updatedResponse(shopProductService.updateProductStock(productId, request));
+    }
+
+    @PostMapping("/import")
+    public ResponseEntity<String> importProducts(@RequestParam("file") MultipartFile file) {
+        String responseMessage = productImportService.importProducts(file);
+        return successResponse(responseMessage);
     }
 
 }

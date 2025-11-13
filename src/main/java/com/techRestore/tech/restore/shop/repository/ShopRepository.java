@@ -78,4 +78,6 @@ public interface ShopRepository extends JpaRepository<Shop, UUID> {
 
         @Query("SELECT s FROM Shop s LEFT JOIN FETCH s.addresses WHERE s.id = :id")
         Optional<Shop> findByIdWithAddresses(@Param("id") UUID id);
+
+        
 }
