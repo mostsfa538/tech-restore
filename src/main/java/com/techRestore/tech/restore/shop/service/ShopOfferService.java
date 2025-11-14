@@ -44,12 +44,14 @@ public class ShopOfferService {
         return shop.get();
     }
 
+    @Transactional(readOnly = true)
     public Page<OfferResponseDTO> getOffersByShop(Pageable pageable) {
         UUID shopId = getCurrentShop().getId();
         return offersRepository.findByShopId(shopId, pageable)
                 .map(DTOConverter::convertToOfferResponseDTO);
     }
 
+    @Transactional(readOnly = true)
     public OfferResponseDTO getOfferById(UUID offerId) {
         UUID shopId = getCurrentShop().getId();
         return offersRepository.findByShopIdAndId(shopId, offerId)
