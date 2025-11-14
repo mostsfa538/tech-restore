@@ -79,6 +79,7 @@ public class ShopOfferService {
         return DTOConverter.convertToOfferResponseDTO(savedOffer);
     }
 
+    @Transactional
     public OfferResponseDTO updateOffer(UUID offerId, OfferRequestDTO request) {
         Offer existingOffer = offersRepository.findById(offerId)
                 .orElseThrow(() -> new NotFoundException("Offer not found"));
