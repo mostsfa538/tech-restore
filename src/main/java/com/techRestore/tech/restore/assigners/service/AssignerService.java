@@ -494,18 +494,18 @@ public class AssignerService {
                 dto.setShopAddress(convertToShopAddressDto(shopAddress));
             }
         }
-
+        dto.setDeliveryId(assignmentLog.getDelivery().getId());
         if (assignmentLog.getUser() != null) {
             dto.setUserId(assignmentLog.getUser().getId());
             dto.setUserName(assignmentLog.getUser().getDisplayName());
 
-            Address userAddress = assignmentLog.getUser()
-                    .getAddresses()
+            User user = assignmentLog.getUser();
+            Address userAddress = user.getAddresses()
                     .stream()
                     .filter(Address::isDefault)
                     .findFirst()
-                    .orElse(null);
-            
+                    .orElse(user.getAddresses().stream().findFirst().orElse(null));
+
             if (userAddress != null) {
                 dto.setUserAddress(convertToUserAddressDto(userAddress));
             }
