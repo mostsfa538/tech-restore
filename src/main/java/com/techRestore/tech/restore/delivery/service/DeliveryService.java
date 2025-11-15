@@ -156,13 +156,18 @@ public class DeliveryService {
         User user = userRepository.findByIdWithAddresses(order.getUserId())
                 .orElseThrow(() -> new NotFoundException("User not found with ID: " + order.getUserId()));
         if (user.getAddresses() != null && !user.getAddresses().isEmpty()) {
-            Address userAddress = user.getAddresses().get(0);
-            OrderDeliveryDto.AddressDto userAddressDto = new OrderDeliveryDto.AddressDto();
-            userAddressDto.setId(userAddress.getId());
-            userAddressDto.setStreet(userAddress.getStreet());
-            userAddressDto.setCity(userAddress.getCity());
-            userAddressDto.setState(userAddress.getState());
-            dto.setUserAddress(userAddressDto);
+            Address userAddress = user.getAddresses().stream()
+                    .filter(addr->addr.getId().equals(order.getDeliveryAddressId()))
+                    .findFirst()
+                    .orElse(null);
+            if(userAddress!=null){        
+                OrderDeliveryDto.AddressDto userAddressDto = new OrderDeliveryDto.AddressDto();
+                userAddressDto.setId(userAddress.getId());
+                userAddressDto.setStreet(userAddress.getStreet());
+                userAddressDto.setCity(userAddress.getCity());
+                userAddressDto.setState(userAddress.getState());
+                dto.setUserAddress(userAddressDto);
+            }
         }
 
         Shop shop = shopRepository.findByIdWithAddresses(order.getShopId())
