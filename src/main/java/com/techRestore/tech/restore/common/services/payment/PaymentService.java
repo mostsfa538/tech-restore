@@ -685,8 +685,7 @@ public class PaymentService {
         return dto;
     }
 
-    public Page<Payment> getAllPayments(Pageable pageable) {
-      // TODO Auto-generated method stub
-      throw new UnsupportedOperationException("Unimplemented method 'getAllPayments'");
+    public Page<PaymentDto> getAllPayments(Pageable pageable) {
+      return paymentRepository.findAll(pageable).map(this::toDto);
     }
 }

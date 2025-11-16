@@ -1,6 +1,11 @@
 package com.techRestore.tech.restore.common.security.config;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.concurrent.ConcurrentMapCache;
+import org.springframework.cache.support.SimpleCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -34,6 +39,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
+@EnableCaching
 public class AppConfig {
 
     private final UserDetailsServiceImpl userDetailsService;
@@ -154,6 +160,17 @@ public class AppConfig {
                 deliveryDetailsService,
                 assignerDetailsService,
                 passwordEncoder());
+    }
+
+    @Bean
+    public CacheManager cacheManager() {
+        SimpleCacheManager cacheManager = new SimpleCacheManager();
+        cacheManager.setCaches(Arrays.asList(
+            new ConcurrentMapCache("deliveryProfile"),
+            new ConcurrentMapCache("availableOrders"),
+            new ConcurrentMapCache("myDeliveries")
+        ));
+        return cacheManager;
     }
 
     private AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler() {
