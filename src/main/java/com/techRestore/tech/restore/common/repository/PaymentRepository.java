@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 
 import com.techRestore.tech.restore.common.model.entities.Payment;
 import com.techRestore.tech.restore.common.model.entities.User;
+import com.techRestore.tech.restore.common.model.enums.PaymentMethod;
 import com.techRestore.tech.restore.common.model.enums.PaymentStatus;
 import com.techRestore.tech.restore.common.model.enums.PaymentType;
 
@@ -46,4 +47,11 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     List<Payment> findByShopIdAndPaymentTypeAndPaymentStatus(UUID shopId, PaymentType paymentType, PaymentStatus paymentStatus);
     
     Page<Payment> findAllByUserId(UUID userId, Pageable pageable);
+
+    Page<Payment> findAllByPaymentMethodAndPaymentStatusAndPaymentType(
+            PaymentMethod method,
+            PaymentStatus status,
+            PaymentType type,
+            Pageable pageable
+    );
 }

@@ -9,6 +9,7 @@ import com.techRestore.tech.restore.common.controller.BaseController;
 import com.techRestore.tech.restore.common.dto.common.SearchRequest;
 import com.techRestore.tech.restore.common.dto.payment.AdminPaymentDto;
 import com.techRestore.tech.restore.common.dto.payment.PaymentDto;
+import com.techRestore.tech.restore.common.model.entities.Payment;
 import com.techRestore.tech.restore.common.model.entities.Shop;
 import com.techRestore.tech.restore.common.services.payment.PaymentService;
 import com.techRestore.tech.restore.delivery.dto.DeliveryResponseDto;
@@ -270,5 +271,11 @@ public class AdminController extends BaseController {
 	public ResponseEntity<Void> updateRefundStatus(@PathVariable UUID orderId) {
 		orderService.updateRefundStatus(orderId);
 		return updatedResponse();
+	}
+
+	@GetMapping("/all-payments")
+	public ResponseEntity<Page<Payment>> getAllPayments(Pageable pageable) {
+		Page<Payment> payments = paymentService.getAllPayments(pageable);
+		return successResponse(payments);
 	}
 }
