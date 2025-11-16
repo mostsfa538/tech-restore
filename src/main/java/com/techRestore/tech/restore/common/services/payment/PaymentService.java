@@ -588,18 +588,36 @@ public class PaymentService {
     }
 
     private void createSubscriptionFromPayment(Payment payment) {
+
+        UUID shopId=payment.getShop().getId();
+        Subscription lastSubscription = subscriptionRepository
+            .findFirstByShopIdOrderByCreatedAtDesc(shopId)
+            .orElse(null);
+        
+        int months=payment.getAmount().divide(BigDecimal.valueOf(1000), 0, BigDecimal.ROUND_DOWN).intValue();
+
+        LocalDateTime startDate;
+        LocalDateTime endDate;
+        if (lastSubscription != null && lastSubscription.getEndDate().isAfter(LocalDateTime.now())) {
+            startDate = lastSubscription.getEndDate();
+        } 
+        else {
+            startDate = LocalDateTime.now();                        
+        }
+        endDate = startDate.plusMonths(months);
+
         Subscription subscription = new Subscription();
         subscription.setShopId(payment.getShop().getId());
         subscription.setPaymentId(payment.getId());
-        subscription.setMonths((int) (payment.getAmount().divide(BigDecimal.valueOf(1000), 0, BigDecimal.ROUND_DOWN).longValue()));
+        subscription.setMonths(months);
         subscription.setType(SubscriptionType.COMMISSION);
-        subscription.setStartDate(LocalDateTime.now());
-        subscription.setEndDate(LocalDateTime.now().plusMonths(subscription.getMonths()));
+        subscription.setStartDate(startDate);
+        subscription.setEndDate(endDate);
         subscriptionRepository.save(subscription);
 
         Shop shop = payment.getShop();
         shop.setActivate(true);
-        shop.setSubscriptionMonths(subscription.getMonths());
+        shop.setSubscriptionMonths(months);
         shop.setSubscriptionStartDate(subscription.getStartDate());
         shop.setSubscriptionEndDate(subscription.getEndDate());
         shopRepository.save(shop);
@@ -665,5 +683,10 @@ public class PaymentService {
         dto.setEndDate(subscription.getEndDate());
         dto.setCreatedAt(subscription.getCreatedAt());
         return dto;
+    }
+
+    public Page<Payment> getAllPayments(Pageable pageable) {
+      // TODO Auto-generated method stub
+      throw new UnsupportedOperationException("Unimplemented method 'getAllPayments'");
     }
 }
