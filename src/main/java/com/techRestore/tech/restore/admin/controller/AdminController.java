@@ -274,8 +274,8 @@ public class AdminController extends BaseController {
 	}
 
 	@GetMapping("/all-payments")
-	public ResponseEntity<Page<Payment>> getAllPayments(Pageable pageable) {
-		Page<Payment> payments = paymentService.getAllPayments(pageable);
+	public ResponseEntity<Page<PaymentDto>> getAllPayments(Pageable pageable) {
+		Page<PaymentDto> payments = paymentService.getAllPayments(pageable);
 		return successResponse(payments);
 	}
 }
