@@ -67,6 +67,9 @@ public class AddressService {
         address.setBuilding(request.building());
         address.setNotes(request.notes());
         address.setDefault(request.isDefault());
+        address.setLatitude(request.latitude());
+        address.setLongitude(request.longitude());
+
         addressRepository.save(address);
         return mapToAddressResponseDTO(address);
     }
@@ -128,6 +131,8 @@ public class AddressService {
         dto.setDefault(address.isDefault());
         dto.setUserId(address.getUser().getId());
         dto.setCreatedAt(address.getCreatedAt());
+        dto.setLatitude(address.getLatitude());
+        dto.setLongitude(address.getLongitude());
         return dto;
     }
 

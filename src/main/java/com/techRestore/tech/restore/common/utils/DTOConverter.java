@@ -89,6 +89,8 @@ public class DTOConverter {
         dto.setBuilding(address.getBuilding());
         dto.setNotes(address.getNotes());
         dto.setDefault(address.isDefault());
+        dto.setLatitude(address.getLatitude());
+        dto.setLongitude(address.getLongitude());
         dto.setUserId(address.getShop().getId());
         dto.setCreatedAt(address.getCreatedAt());
         return dto;
@@ -103,6 +105,8 @@ public class DTOConverter {
         dto.setBuilding(address.getBuilding());
         dto.setNotes(address.getNotes());
         dto.setDefault(address.isDefault());
+        dto.setLatitude(address.getLatitude());
+        dto.setLongitude(address.getLongitude());
         dto.setUserId(address.getUser().getId());
         dto.setCreatedAt(address.getCreatedAt());
         return dto;

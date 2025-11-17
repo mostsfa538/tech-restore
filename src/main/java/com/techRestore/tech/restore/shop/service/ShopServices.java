@@ -81,6 +81,8 @@ public class ShopServices extends BaseService<Shop, UUID> {
         shopAddress.setStreet(addressRequest.street());
         shopAddress.setNotes(addressRequest.notes());
         shopAddress.setDefault(addressRequest.isDefault());
+        shopAddress.setLatitude(addressRequest.latitude());
+        shopAddress.setLongitude(addressRequest.longitude());
 
         shopAddressRepository.save(shopAddress);
     }
@@ -104,6 +106,12 @@ public class ShopServices extends BaseService<Shop, UUID> {
         }
         if (addressUpdate.notes() != null) {
             shopAddress.setNotes(addressUpdate.notes());
+        }
+        if(addressUpdate.latitude() != null) {
+            shopAddress.setLatitude(addressUpdate.latitude());
+        }
+        if(addressUpdate.longitude() != null) {
+            shopAddress.setLongitude(addressUpdate.longitude());
         }
         shopAddress.setDefault(addressUpdate.isDefault());
 

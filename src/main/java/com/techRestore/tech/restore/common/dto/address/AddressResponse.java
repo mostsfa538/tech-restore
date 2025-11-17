@@ -16,4 +16,6 @@ public class AddressResponse {
         private boolean isDefault;
         private UUID userId;
         private LocalDateTime createdAt;
+        private Double latitude;
+        private Double longitude;
 }

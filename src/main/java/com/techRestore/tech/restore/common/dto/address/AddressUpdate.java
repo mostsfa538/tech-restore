@@ -6,5 +6,7 @@ public record AddressUpdate(
         String street,
         String building,
         String notes,
-        boolean isDefault) {
+        boolean isDefault,
+        Double latitude,
+        Double longitude) {
 }

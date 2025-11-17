@@ -30,6 +30,12 @@ public class ShopAddress {
     @Column(name = "building", nullable = false, length = 50)
     private String building;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 

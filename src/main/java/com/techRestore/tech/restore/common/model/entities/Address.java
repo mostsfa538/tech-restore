@@ -33,6 +33,12 @@ public class Address {
     @Column(name = "is_default", nullable = false)
     private boolean isDefault;
 
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
