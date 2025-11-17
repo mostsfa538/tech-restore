@@ -8,5 +8,7 @@ public record AddressRequest(
         @NotBlank String street,
         @NotBlank String building,
         String notes,
-        boolean isDefault) {
+        boolean isDefault,
+        Double latitude,
+        Double longitude) {
 }
