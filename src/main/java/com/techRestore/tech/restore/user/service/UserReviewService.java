@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.user.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -11,10 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.techRestore.tech.restore.common.exception.NotFoundException;
 import com.techRestore.tech.restore.common.model.entities.Review;
+import com.techRestore.tech.restore.common.model.entities.Shop;
 import com.techRestore.tech.restore.common.model.entities.User;
 import com.techRestore.tech.restore.common.model.enums.OrderStatus;
 import com.techRestore.tech.restore.common.model.enums.RepairStatus;
 import com.techRestore.tech.restore.common.utils.DTOConverter;
+import com.techRestore.tech.restore.shop.repository.ShopRepository;
 import com.techRestore.tech.restore.user.dto.reviews.ReviewRequestDTO;
 import com.techRestore.tech.restore.user.dto.reviews.ReviewResponseDTO;
 import com.techRestore.tech.restore.user.repository.OrderRepository;
@@ -29,6 +32,7 @@ public class UserReviewService {
   private final ReviewRepository reviewRepository;
   private final OrderRepository orderRepository;
   private final RepairRequestRepository repairRequestRepository;
+  private final ShopRepository shopRepository;
   private final AuthUtil authUtil;
 
   @PreAuthorize("hasRole('GUEST')")
@@ -62,8 +66,17 @@ public class UserReviewService {
     review.setRating(reviewRequestDTO.getRating());
     review.setComment(reviewRequestDTO.getComment());
     review.setCreatedAt(LocalDateTime.now());
-
     review = reviewRepository.save(review);
+
+    Shop shop=shopRepository.findById(shopId)
+        .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
+    
+    if(shop.getRating()==null){
+      shop.setRating(BigDecimal.ZERO);
+    }
+    BigDecimal totalRating = shop.getRating().add(review.getRating()).divide(reviewRepository.countByShopId(shopId));
+    shop.setRating(totalRating);
+    shopRepository.save(shop);
     return DTOConverter.toReviewResponseDTO(review);
   }
 

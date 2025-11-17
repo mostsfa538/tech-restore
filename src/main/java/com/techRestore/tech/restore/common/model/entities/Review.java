@@ -3,6 +3,7 @@ package com.techRestore.tech.restore.common.model.entities;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -24,7 +25,7 @@ public class Review {
     @Column(name = "shop_id")
     private UUID shopId;
 
-    private int rating;
+    private BigDecimal rating;
 
     private String comment;
 

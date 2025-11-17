@@ -55,6 +55,7 @@ public class ShopOrderService extends BaseService<Order, UUID> {
         return shop.getId();
     }
 
+    //return the shop name
     @Transactional
     public Page<OrderResponseDTO> getAllShopOrders(Pageable pageable) {
         UUID shopId = getCurrentShopId();
