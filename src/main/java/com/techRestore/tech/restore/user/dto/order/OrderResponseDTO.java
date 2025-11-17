@@ -14,6 +14,8 @@ import lombok.Data;
 public class OrderResponseDTO {
     private UUID id;
     private UUID userId;
+    private String firstName;
+    private String lastName;
     private UUID deliveryAddressId;
     private BigDecimal totalPrice;
     private OrderStatus status;

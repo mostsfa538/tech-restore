@@ -11,6 +11,7 @@ import com.techRestore.tech.restore.user.dto.order.OrderResponseDTO;
 import com.techRestore.tech.restore.user.dto.repair.RepairRequestDto;
 import com.techRestore.tech.restore.user.dto.reviews.ReviewResponseDTO;
 import com.techRestore.tech.restore.user.dto.user.UserProfileDTO;
+import com.techRestore.tech.restore.user.repository.OrderRepository;
 
 import org.hibernate.LazyInitializationException;
 
@@ -191,6 +192,8 @@ public class DTOConverter {
         OrderResponseDTO dto = new OrderResponseDTO();
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());
+        dto.setFirstName(order.getUser().getFirst_name());
+        dto.setLastName(order.getUser().getLast_name());
         dto.setDeliveryAddressId(order.getDeliveryAddressId());
         dto.setTotalPrice(order.getTotalPrice());
         dto.setStatus(order.getStatus());

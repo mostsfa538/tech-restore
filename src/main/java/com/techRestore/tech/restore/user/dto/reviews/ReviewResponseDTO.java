@@ -1,5 +1,6 @@
 package com.techRestore.tech.restore.user.dto.reviews;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -10,7 +11,7 @@ public class ReviewResponseDTO {
     private UUID id;
     private UUID userId;
     private UUID shopId;
-    private int rating;
+    private BigDecimal rating;
     private String comment;
     private LocalDateTime createdAt;
 }
