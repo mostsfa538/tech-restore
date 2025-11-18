@@ -16,6 +16,7 @@ public class OrderResponseDTO {
     private UUID userId;
     private String firstName;
     private String lastName;
+    private String phoneNumber;
     private UUID deliveryAddressId;
     private BigDecimal totalPrice;
     private OrderStatus status;

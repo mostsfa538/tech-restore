@@ -158,6 +158,9 @@ public class DeliveryService {
         OrderDeliveryDto dto = new OrderDeliveryDto();
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());
+        dto.setFirstName(order.getUser().getFirst_name());
+        dto.setLastName(order.getUser().getLast_name());
+        dto.setPhone(order.getUser().getPhone());
         dto.setShopId(order.getShopId());
         dto.setStatus(order.getStatus());
         dto.setTotalPrice(order.getTotalPrice());

@@ -20,6 +20,9 @@ import java.util.UUID;
 public class RepairDeliveryDto {
     private UUID id;
     private UUID userId;
+    private String firstName;
+    private String lastName;
+    private String phone;
     private UUID shopId;
     private UUID deliveryId;
     private RepairStatus status;

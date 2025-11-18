@@ -398,6 +398,9 @@ public class AssignerService {
         OrderDeliveryDto dto = new OrderDeliveryDto();
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());
+        dto.setFirstName(order.getUser().getFirst_name());
+        dto.setLastName(order.getUser().getLast_name());
+        dto.setPhone(order.getUser().getPhone());
         dto.setShopId(order.getShopId());
         dto.setStatus(order.getStatus());
         dto.setTotalPrice(order.getTotalPrice());
@@ -430,6 +433,9 @@ public class AssignerService {
         RepairDeliveryDto dto = new RepairDeliveryDto();
         dto.setId(repairRequest.getId());
         dto.setUserId(repairRequest.getUserId());
+        dto.setFirstName(repairRequest.getUser().getFirst_name());
+        dto.setLastName(repairRequest.getUser().getLast_name());
+        dto.setPhone(repairRequest.getUser().getPhone());
         dto.setShopId(repairRequest.getShopId());
         dto.setDeliveryId(repairRequest.getDeliveryId());
         dto.setStatus(repairRequest.getStatus());
@@ -482,7 +488,7 @@ public class AssignerService {
         if (assignmentLog.getShop() != null) {
             dto.setShopId(assignmentLog.getShop().getId());
             dto.setShopName(assignmentLog.getShop().getName());
-
+            dto.setShopPhone(assignmentLog.getShop().getPhone());
             ShopAddress shopAddress = assignmentLog.getShop()
                     .getAddresses()
                     .stream()
@@ -498,6 +504,7 @@ public class AssignerService {
         if (assignmentLog.getUser() != null) {
             dto.setUserId(assignmentLog.getUser().getId());
             dto.setUserName(assignmentLog.getUser().getDisplayName());
+            dto.setUserPhone(assignmentLog.getUser().getPhone());
 
             User user = assignmentLog.getUser();
             Address userAddress = user.getAddresses()
