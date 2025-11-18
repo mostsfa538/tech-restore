@@ -14,14 +14,17 @@ import com.techRestore.tech.restore.common.model.enums.ApprovalStatus;
 import com.techRestore.tech.restore.common.model.enums.OrderStatus;
 import com.techRestore.tech.restore.common.model.enums.PaymentMethod;
 import com.techRestore.tech.restore.common.model.enums.PaymentStatus;
+import com.techRestore.tech.restore.common.model.enums.RepairStatus;
 import com.techRestore.tech.restore.common.repository.PaymentRepository;
 import com.techRestore.tech.restore.common.services.notification.NotificationService;
 import com.techRestore.tech.restore.delivery.dto.DeliveryProfileUpdateDto;
+import com.techRestore.tech.restore.delivery.dto.DeliveryResponseDto;
 import com.techRestore.tech.restore.delivery.dto.DeliveryStateUpdate;
 import com.techRestore.tech.restore.delivery.dto.OrderDeliveryDto;
 import com.techRestore.tech.restore.delivery.repository.DeliveryRepository;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
 import com.techRestore.tech.restore.user.repository.OrderRepository;
+import com.techRestore.tech.restore.user.repository.RepairRequestRepository;
 import com.techRestore.tech.restore.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -36,6 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -48,6 +52,7 @@ public class DeliveryService {
     private final PaymentRepository orderPaymentRepository;
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
+    private final RepairRequestRepository repairRequestRepository;
 
     private UUID getCurrentDeliveryId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -64,35 +69,54 @@ public class DeliveryService {
         return delivery.getId();
     }
 
-    @Cacheable(value = "deliveryProfile", key = "#root.methodName + '_' + getCurrentDeliveryId()")
-    public Delivery getProfile() {
-        UUID deliveryId = getCurrentDeliveryId();
+    @Cacheable(value = "deliveryProfile", key = "#deliveryId")
+    public DeliveryResponseDto getProfile(UUID deliveryId) {
         return deliveryRepository.findById(deliveryId)
+                .map(this::convertToDeliveryResponseDto)
                 .orElseThrow(() -> new NotFoundException("Delivery not found"));
     }
 
+    @Transactional(readOnly = true)
+    public DeliveryResponseDto getProfile() {
+        return getProfile(getCurrentDeliveryId());
+    }
+
     @Transactional
-    @CacheEvict(value = "deliveryProfile", key = "'getProfile_' + getCurrentDeliveryId()")
     public void updateProfile(DeliveryProfileUpdateDto updateDto) {
         UUID deliveryId = getCurrentDeliveryId();
         Delivery delivery = deliveryRepository.findById(deliveryId)
                 .orElseThrow(() -> new NotFoundException("Delivery not found"));
-        delivery.setName(updateDto.getName());
-        delivery.setAddress(updateDto.getAddress());
+
+        if(updateDto.getName()!=null){
+            delivery.setName(updateDto.getName());
+        }
+        if(updateDto.getAddress()!=null){
+            delivery.setAddress(updateDto.getAddress());
+        }
         deliveryRepository.save(delivery);
+        evictDeliveryProfile(deliveryId);
     }
 
+    @Transactional(readOnly = true)
     @Cacheable(value = "availableOrders", key = "'FINISHPROCESSING_'+#pageable.pageNumber+'_'+#pageable.pageSize")
     public Page<OrderDeliveryDto> getAvailableOrders(Pageable pageable) {
         Page<Order> orders = orderRepository.findByStatusAndDeliveryIdIsNull(OrderStatus.FINISHPROCESSING, pageable);
         return orders.map(this::convertToDeliveryDTO);
     }
 
-    @Cacheable(value = "myDeliveries", key = "#root.methodName + '_' + getCurrentDeliveryId() + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
-    public Page<OrderDeliveryDto> getMyDeliveries(Pageable pageable) {
-        UUID deliveryId = getCurrentDeliveryId();
+    @Transactional(readOnly = true)
+    @Cacheable(
+        value = "myDeliveries",
+        key = "'getMyDeliveries_' + #deliveryId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize"
+    )
+    public Page<OrderDeliveryDto> getMyDeliveries(UUID deliveryId, Pageable pageable) {
         Page<Order> orders = orderRepository.findByDeliveryId(deliveryId, pageable);
         return orders.map(this::convertToDeliveryDTO);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<OrderDeliveryDto> getMyDeliveries(Pageable pageable) {
+        return getMyDeliveries(getCurrentDeliveryId(), pageable);
     }
 
     @CacheEvict(value = {"availableOrders", "myDeliveries"}, allEntries = true)
@@ -197,5 +221,37 @@ public class DeliveryService {
         return dto;
     }
 
+
+    private DeliveryResponseDto convertToDeliveryResponseDto(Delivery delivery) {
+        DeliveryResponseDto dto = new DeliveryResponseDto();
+        dto.setId(delivery.getId());
+        dto.setEmail(delivery.getEmail());
+        dto.setName(delivery.getName());
+        dto.setAddress(delivery.getAddress());
+        dto.setPhone(delivery.getPhone());
+        dto.setStatus(delivery.getStatus());
+        dto.setActivate(delivery.isActivate());
+        dto.setVerified(delivery.getVerified());
+        dto.setCreatedAt(delivery.getCreatedAt());
+        // dto.setNotificationHistory(delivery.getNotificationHistory());
+
+        long activeOrderDeliveries = orderRepository.countByDeliveryIdAndStatusIn(
+                delivery.getId(), List.of(OrderStatus.SHIPPED));
+        long activeRepairDeliveries = repairRequestRepository.countByDeliveryIdAndStatusIn(
+                delivery.getId(), List.of(RepairStatus.DEVICE_COLLECTED, RepairStatus.DEVICE_DELIVERED));
+        long totalCompleted = orderRepository.countByDeliveryIdAndStatusIn(
+                delivery.getId(), List.of(OrderStatus.DELIVERED)) +
+                repairRequestRepository.countByDeliveryIdAndStatusIn(
+                        delivery.getId(), List.of(RepairStatus.REPAIR_COMPLETED));
+        dto.setActiveOrderDeliveries((int) activeOrderDeliveries);
+        dto.setActiveRepairDeliveries((int) activeRepairDeliveries);
+        dto.setTotalCompletedDeliveries((int) totalCompleted);
+
+        return dto;
+    }
+
+    @CacheEvict(value = "deliveryProfile", key = "'getProfile_' + #deliveryId")
+    public void evictDeliveryProfile(UUID deliveryId) {
+    }
 
 }
