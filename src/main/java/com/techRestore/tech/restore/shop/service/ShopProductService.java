@@ -14,6 +14,8 @@ import com.techRestore.tech.restore.shop.dto.shop.StockUpdateRequest;
 import com.techRestore.tech.restore.shop.repository.ProductRepository;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -49,12 +51,21 @@ public class ShopProductService extends BaseService<Product, UUID> {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(
+        value = "shopProductPages",
+        key = "{ #root.target.getCurrentShopId(), #pageable.pageNumber, #pageable.pageSize, #pageable.sort }"
+    )
     public Page<ProductResponseDTO> getProductsByShopId(Pageable pageable) {
         UUID shopId = getCurrentShopId();
         return ((ProductRepository) repository).findByShopId(shopId, pageable)
                 .map(DTOConverter::convertToProductDTO);
     }
 
+    @CacheEvict(value = {
+        "products",
+        "shopProductPages",
+        "shopCategoryProductPages" 
+    }, allEntries = true)
     public ProductResponseDTO addProductToShop(CreateProductDto createProductDto) {
         UUID shopId = getCurrentShopId();
 
@@ -78,6 +89,11 @@ public class ShopProductService extends BaseService<Product, UUID> {
         return DTOConverter.convertToProductDTO(product);
     }
 
+    @CacheEvict(value = {
+        "products",
+        "shopProductPages",
+        "shopCategoryProductPages"
+    }, allEntries = true)
     public ProductResponseDTO updateProduct(UUID productId, UpdateProductDto updateProductDto) {
         Product product = findProductByIdAndValidateOwnership(productId);
 
@@ -107,12 +123,22 @@ public class ShopProductService extends BaseService<Product, UUID> {
         return DTOConverter.convertToProductDTO(product);
     }
 
+    @CacheEvict(value = {
+        "products",
+        "shopProductPages",
+        "shopCategoryProductPages"
+    }, allEntries = true)
     public void deleteProduct(UUID productId) {
         Product product = findProductByIdAndValidateOwnership(productId);
         product.setDeleted(true);
         repository.save(product);
     }
 
+    @CacheEvict(value = {
+        "products",
+        "shopProductPages",
+        "shopCategoryProductPages"
+    }, allEntries = true)
     public ProductResponseDTO updateProductStock(UUID productId, StockUpdateRequest stockUpdateRequest) {
         Product product = findProductByIdAndValidateOwnership(productId);
 

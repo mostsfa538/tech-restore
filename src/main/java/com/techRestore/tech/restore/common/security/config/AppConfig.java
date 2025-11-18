@@ -2,10 +2,10 @@ package com.techRestore.tech.restore.common.security.config;
 
 import lombok.RequiredArgsConstructor;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.concurrent.ConcurrentMapCache;
-import org.springframework.cache.support.SimpleCacheManager;
+import org.springframework.cache.caffeine.CaffeineCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -29,6 +29,9 @@ import com.techRestore.tech.restore.common.security.userdetails.DeliveryDetailsS
 import com.techRestore.tech.restore.common.security.userdetails.ShopDetailsServiceImpl;
 import com.techRestore.tech.restore.common.security.userdetails.UserDetailsServiceImpl;
 import com.techRestore.tech.restore.common.utils.CookieUtil;
+
+import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -164,12 +167,27 @@ public class AppConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        SimpleCacheManager cacheManager = new SimpleCacheManager();
-        cacheManager.setCaches(Arrays.asList(
-            new ConcurrentMapCache("deliveryProfile"),
-            new ConcurrentMapCache("availableOrders"),
-            new ConcurrentMapCache("myDeliveries")
+        CaffeineCacheManager cacheManager = new CaffeineCacheManager();
+        
+        cacheManager.setCaffeine(Caffeine.newBuilder()
+            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .maximumSize(20_000)
+            .recordStats()
+        );
+        
+        cacheManager.setCacheNames(Arrays.asList(
+            //delivery caches
+            "deliveryProfile",
+            "availableOrders",
+            "myDeliveries",
+            //products caches
+            "products",
+            "productPages",
+            "shopProductPages",
+            "categoryProductPages",
+            "shopCategoryProductPages"
         ));
+        
         return cacheManager;
     }
 
