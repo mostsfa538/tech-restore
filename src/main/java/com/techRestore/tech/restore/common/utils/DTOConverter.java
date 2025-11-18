@@ -194,6 +194,7 @@ public class DTOConverter {
         dto.setUserId(order.getUserId());
         dto.setFirstName(order.getUser().getFirst_name());
         dto.setLastName(order.getUser().getLast_name());
+        dto.setPhoneNumber(order.getUser().getPhone());
         dto.setDeliveryAddressId(order.getDeliveryAddressId());
         dto.setTotalPrice(order.getTotalPrice());
         dto.setStatus(order.getStatus());

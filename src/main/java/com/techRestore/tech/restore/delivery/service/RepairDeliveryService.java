@@ -159,6 +159,9 @@ public class RepairDeliveryService {
         RepairDeliveryDto dto = new RepairDeliveryDto();
         dto.setId(repairRequest.getId());
         dto.setUserId(repairRequest.getUserId());
+        dto.setFirstName(repairRequest.getUser().getFirst_name());
+        dto.setLastName(repairRequest.getUser().getLast_name());    
+        dto.setPhone(repairRequest.getUser().getPhone());
         dto.setShopId(repairRequest.getShopId());
         dto.setDeliveryId(repairRequest.getDeliveryId());
         dto.setStatus(repairRequest.getStatus());

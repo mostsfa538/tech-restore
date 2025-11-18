@@ -14,10 +14,12 @@ public class AssignmentLogDto {
     private String assignerName;
     private UUID shopId;
     private String shopName;
+    private String shopPhone;
     private ShopAddressDto shopAddress;  
     private UUID deliveryId;
     private UUID userId;
     private String userName;
+    private String userPhone;
     private UserAdressDto userAddress;
     private UUID orderId;
     private UUID repairRequestId;
