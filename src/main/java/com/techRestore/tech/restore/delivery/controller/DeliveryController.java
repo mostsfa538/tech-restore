@@ -3,6 +3,7 @@ package com.techRestore.tech.restore.delivery.controller;
 import com.techRestore.tech.restore.common.controller.BaseController;
 import com.techRestore.tech.restore.common.model.entities.Delivery;
 import com.techRestore.tech.restore.delivery.dto.DeliveryProfileUpdateDto;
+import com.techRestore.tech.restore.delivery.dto.DeliveryResponseDto;
 import com.techRestore.tech.restore.delivery.dto.DeliveryStateUpdate;
 import com.techRestore.tech.restore.delivery.dto.OrderDeliveryDto;
 import com.techRestore.tech.restore.delivery.dto.RepairDeliveryDto;
@@ -31,7 +32,7 @@ public class DeliveryController extends BaseController {
     private final RepairDeliveryService repairDeliveryService;
 
     @GetMapping("/profile")
-    public ResponseEntity<Delivery> getProfile() {
+    public ResponseEntity<DeliveryResponseDto> getProfile() {
         return successResponse(deliveryService.getProfile());
     }
 
