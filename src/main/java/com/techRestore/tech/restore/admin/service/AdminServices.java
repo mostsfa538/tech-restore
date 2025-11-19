@@ -158,6 +158,7 @@ public class AdminServices extends BaseService<User, UUID> {
         shopRepository.save(shop);
     }
 
+    @Transactional
     public Page<OfferResponseDTO> getAllOffers(Pageable pageable) {
         return offersRepository.findAll(pageable).map(DTOConverter::convertToOfferResponseDTO);
     }
