@@ -9,7 +9,6 @@ import com.techRestore.tech.restore.common.controller.BaseController;
 import com.techRestore.tech.restore.common.dto.common.SearchRequest;
 import com.techRestore.tech.restore.common.dto.payment.AdminPaymentDto;
 import com.techRestore.tech.restore.common.dto.payment.PaymentDto;
-import com.techRestore.tech.restore.common.model.entities.Payment;
 import com.techRestore.tech.restore.common.model.entities.Shop;
 import com.techRestore.tech.restore.common.services.payment.PaymentService;
 import com.techRestore.tech.restore.delivery.dto.DeliveryResponseDto;

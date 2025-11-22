@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.techRestore.tech.restore.admin.dto.SubscriptionDetails;
 import com.techRestore.tech.restore.admin.service.AdminSubscriptionService;
 import com.techRestore.tech.restore.common.dto.payment.PaymentDto;
-import com.techRestore.tech.restore.common.model.entities.Payment;
 
 import lombok.RequiredArgsConstructor;
 
@@ -58,12 +57,10 @@ public class AdminSubscriptionController {
         return ResponseEntity.ok(subscription);
     }
 
-
     @GetMapping("/cash/pending")
     public ResponseEntity<Page<PaymentDto>> getPendingCashPayments(Pageable pageable) {
         Page<PaymentDto> page = adminSubscriptionService.getPendingCashPayments(pageable);
         return ResponseEntity.ok(page);
     }
-
 
 }

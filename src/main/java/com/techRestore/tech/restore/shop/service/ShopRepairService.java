@@ -30,10 +30,10 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
     private final NotificationService notificationService;
 
     public ShopRepairService(RepairRequestRepository repairRequestRepository, ShopRepository shopRepository,
-                             NotificationService notificationService) {
+            NotificationService notificationService) {
         super(repairRequestRepository);
         this.shopRepository = shopRepository;
-        this.notificationService=notificationService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -59,33 +59,35 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
     @PreAuthorize("hasRole('SHOP_OWNER')")
     public void setPrice(UUID id, RepairPriceUpdateDto repairPriceUpdateDto) {
         RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
-        if(repairRequest.getStatus() == RepairStatus.SUBMITTED || repairRequest.getStatus() == RepairStatus.QUOTE_PENDING || repairRequest.getStatus() == RepairStatus.QUOTE_REJECTED || repairRequest.getStatus() == RepairStatus.QUOTE_SENT){
+        if (repairRequest.getStatus() == RepairStatus.SUBMITTED
+                || repairRequest.getStatus() == RepairStatus.QUOTE_PENDING
+                || repairRequest.getStatus() == RepairStatus.QUOTE_REJECTED
+                || repairRequest.getStatus() == RepairStatus.QUOTE_SENT
+                || repairRequest.getPrice() == null) {
             repairRequest.setPrice(repairPriceUpdateDto.price());
             repairRequest.setStatus(RepairStatus.QUOTE_SENT);
             repository.save(repairRequest);
-        }
-        else {
+        } else {
             throw new IllegalStateException("Repair request is not available for price update");
         }
-        notificationService.sendToUser(repairRequest.getUserId(),"Price for repair request " + id + " has been updated to " + repairPriceUpdateDto.price());
+        notificationService.sendToUser(repairRequest.getUserId(),
+                "Price for repair request " + id + " has been updated to " + repairPriceUpdateDto.price());
     }
 
     public void setStatus(UUID id, RepairStatusDto repairStatusDto) {
         RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
-        RepairStatus newStatus = repairStatusDto.status();
-        repairRequest.setStatus(newStatus);
+        RepairStatus current = repairRequest.getStatus();
+        RepairStatus next = repairStatusDto.status();
+
+        if (!current.canTransitionTo(next)) {
+            throw new IllegalStateException(
+                    "Invalid status transition: " + current + " → " + next);
+        }
+
+        repairRequest.setStatus(next);
         repository.save(repairRequest);
 
-        if (newStatus == RepairStatus.REPAIR_COMPLETED){
-            notificationService.sendToUser(repairRequest.getUserId(), "Repair request " + id + " is now REPAIR_COMPLETED");
-        }
-        if (newStatus == RepairStatus.REPAIR_COMPLETED && repairRequest.getDeliveryAddress() != null) {
-            notificationService.sendToAllDelivery(
-                    "Repair request " + id + " is now REPAIR_COMPLETED and ready for delivery."
-            );
-
-            notificationService.sendToAssigners("Repair request " + id + " is now REPAIR_COMPLETED and ready To Be Assigned.");
-        }
+        handleNotifications(repairRequest, next);
     }
 
     public RepairRequestDto getRepairRequestById(UUID id) {
@@ -103,6 +105,20 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
         Page<RepairRequest> repairRequests = ((RepairRequestRepository) repository)
                 .findByShopIdAndStatus(shopId, status, pageable);
         return repairRequests.map(repairRequest -> DTOConverter.convertToRepairRequestDTO(repairRequest, shop));
+    }
+
+    private void handleNotifications(RepairRequest request, RepairStatus newStatus) {
+        if (newStatus == RepairStatus.REPAIR_COMPLETED) {
+            notificationService.sendToUser(request.getUserId(),
+                    "Repair request " + request.getId() + " is now REPAIR_COMPLETED");
+
+            if (request.getDeliveryAddress() != null) {
+                notificationService.sendToAllDelivery(
+                        "Repair request " + request.getId() + " is ready for delivery");
+                notificationService.sendToAssigners(
+                        "Repair request " + request.getId() + " is ready to be assigned");
+            }
+        }
     }
 
 }

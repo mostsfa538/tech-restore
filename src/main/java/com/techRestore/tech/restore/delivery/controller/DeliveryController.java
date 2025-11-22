@@ -1,7 +1,6 @@
 package com.techRestore.tech.restore.delivery.controller;
 
 import com.techRestore.tech.restore.common.controller.BaseController;
-import com.techRestore.tech.restore.common.model.entities.Delivery;
 import com.techRestore.tech.restore.delivery.dto.DeliveryProfileUpdateDto;
 import com.techRestore.tech.restore.delivery.dto.DeliveryResponseDto;
 import com.techRestore.tech.restore.delivery.dto.DeliveryStateUpdate;

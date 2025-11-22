@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 
-import org.hibernate.id.Assigned;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -35,13 +34,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 import java.util.function.Consumer;
 
 @Service
@@ -51,14 +47,13 @@ public class NotificationService {
     private static final Logger logger = LoggerFactory.getLogger(NotificationService.class);
     private static final int CLEANUP_BATCH_SIZE = 100;
     private static final int NOTIFICATION_RETENTION_DAYS = 30;
-    
+
     private final SimpMessagingTemplate messagingTemplate;
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final DeliveryRepository deliveryRepository;
     private final AssignerRepository assignerRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
-
 
     private UUID getCurrentUserId() {
         Authentication authentication = getAuthentication();
@@ -91,7 +86,6 @@ public class NotificationService {
         validateEntityActivation(delivery.isActivate(), "Delivery", email);
         return delivery.getId();
     }
-    
 
     private UUID getCurrentAssignerId() {
         Authentication authentication = getAuthentication();
@@ -177,11 +171,11 @@ public class NotificationService {
     protected void sendToShopSync(UUID shopId, String message) {
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new NotFoundException("Shop not found with ID: " + shopId));
-        
+
         messagingTemplate.convertAndSendToUser(shop.getEmail(), "/queue/notifications", message);
         addToHistory(shop.getNotificationHistory(), message, shop::setNotificationHistory);
         shopRepository.save(shop);
-        
+
         logger.debug("Notification sent to shop {}: {}", shopId, message);
     }
 
@@ -189,11 +183,11 @@ public class NotificationService {
     protected void sendToUserSync(UUID userId, String message) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found with ID: " + userId));
-        
+
         messagingTemplate.convertAndSendToUser(user.getEmail(), "/queue/notifications", message);
         addToHistory(user.getNotificationHistory(), message, user::setNotificationHistory);
         userRepository.save(user);
-        
+
         logger.debug("Notification sent to user {}: {}", userId, message);
     }
 
@@ -201,7 +195,7 @@ public class NotificationService {
     protected void sendToAllDeliverySync(String message) {
         List<Delivery> deliveries = deliveryRepository.findAll();
         List<Delivery> updatedDeliveries = new ArrayList<>();
-        
+
         for (Delivery delivery : deliveries) {
             try {
                 messagingTemplate.convertAndSendToUser(delivery.getEmail(), "/queue/notifications", message);
@@ -211,7 +205,7 @@ public class NotificationService {
                 logger.error("Failed to send notification to delivery {}: {}", delivery.getId(), e.getMessage());
             }
         }
-        
+
         deliveryRepository.saveAll(updatedDeliveries);
         logger.info("Notification sent to {} deliveries", updatedDeliveries.size());
     }
@@ -220,7 +214,7 @@ public class NotificationService {
     protected void sendToAssignersSync(String message) {
         List<Assigner> assigners = assignerRepository.findAll();
         List<Assigner> updatedAssigners = new ArrayList<>();
-        
+
         for (Assigner assigner : assigners) {
             try {
                 messagingTemplate.convertAndSendToUser(assigner.getEmail(), "/queue/notifications", message);
@@ -230,7 +224,7 @@ public class NotificationService {
                 logger.error("Failed to send notification to assigner {}: {}", assigner.getId(), e.getMessage());
             }
         }
-        
+
         assignerRepository.saveAll(updatedAssigners);
         logger.info("Notification sent to {} assigners", updatedAssigners.size());
     }
@@ -243,7 +237,7 @@ public class NotificationService {
         messagingTemplate.convertAndSendToUser(assigner.getEmail(), "/queue/notifications", message);
         addToHistory(assigner.getNotificationHistory(), message, assigner::setNotificationHistory);
         assignerRepository.save(assigner);
-        
+
         logger.debug("Notification sent to assigner {}: {}", assignerId, message);
     }
 
@@ -251,11 +245,11 @@ public class NotificationService {
     protected void sendToDeliverySync(UUID deliveryId, String message) {
         Delivery delivery = deliveryRepository.findById(deliveryId)
                 .orElseThrow(() -> new NotFoundException("Delivery person not found with ID: " + deliveryId));
-        
+
         messagingTemplate.convertAndSendToUser(delivery.getEmail(), "/queue/notifications", message);
         addToHistory(delivery.getNotificationHistory(), message, delivery::setNotificationHistory);
         deliveryRepository.save(delivery);
-        
+
         logger.debug("Notification sent to delivery {}: {}", deliveryId, message);
     }
 
@@ -314,15 +308,14 @@ public class NotificationService {
         try {
             notifications = objectMapper.readValue(
                     user.getNotificationHistory(),
-                    new TypeReference<List<Map<String, Object>>>() {}
-            );
+                    new TypeReference<List<Map<String, Object>>>() {
+                    });
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse notificationHistory JSON");
         }
 
         boolean removed = notifications.removeIf(
-                n -> notifId.equals(String.valueOf(n.get("id")))
-        );
+                n -> notifId.equals(String.valueOf(n.get("id"))));
 
         if (!removed) {
             throw new NotFoundException("Notification not found for this user: " + notifId);
@@ -338,7 +331,6 @@ public class NotificationService {
         userRepository.save(user);
     }
 
-
     @Transactional
     public void deleteShopNotification(String notifId) {
         UUID currentShoprId = getCurrentShopId();
@@ -352,15 +344,14 @@ public class NotificationService {
         try {
             notifications = objectMapper.readValue(
                     shop.getNotificationHistory(),
-                    new TypeReference<List<Map<String, Object>>>() {}
-            );
+                    new TypeReference<List<Map<String, Object>>>() {
+                    });
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse notificationHistory JSON");
         }
 
         boolean removed = notifications.removeIf(
-                n -> notifId.equals(String.valueOf(n.get("id")))
-        );
+                n -> notifId.equals(String.valueOf(n.get("id"))));
 
         if (!removed) {
             throw new NotFoundException("Notification not found for this user: " + notifId);
@@ -389,15 +380,14 @@ public class NotificationService {
         try {
             notifications = objectMapper.readValue(
                     delivery.getNotificationHistory(),
-                    new TypeReference<List<Map<String, Object>>>() {}
-            );
+                    new TypeReference<List<Map<String, Object>>>() {
+                    });
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse notificationHistory JSON");
         }
 
         boolean removed = notifications.removeIf(
-                n -> notifId.equals(String.valueOf(n.get("id")))
-        );
+                n -> notifId.equals(String.valueOf(n.get("id"))));
 
         if (!removed) {
             throw new NotFoundException("Notification not found for this delivery: " + notifId);
@@ -426,15 +416,14 @@ public class NotificationService {
         try {
             notifications = objectMapper.readValue(
                     assigner.getNotificationHistory(),
-                    new TypeReference<List<Map<String, Object>>>() {}
-            );
+                    new TypeReference<List<Map<String, Object>>>() {
+                    });
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse notificationHistory JSON");
         }
 
         boolean removed = notifications.removeIf(
-                n -> notifId.equals(String.valueOf(n.get("id")))
-        );
+                n -> notifId.equals(String.valueOf(n.get("id"))));
 
         if (!removed) {
             throw new NotFoundException("Notification not found for this assigned entity: " + notifId);
@@ -449,8 +438,6 @@ public class NotificationService {
 
         assignerRepository.save(assigner);
     }
-
-
 
     @Transactional(readOnly = true)
     public JsonNode getShopNotificationById(String notifId) {
@@ -476,11 +463,10 @@ public class NotificationService {
         return findNotificationById(assigner.getNotificationHistory(), notifId);
     }
 
-
     private JsonNode parseNotificationHistory(String notificationHistory) {
         try {
-            if (notificationHistory == null || notificationHistory.trim().isEmpty() || 
-                notificationHistory.equals("null")) {
+            if (notificationHistory == null || notificationHistory.trim().isEmpty() ||
+                    notificationHistory.equals("null")) {
                 return objectMapper.createArrayNode();
             }
             return objectMapper.readTree(notificationHistory);
@@ -492,29 +478,29 @@ public class NotificationService {
 
     private JsonNode findNotificationById(String notificationHistory, String notifId) {
         JsonNode historyNode = parseNotificationHistory(notificationHistory);
-        
+
         if (!historyNode.isArray()) {
             throw new RuntimeException("Notification history is not an array");
         }
-        
+
         for (JsonNode notif : historyNode) {
             if (notif.has("id") && notif.get("id").asText().equals(notifId)) {
                 return notif;
             }
         }
-        
+
         throw new NotFoundException("Notification not found with ID: " + notifId);
     }
 
     private void addToHistory(String currentHistory, String message, Consumer<String> setter) {
         try {
             ArrayNode arrayNode = parseHistoryAsArray(currentHistory);
-            
+
             ObjectNode newNotif = objectMapper.createObjectNode();
             newNotif.put("id", UUID.randomUUID().toString());
             newNotif.put("timestamp", LocalDateTime.now().toString());
             newNotif.put("message", message);
-            
+
             arrayNode.add(newNotif);
             setter.accept(objectMapper.writeValueAsString(arrayNode));
         } catch (Exception e) {
@@ -527,27 +513,26 @@ public class NotificationService {
         if (currentHistory == null || currentHistory.trim().isEmpty() || currentHistory.equals("null")) {
             return objectMapper.createArrayNode();
         }
-        
+
         JsonNode historyNode = objectMapper.readTree(currentHistory);
         if (!historyNode.isArray()) {
             logger.warn("Invalid notification history format, initializing new array");
             return objectMapper.createArrayNode();
         }
-        
+
         return (ArrayNode) historyNode;
     }
-
 
     @Scheduled(cron = "0 0 1 * * ?")
     public void cleanNotifications() {
         logger.info("Starting notification cleanup task");
-        
+
         try {
             cleanShopNotifications();
             cleanUserNotifications();
             cleanDeliveryNotifications();
             cleanAssignerNotifications();
-            
+
             logger.info("Notification cleanup task completed successfully");
         } catch (Exception e) {
             logger.error("Error during notification cleanup: {}", e.getMessage(), e);
@@ -559,21 +544,21 @@ public class NotificationService {
         int page = 0;
         Slice<Shop> shopsSlice;
         int totalCleaned = 0;
-        
+
         do {
             shopsSlice = shopRepository.findAll(PageRequest.of(page, CLEANUP_BATCH_SIZE));
             List<Shop> updatedShops = new ArrayList<>();
-            
+
             for (Shop shop : shopsSlice.getContent()) {
                 cleanHistory(shop.getNotificationHistory(), shop::setNotificationHistory);
                 updatedShops.add(shop);
             }
-            
+
             shopRepository.saveAll(updatedShops);
             totalCleaned += updatedShops.size();
             page++;
         } while (shopsSlice.hasNext());
-        
+
         logger.info("Cleaned notifications for {} shops", totalCleaned);
     }
 
@@ -582,21 +567,21 @@ public class NotificationService {
         int page = 0;
         Slice<User> usersSlice;
         int totalCleaned = 0;
-        
+
         do {
             usersSlice = userRepository.findAll(PageRequest.of(page, CLEANUP_BATCH_SIZE));
             List<User> updatedUsers = new ArrayList<>();
-            
+
             for (User user : usersSlice.getContent()) {
                 cleanHistory(user.getNotificationHistory(), user::setNotificationHistory);
                 updatedUsers.add(user);
             }
-            
+
             userRepository.saveAll(updatedUsers);
             totalCleaned += updatedUsers.size();
             page++;
         } while (usersSlice.hasNext());
-        
+
         logger.info("Cleaned notifications for {} users", totalCleaned);
     }
 
@@ -605,21 +590,21 @@ public class NotificationService {
         int page = 0;
         Slice<Delivery> deliveriesSlice;
         int totalCleaned = 0;
-        
+
         do {
             deliveriesSlice = deliveryRepository.findAll(PageRequest.of(page, CLEANUP_BATCH_SIZE));
             List<Delivery> updatedDeliveries = new ArrayList<>();
-            
+
             for (Delivery delivery : deliveriesSlice.getContent()) {
                 cleanHistory(delivery.getNotificationHistory(), delivery::setNotificationHistory);
                 updatedDeliveries.add(delivery);
             }
-            
+
             deliveryRepository.saveAll(updatedDeliveries);
             totalCleaned += updatedDeliveries.size();
             page++;
         } while (deliveriesSlice.hasNext());
-        
+
         logger.info("Cleaned notifications for {} deliveries", totalCleaned);
     }
 
@@ -628,21 +613,21 @@ public class NotificationService {
         int page = 0;
         Slice<Assigner> assignersSlice;
         int totalCleaned = 0;
-        
+
         do {
             assignersSlice = assignerRepository.findAll(PageRequest.of(page, CLEANUP_BATCH_SIZE));
             List<Assigner> updatedAssigners = new ArrayList<>();
-            
+
             for (Assigner assigner : assignersSlice.getContent()) {
                 cleanHistory(assigner.getNotificationHistory(), assigner::setNotificationHistory);
                 updatedAssigners.add(assigner);
             }
-            
+
             assignerRepository.saveAll(updatedAssigners);
             totalCleaned += updatedAssigners.size();
             page++;
         } while (assignersSlice.hasNext());
-        
+
         logger.info("Cleaned notifications for {} assigners", totalCleaned);
     }
 
@@ -651,7 +636,7 @@ public class NotificationService {
             ArrayNode arrayNode = parseHistoryAsArray(currentHistory);
             ArrayNode newArray = objectMapper.createArrayNode();
             LocalDateTime cutoffDate = LocalDateTime.now().minusDays(NOTIFICATION_RETENTION_DAYS);
-            
+
             for (JsonNode notif : arrayNode) {
                 if (notif.has("timestamp")) {
                     LocalDateTime timestamp = LocalDateTime.parse(notif.get("timestamp").asText());
@@ -660,7 +645,7 @@ public class NotificationService {
                     }
                 }
             }
-            
+
             setter.accept(objectMapper.writeValueAsString(newArray));
         } catch (Exception e) {
             logger.error("Error cleaning notification history: {}", e.getMessage(), e);

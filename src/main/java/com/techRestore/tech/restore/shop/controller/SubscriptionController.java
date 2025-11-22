@@ -4,7 +4,6 @@ import com.techRestore.tech.restore.common.controller.BaseController;
 import com.techRestore.tech.restore.common.dto.payment.PaymentInitiationDto;
 import com.techRestore.tech.restore.common.exception.CustomException;
 import com.techRestore.tech.restore.common.model.entities.Shop;
-import com.techRestore.tech.restore.common.model.enums.PaymentMethod;
 import com.techRestore.tech.restore.common.model.enums.PaymentStatus;
 import com.techRestore.tech.restore.common.services.payment.PaymentService;
 import com.techRestore.tech.restore.shop.dto.subscription.SubscriptionRequestDto;
@@ -39,12 +38,13 @@ public class SubscriptionController extends BaseController {
                 .orElseThrow(() -> new CustomException(HttpStatus.UNAUTHORIZED, "Shop not found"))
                 .getId();
     }
-//***************** i added 2 options ay 7aga ba2a***************** 
-            /* 
-            1- if shop wants to renew the subscriptoin while his period not ended yet.
-            2- if shop's subscritpion period ended and he want to renew it.
-            3- Admin confirm the subscription payment if it's cash only. 
-            */   
+
+    // ***************** i added 2 options ay 7aga ba2a*****************
+    /*
+     * 1- if shop wants to renew the subscriptoin while his period not ended yet.
+     * 2- if shop's subscritpion period ended and he want to renew it.
+     * 3- Admin confirm the subscription payment if it's cash only.
+     */
     @PostMapping("/card")
     public ResponseEntity<PaymentInitiationDto> initiateCardSubscription(
             @RequestBody SubscriptionRequestDto request) {
@@ -58,7 +58,7 @@ public class SubscriptionController extends BaseController {
             @RequestBody SubscriptionRequestDto request) {
         UUID shopId = getCurrentShopId();
         paymentService.initiateCashSubscriptionPayment(shopId, request);
-        return ResponseEntity.ok(Map.of("message", "Cash payment initiated. Please pay admin EGP " + 
+        return ResponseEntity.ok(Map.of("message", "Cash payment initiated. Please pay admin EGP " +
                 (1000 * request.getMonths()), "months", request.getMonths().toString()));
     }
 
@@ -66,37 +66,37 @@ public class SubscriptionController extends BaseController {
     public ResponseEntity<PaymentInitiationDto> renewCardSubscription(
             @PathVariable String shopEmail,
             @RequestBody SubscriptionRequestDto request) {
-        
+
         Shop shop = shopRepository.findByEmail(shopEmail)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "Shop not found"));
-        
+
         if (!shop.isSubscriptionActive()) {
             shop.setActivate(true);
         }
-        
+
         return ResponseEntity.ok(paymentService.initiateCardSubscriptionPayment(shop.getId(), request));
     }
-    
+
     @PostMapping("/renew/cash/{shopEmail}")
     public ResponseEntity<Map<String, String>> renewCashSubscription(
             @PathVariable String shopEmail,
             @RequestBody SubscriptionRequestDto request) {
-        
+
         Shop shop = shopRepository.findByEmail(shopEmail)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "Shop not found"));
-        
+
         paymentService.initiateCashSubscriptionPayment(shop.getId(), request);
-        
+
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Cash payment initiated! Contact to arrange 1  to 1 meetting " + 
-            (request.getMonths() * 1000) + " EGP");
+        response.put("message", "Cash payment initiated! Contact to arrange 1  to 1 meetting " +
+                (request.getMonths() * 1000) + " EGP");
         response.put("status", "PENDING");
         response.put("paymentReference", "CASH-SUB-" + shopEmail);
-        
+
         return ResponseEntity.ok(response);
     }
 
-//***************get Current subscription ***************************** */
+    // ***************get Current subscription ***************************** */
     @GetMapping
     public ResponseEntity<SubscriptionResponseDto> getMySubscription() {
         UUID shopId = getCurrentShopId();

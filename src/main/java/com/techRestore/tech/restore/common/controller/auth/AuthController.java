@@ -20,17 +20,12 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
-
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -85,8 +80,8 @@ public class AuthController extends BaseController {
 
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(HttpServletRequest request, HttpServletResponse response) {
-            authServices.logout(request, response);
-            return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
+        authServices.logout(request, response);
+        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
 
     @PostMapping("/logout-all")
@@ -133,15 +128,11 @@ public class AuthController extends BaseController {
         return ResponseEntity.ok().build();
     }
 
-
-    
-
     @GetMapping("/test-cookie")
     public ResponseEntity<?> testCookie(HttpServletRequest request) {
         Optional<String> refreshToken = cookieUtil.getRefreshTokenFromCookie(request);
         return ResponseEntity.ok(Map.of(
                 "hasCookie", refreshToken.isPresent(),
-                "cookieValue", refreshToken.orElse("none")
-        ));
+                "cookieValue", refreshToken.orElse("none")));
     }
 }

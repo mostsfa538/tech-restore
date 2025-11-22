@@ -3,7 +3,6 @@ package com.techRestore.tech.restore.common.services.emailVerification;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Random;
-import java.util.UUID;
 
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
@@ -209,8 +208,8 @@ public class EmailServices {
     entityRepositoryService.save(entity);
   }
 
-  public String creditPaymentWarnning(String emmil){
-      return """
+  public String creditPaymentWarnning(String emmil) {
+    return """
         <!DOCTYPE html>
         <html lang="en">
         <head>

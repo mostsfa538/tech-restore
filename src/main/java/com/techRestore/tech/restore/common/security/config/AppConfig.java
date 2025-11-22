@@ -35,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 
 import jakarta.servlet.http.HttpServletResponse;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -62,12 +61,12 @@ public class AppConfig {
                 .cors(corsConfig -> corsConfig.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(
-                            "/v3/api-docs/**",
-                            "/swagger-ui/**",
-                            "/swagger-ui.html",
-                            "/swagger-resources/**",
-                            "/webjars/**"
-                        ).permitAll()
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-resources/**",
+                                "/webjars/**")
+                        .permitAll()
                         .requestMatchers("/login/oauth2/code/**", "/oauth2/authorization/**").permitAll()
                         .requestMatchers("/api/auth/register/user", "/api/auth/login",
                                 "/api/auth/verify-email", "/api/auth/resend-otp", "api/auth/forgot-password",
@@ -168,26 +167,24 @@ public class AppConfig {
     @Bean
     public CacheManager cacheManager() {
         CaffeineCacheManager cacheManager = new CaffeineCacheManager();
-        
+
         cacheManager.setCaffeine(Caffeine.newBuilder()
-            .expireAfterWrite(10, TimeUnit.MINUTES)
-            .maximumSize(20_000)
-            .recordStats()
-        );
-        
+                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .maximumSize(20_000)
+                .recordStats());
+
         cacheManager.setCacheNames(Arrays.asList(
-            //delivery caches
-            "deliveryProfile",
-            "availableOrders",
-            "myDeliveries",
-            //products caches
-            "products",
-            "productPages",
-            "shopProductPages",
-            "categoryProductPages",
-            "shopCategoryProductPages"
-        ));
-        
+                // delivery caches
+                "deliveryProfile",
+                "availableOrders",
+                "myDeliveries",
+                // products caches
+                "products",
+                "productPages",
+                "shopProductPages",
+                "categoryProductPages",
+                "shopCategoryProductPages"));
+
         return cacheManager;
     }
 
