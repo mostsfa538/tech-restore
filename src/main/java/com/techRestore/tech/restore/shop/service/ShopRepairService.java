@@ -59,12 +59,14 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
     @PreAuthorize("hasRole('SHOP_OWNER')")
     public void setPrice(UUID id, RepairPriceUpdateDto repairPriceUpdateDto) {
         RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
-        if(repairRequest.getPrice()!=null ){
-            throw new IllegalArgumentException("Price already set");
+        if(repairRequest.getStatus() == RepairStatus.SUBMITTED || repairRequest.getStatus() == RepairStatus.QUOTE_PENDING || repairRequest.getStatus() == RepairStatus.QUOTE_REJECTED || repairRequest.getStatus() == RepairStatus.QUOTE_SENT){
+            repairRequest.setPrice(repairPriceUpdateDto.price());
+            repairRequest.setStatus(RepairStatus.QUOTE_SENT);
+            repository.save(repairRequest);
         }
-        repairRequest.setPrice(repairPriceUpdateDto.price());
-        repairRequest.setStatus(RepairStatus.QUOTE_SENT);
-        repository.save(repairRequest);
+        else {
+            throw new IllegalStateException("Repair request is not available for price update");
+        }
         notificationService.sendToUser(repairRequest.getUserId(),"Price for repair request " + id + " has been updated to " + repairPriceUpdateDto.price());
     }
 
