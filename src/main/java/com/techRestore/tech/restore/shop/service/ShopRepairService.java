@@ -60,7 +60,6 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
     public void setPrice(UUID id, RepairPriceUpdateDto repairPriceUpdateDto) {
         RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
         if (repairRequest.getStatus() == RepairStatus.SUBMITTED
-                || repairRequest.getStatus() == RepairStatus.QUOTE_PENDING
                 || repairRequest.getStatus() == RepairStatus.QUOTE_REJECTED
                 || repairRequest.getStatus() == RepairStatus.QUOTE_SENT
                 || repairRequest.getPrice() == null) {
