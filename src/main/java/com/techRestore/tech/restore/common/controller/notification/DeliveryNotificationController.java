@@ -1,6 +1,7 @@
 package com.techRestore.tech.restore.common.controller.notification;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,5 +26,11 @@ public class DeliveryNotificationController {
   @GetMapping("/{notificationId}")
   public ResponseEntity<JsonNode>getNotificationById(@PathVariable String notificationId) {
     return ResponseEntity.ok(notificationService.getDeliveryNotificationById(notificationId));
+  }
+
+  @DeleteMapping("/{notifId}")
+  public ResponseEntity<?> deleteNotification(@PathVariable String notifId) {
+      notificationService.deleteDeliveryNotification(notifId);
+      return ResponseEntity.ok("Notification deleted successfully");
   }
 }

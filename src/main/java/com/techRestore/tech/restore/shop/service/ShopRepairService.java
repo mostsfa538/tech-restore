@@ -65,6 +65,7 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
         repairRequest.setPrice(repairPriceUpdateDto.price());
         repairRequest.setStatus(RepairStatus.QUOTE_SENT);
         repository.save(repairRequest);
+        notificationService.sendToUser(repairRequest.getUserId(),"Price for repair request " + id + " has been updated to " + repairPriceUpdateDto.price());
     }
 
     public void setStatus(UUID id, RepairStatusDto repairStatusDto) {
@@ -73,6 +74,9 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
         repairRequest.setStatus(newStatus);
         repository.save(repairRequest);
 
+        if (newStatus == RepairStatus.REPAIR_COMPLETED){
+            notificationService.sendToUser(repairRequest.getUserId(), "Repair request " + id + " is now REPAIR_COMPLETED");
+        }
         if (newStatus == RepairStatus.REPAIR_COMPLETED && repairRequest.getDeliveryAddress() != null) {
             notificationService.sendToAllDelivery(
                     "Repair request " + id + " is now REPAIR_COMPLETED and ready for delivery."
