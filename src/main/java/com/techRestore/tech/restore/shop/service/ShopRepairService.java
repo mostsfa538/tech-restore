@@ -59,6 +59,9 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
     @PreAuthorize("hasRole('SHOP_OWNER')")
     public void setPrice(UUID id, RepairPriceUpdateDto repairPriceUpdateDto) {
         RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
+        if(repairRequest.getPrice()!=null ){
+            throw new IllegalArgumentException("Price already set");
+        }
         repairRequest.setPrice(repairPriceUpdateDto.price());
         repairRequest.setStatus(RepairStatus.QUOTE_SENT);
         repository.save(repairRequest);
