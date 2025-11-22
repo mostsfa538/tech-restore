@@ -29,8 +29,6 @@ import com.techRestore.tech.restore.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -69,7 +67,6 @@ public class DeliveryService {
         return delivery.getId();
     }
 
-    @Cacheable(value = "deliveryProfile", key = "#deliveryId")
     public DeliveryResponseDto getProfile(UUID deliveryId) {
         return deliveryRepository.findById(deliveryId)
                 .map(this::convertToDeliveryResponseDto)
@@ -94,21 +91,15 @@ public class DeliveryService {
             delivery.setAddress(updateDto.getAddress());
         }
         deliveryRepository.save(delivery);
-        evictDeliveryProfile(deliveryId);
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "availableOrders", key = "'FINISHPROCESSING_'+#pageable.pageNumber+'_'+#pageable.pageSize")
     public Page<OrderDeliveryDto> getAvailableOrders(Pageable pageable) {
         Page<Order> orders = orderRepository.findByStatusAndDeliveryIdIsNull(OrderStatus.FINISHPROCESSING, pageable);
         return orders.map(this::convertToDeliveryDTO);
     }
 
     @Transactional(readOnly = true)
-    @Cacheable(
-        value = "myDeliveries",
-        key = "'getMyDeliveries_' + #deliveryId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize"
-    )
     public Page<OrderDeliveryDto> getMyDeliveries(UUID deliveryId, Pageable pageable) {
         Page<Order> orders = orderRepository.findByDeliveryId(deliveryId, pageable);
         return orders.map(this::convertToDeliveryDTO);
@@ -119,7 +110,6 @@ public class DeliveryService {
         return getMyDeliveries(getCurrentDeliveryId(), pageable);
     }
 
-    @CacheEvict(value = {"availableOrders", "myDeliveries"}, allEntries = true)
     @Transactional
     public void acceptDelivery(UUID orderId) {
         UUID deliveryId = getCurrentDeliveryId();
@@ -135,7 +125,6 @@ public class DeliveryService {
                 "Your order " + orderId + " has been accepted for delivery and is now shipped");
     }
 
-    @CacheEvict(value = "availableOrders", allEntries = true)
     @Transactional
     public void rejectDelivery(UUID orderId) {
         getCurrentDeliveryId();
@@ -147,7 +136,6 @@ public class DeliveryService {
         notificationService.sendToShop(order.getShopId(), "Delivery rejected for order " + orderId);
     }
 
-    @CacheEvict(value = {"availableOrders", "myDeliveries"}, allEntries = true)
     @Transactional
     public void updateOrderStatus(UUID orderId, DeliveryStateUpdate stateUpdate) {
         UUID deliveryId = getCurrentDeliveryId();
@@ -249,9 +237,4 @@ public class DeliveryService {
 
         return dto;
     }
-
-    @CacheEvict(value = "deliveryProfile", key = "'getProfile_' + #deliveryId")
-    public void evictDeliveryProfile(UUID deliveryId) {
-    }
-
 }
