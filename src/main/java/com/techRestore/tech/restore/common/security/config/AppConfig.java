@@ -174,10 +174,6 @@ public class AppConfig {
                 .recordStats());
 
         cacheManager.setCacheNames(Arrays.asList(
-                // delivery caches
-                "deliveryProfile",
-                "availableOrders",
-                "myDeliveries",
                 // products caches
                 "products",
                 "productPages",
