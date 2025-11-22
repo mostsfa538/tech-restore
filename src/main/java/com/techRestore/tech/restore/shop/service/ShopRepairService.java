@@ -60,6 +60,7 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
     public void setPrice(UUID id, RepairPriceUpdateDto repairPriceUpdateDto) {
         RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
         repairRequest.setPrice(repairPriceUpdateDto.price());
+        repairRequest.setStatus(RepairStatus.QUOTE_SENT);
         repository.save(repairRequest);
     }
 
