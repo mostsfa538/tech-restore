@@ -29,7 +29,7 @@ public class AssignerNotificationController {
     return ResponseEntity.ok(notificationService.getAssignerNotificationById(notificationId));
   }
 
-  @DeleteMapping
+  @DeleteMapping("/{notifId}")
   public ResponseEntity<?> deleteNotification(@PathVariable String notifId) {
     notificationService.deleteAssignerNotification(notifId);
     return ResponseEntity.ok("Notification deleted successfully");

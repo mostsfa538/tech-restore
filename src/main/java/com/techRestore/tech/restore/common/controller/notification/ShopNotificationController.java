@@ -31,7 +31,7 @@ public class ShopNotificationController {
     return ResponseEntity.ok(notificationService.getShopNotificationById(notificationId));
   }
 
-  @DeleteMapping
+  @DeleteMapping("/{notifId}")
   public ResponseEntity<?> deleteNotification(@PathVariable String notifId) {
     notificationService.deleteShopNotification(notifId);
     return ResponseEntity.ok("Notification deleted successfully");

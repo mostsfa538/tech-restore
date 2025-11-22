@@ -53,7 +53,7 @@ public class ShopProductService extends BaseService<Product, UUID> {
     @Transactional(readOnly = true)
     @Cacheable(
         value = "shopProductPages",
-        key = "{ #root.target.getCurrentShopId(), #pageable.pageNumber, #pageable.pageSize, #pageable.sort }"
+        key = "{ #shopId, #pageable.pageNumber, #pageable.pageSize, #pageable.sort }"
     )
     public Page<ProductResponseDTO> getProductsByShopId(Pageable pageable) {
         UUID shopId = getCurrentShopId();
