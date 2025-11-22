@@ -14,9 +14,15 @@ import com.techRestore.tech.restore.common.model.entities.User;
 import com.techRestore.tech.restore.delivery.repository.DeliveryRepository;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
 import com.techRestore.tech.restore.user.repository.UserRepository;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
+import org.springframework.transaction.annotation.Transactional;
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.RequiredArgsConstructor;
 
+import org.hibernate.id.Assigned;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.PageRequest;
@@ -85,6 +91,7 @@ public class NotificationService {
         validateEntityActivation(delivery.isActivate(), "Delivery", email);
         return delivery.getId();
     }
+    
 
     private UUID getCurrentAssignerId() {
         Authentication authentication = getAuthentication();
@@ -293,6 +300,157 @@ public class NotificationService {
                 .orElseThrow(() -> new NotFoundException("User not found with ID: " + currentUserId));
         return findNotificationById(user.getNotificationHistory(), notifId);
     }
+
+    @Transactional
+    public void deleteUserNotification(String notifId) {
+        UUID currentUserId = getCurrentUserId();
+
+        User user = userRepository.findById(currentUserId)
+                .orElseThrow(() -> new NotFoundException("User not found: " + currentUserId));
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        List<Map<String, Object>> notifications;
+        try {
+            notifications = objectMapper.readValue(
+                    user.getNotificationHistory(),
+                    new TypeReference<List<Map<String, Object>>>() {}
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse notificationHistory JSON");
+        }
+
+        boolean removed = notifications.removeIf(
+                n -> notifId.equals(String.valueOf(n.get("id")))
+        );
+
+        if (!removed) {
+            throw new NotFoundException("Notification not found for this user: " + notifId);
+        }
+
+        try {
+            String updatedJson = objectMapper.writeValueAsString(notifications);
+            user.setNotificationHistory(updatedJson);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update notificationHistory JSON");
+        }
+
+        userRepository.save(user);
+    }
+
+
+    @Transactional
+    public void deleteShopNotification(String notifId) {
+        UUID currentShoprId = getCurrentShopId();
+
+        Shop shop = shopRepository.findById(currentShoprId)
+                .orElseThrow(() -> new NotFoundException("User not found: " + currentShoprId));
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        List<Map<String, Object>> notifications;
+        try {
+            notifications = objectMapper.readValue(
+                    shop.getNotificationHistory(),
+                    new TypeReference<List<Map<String, Object>>>() {}
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse notificationHistory JSON");
+        }
+
+        boolean removed = notifications.removeIf(
+                n -> notifId.equals(String.valueOf(n.get("id")))
+        );
+
+        if (!removed) {
+            throw new NotFoundException("Notification not found for this user: " + notifId);
+        }
+
+        try {
+            String updatedJson = objectMapper.writeValueAsString(notifications);
+            shop.setNotificationHistory(updatedJson);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update notificationHistory JSON");
+        }
+
+        shopRepository.save(shop);
+    }
+
+    @Transactional
+    public void deleteDeliveryNotification(String notifId) {
+        UUID currentDeliveryId = getCurrentDeliveryId();
+
+        Delivery delivery = deliveryRepository.findById(currentDeliveryId)
+                .orElseThrow(() -> new NotFoundException("Delivery not found: " + currentDeliveryId));
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        List<Map<String, Object>> notifications;
+        try {
+            notifications = objectMapper.readValue(
+                    delivery.getNotificationHistory(),
+                    new TypeReference<List<Map<String, Object>>>() {}
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse notificationHistory JSON");
+        }
+
+        boolean removed = notifications.removeIf(
+                n -> notifId.equals(String.valueOf(n.get("id")))
+        );
+
+        if (!removed) {
+            throw new NotFoundException("Notification not found for this delivery: " + notifId);
+        }
+
+        try {
+            String updatedJson = objectMapper.writeValueAsString(notifications);
+            delivery.setNotificationHistory(updatedJson);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update notificationHistory JSON");
+        }
+
+        deliveryRepository.save(delivery);
+    }
+
+    @Transactional
+    public void deleteAssignerNotification(String notifId) {
+        UUID currentAssignerId = getCurrentAssignerId();
+
+        Assigner assigner = assignerRepository.findById(currentAssignerId)
+                .orElseThrow(() -> new NotFoundException("Assigned entity not found: " + currentAssignerId));
+
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        List<Map<String, Object>> notifications;
+        try {
+            notifications = objectMapper.readValue(
+                    assigner.getNotificationHistory(),
+                    new TypeReference<List<Map<String, Object>>>() {}
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse notificationHistory JSON");
+        }
+
+        boolean removed = notifications.removeIf(
+                n -> notifId.equals(String.valueOf(n.get("id")))
+        );
+
+        if (!removed) {
+            throw new NotFoundException("Notification not found for this assigned entity: " + notifId);
+        }
+
+        try {
+            String updatedJson = objectMapper.writeValueAsString(notifications);
+            assigner.setNotificationHistory(updatedJson);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update notificationHistory JSON");
+        }
+
+        assignerRepository.save(assigner);
+    }
+
+
 
     @Transactional(readOnly = true)
     public JsonNode getShopNotificationById(String notifId) {

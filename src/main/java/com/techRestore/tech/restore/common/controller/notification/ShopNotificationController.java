@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.techRestore.tech.restore.common.services.notification.NotificationService;
 
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
@@ -29,5 +31,10 @@ public class ShopNotificationController {
     return ResponseEntity.ok(notificationService.getShopNotificationById(notificationId));
   }
 
+  @DeleteMapping
+  public ResponseEntity<?> deleteNotification(@PathVariable String notifId) {
+    notificationService.deleteShopNotification(notifId);
+    return ResponseEntity.ok("Notification deleted successfully");
+  }
 
 }
