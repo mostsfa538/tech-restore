@@ -442,12 +442,13 @@ public class AssignerService {
     }
 
     private RepairDeliveryDto convertToRepairDeliveryDto(RepairRequest repairRequest) {
+        User user =userRepository.findById(repairRequest.getUserId()).orElseThrow(() -> new NotFoundException("User not found"));
         RepairDeliveryDto dto = new RepairDeliveryDto();
         dto.setId(repairRequest.getId());
         dto.setUserId(repairRequest.getUserId());
-        dto.setFirstName(repairRequest.getUser().getFirst_name());
-        dto.setLastName(repairRequest.getUser().getLast_name());
-        dto.setPhone(repairRequest.getUser().getPhone());
+        dto.setFirstName(user.getFirst_name());
+        dto.setLastName(user.getLast_name());
+        dto.setPhone(user.getPhone());
         dto.setShopId(repairRequest.getShopId());
         dto.setDeliveryId(repairRequest.getDeliveryId());
         dto.setStatus(repairRequest.getStatus());
@@ -465,16 +466,12 @@ public class AssignerService {
             });
         }
 
-        if (repairRequest.getUserId() != null) {
-            userRepository.findById(repairRequest.getUserId()).ifPresent(user -> {
-                Address userAddress = user.getAddresses()
-                        .stream()
-                        .filter(Address::isDefault)
-                        .findFirst()
-                        .orElse(null);
-                dto.setUserAddress(convertAddressDto(userAddress, RepairDeliveryDto.AddressDto.class));
-            });
-        }
+        Address userAddress = user.getAddresses()
+            .stream()
+            .filter(Address::isDefault)
+            .findFirst()
+            .orElse(user.getAddresses().stream().findFirst().orElse(null));
+    dto.setUserAddress(convertAddressDto(userAddress, RepairDeliveryDto.AddressDto.class));
 
         if (repairRequest.getDeliveryId() != null) {
             deliveryRepository.findById(repairRequest.getDeliveryId()).ifPresent(delivery -> {
