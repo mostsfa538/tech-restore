@@ -58,6 +58,9 @@ public class UserOrderService {
     public OrderResponseDTO createOrder(OrderRequestDTO request) {
         UUID userId = getCurrentUserId();
         
+        User user=userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
         List<CartItem> cartItems = cartItemRepository.findByUserId(userId);
         validateCartItems(cartItems);
         
@@ -86,7 +89,7 @@ public class UserOrderService {
         Shop shop = shopRepository.findById(shopId)
                 .orElseThrow(() -> new NotFoundException("Shop not found"));
         
-        return DTOConverter.convertToOrderResponseDTO(order, orderItems, shop.getName());
+        return DTOConverter.convertToOrderResponseDTO(order, orderItems, shop.getName(),user);
     }
 
     private void validateCartItems(List<CartItem> cartItems) {
@@ -181,19 +184,27 @@ public class UserOrderService {
     @Transactional(readOnly = true)
     public Page<OrderResponseDTO> getUserOrders(Pageable pageable) {
         UUID userId = getCurrentUserId();
+
+        User user=userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
         Page<Order> ordersPage = orderRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable);
         
         return ordersPage.map(order -> {
             List<OrderItem> items = orderItemRepository.findByOrderId(order.getId());
             Shop shop = shopRepository.findById(order.getShopId())
                     .orElseThrow(() -> new NotFoundException("Shop not found"));
-            return DTOConverter.convertToOrderResponseDTO(order, items, shop.getName());
+            return DTOConverter.convertToOrderResponseDTO(order, items, shop.getName(),user);
         });
     }
 
     @Transactional(readOnly = true)
     public OrderResponseDTO getOrderDetails(UUID orderId) {
         UUID userId = getCurrentUserId();
+
+        User user=userRepository.findById(userId)
+                .orElseThrow(() -> new NotFoundException("User not found"));
+
         Order order = orderRepository.findByIdAndUserId(orderId, userId)
                 .orElseThrow(() -> new NotFoundException("Order not found"));
         
@@ -202,7 +213,7 @@ public class UserOrderService {
         
         List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
         
-        return DTOConverter.convertToOrderResponseDTO(order, orderItems, shop.getName());
+        return DTOConverter.convertToOrderResponseDTO(order, orderItems, shop.getName(),user);
     }
 
     @Transactional
