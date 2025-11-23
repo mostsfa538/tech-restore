@@ -18,6 +18,7 @@ import com.techRestore.tech.restore.common.model.entities.Order;
 import com.techRestore.tech.restore.common.model.entities.OrderItem;
 import com.techRestore.tech.restore.common.model.entities.Product;
 import com.techRestore.tech.restore.common.model.entities.Shop;
+import com.techRestore.tech.restore.common.model.entities.User;
 import com.techRestore.tech.restore.common.model.enums.OrderStatus;
 import com.techRestore.tech.restore.common.services.BaseService;
 import com.techRestore.tech.restore.common.services.notification.NotificationService;
@@ -28,6 +29,7 @@ import com.techRestore.tech.restore.user.dto.order.OrderResponseDTO;
 import com.techRestore.tech.restore.user.dto.order.OrderStatusUpdateDTO;
 import com.techRestore.tech.restore.user.repository.OrderItemRepository;
 import com.techRestore.tech.restore.user.repository.OrderRepository;
+import com.techRestore.tech.restore.user.repository.UserRepository;
 
 @Service
 public class ShopOrderService extends BaseService<Order, UUID> {
@@ -36,15 +38,18 @@ public class ShopOrderService extends BaseService<Order, UUID> {
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
     private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     public ShopOrderService(OrderRepository orderRepository, ShopRepository shopRepository,
             OrderItemRepository orderItemRepository, ProductRepository productRepository,
-            NotificationService notificationService) {
+            NotificationService notificationService
+            ,UserRepository userRepository) {
         super(orderRepository);
         this.shopRepository = shopRepository;
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
         this.notificationService = notificationService;
+        this.userRepository=userRepository;
     }
 
     private UUID getCurrentShopId() {
@@ -142,7 +147,7 @@ public class ShopOrderService extends BaseService<Order, UUID> {
         UUID shopId = getCurrentShopId();
         Order order = ((OrderRepository) repository).findByIdAndShopId(orderId, shopId)
                 .orElseThrow(() -> new NotFoundException("Order not found for shop"));
-
+        
         if (order.getStatus() == OrderStatus.PENDING && statusDto.getStatus() != OrderStatus.CONFIRMED) {
             throw new IllegalStateException("PENDING orders can only transition to CONFIRMED");
         }
@@ -185,9 +190,10 @@ public class ShopOrderService extends BaseService<Order, UUID> {
         List<OrderItem> orderItems = orderItemRepository.findByOrderId(order.getId());
         String shopName =null;
         Shop shop = shopRepository.findById(order.getShopId()).orElseThrow(() -> new NotFoundException("Shop not found"));;
+        User user=userRepository.findById(order.getUserId()).orElseThrow(()-> new NotFoundException("User not found"));
         if (shop != null) {
             shopName = shop.getName();
         }
-        return DTOConverter.convertToOrderResponseDTO(order, orderItems,shopName);
+        return DTOConverter.convertToOrderResponseDTO(order, orderItems,shopName,user);
     }
 }

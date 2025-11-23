@@ -187,13 +187,13 @@ public class DTOConverter {
         return dto;
     }
 
-    public static OrderResponseDTO convertToOrderResponseDTO(Order order, List<OrderItem> orderItems, String shopName) {
+    public static OrderResponseDTO convertToOrderResponseDTO(Order order, List<OrderItem> orderItems, String shopName,User user) {
         OrderResponseDTO dto = new OrderResponseDTO();
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());
-        dto.setFirstName(order.getUser().getFirst_name());
-        dto.setLastName(order.getUser().getLast_name());
-        dto.setPhoneNumber(order.getUser().getPhone());
+        dto.setFirstName(user.getFirst_name());
+        dto.setLastName(user.getLast_name());
+        dto.setPhoneNumber(user.getPhone());
         dto.setDeliveryAddressId(order.getDeliveryAddressId());
         dto.setTotalPrice(order.getTotalPrice());
         dto.setStatus(order.getStatus());

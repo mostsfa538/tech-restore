@@ -167,21 +167,22 @@ public class DeliveryService {
     }
 
     private OrderDeliveryDto convertToDeliveryDTO(Order order) {
+        User user= userRepository.findById(order.getUserId()).orElseThrow(() -> new NotFoundException("User not found"));
         OrderDeliveryDto dto = new OrderDeliveryDto();
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());
-        dto.setFirstName(order.getUser().getFirst_name());
-        dto.setLastName(order.getUser().getLast_name());
-        dto.setPhone(order.getUser().getPhone());
+        dto.setFirstName(user.getFirst_name());
+        dto.setLastName(user.getLast_name());
+        dto.setPhone(user.getPhone());
         dto.setShopId(order.getShopId());
         dto.setStatus(order.getStatus());
         dto.setTotalPrice(order.getTotalPrice());
         dto.setCreatedAt(order.getCreatedAt());
 
-        User user = userRepository.findByIdWithAddresses(order.getUserId())
+        User userAd = userRepository.findByIdWithAddresses(order.getUserId())
                 .orElseThrow(() -> new NotFoundException("User not found with ID: " + order.getUserId()));
-        if (user.getAddresses() != null && !user.getAddresses().isEmpty()) {
-            Address userAddress = user.getAddresses().stream()
+        if (userAd.getAddresses() != null && !userAd.getAddresses().isEmpty()) {
+            Address userAddress = userAd.getAddresses().stream()
                     .filter(addr->addr.getId().equals(order.getDeliveryAddressId()))
                     .findFirst()
                     .orElse(null);

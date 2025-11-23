@@ -92,7 +92,10 @@ public class AssignerService {
     @Transactional(readOnly = true)
     public Page<OrderDeliveryDto> getOrdersForAssignment(Pageable pageable) {
         Page<Order> orders = orderRepository.findByStatusAndDeliveryIdIsNull(OrderStatus.FINISHPROCESSING, pageable);
-        return orders.map(this::convertToOrderDeliveryDto);
+        return orders.map(order -> {
+            User user = userRepository.findById(order.getUserId()).orElse(null);
+            return convertToOrderDeliveryDto(order, user);
+        });
     }
 
     @Transactional(readOnly = true)
@@ -202,7 +205,11 @@ public class AssignerService {
     public Page<OrderDeliveryDto> getAssignedOrdersByDelivery(UUID deliveryId, Pageable pageable) {
         getCurrentAssigner();
         Page<Order> orders = orderRepository.findByDeliveryId(deliveryId, pageable);
-        return orders.map(this::convertToOrderDeliveryDto);
+        return orders.map(order -> {
+            User user = userRepository.findById(order.getUserId())
+                    .orElse(null);
+            return convertToOrderDeliveryDto(order, user);
+        });
     }
 
     @Transactional(readOnly = true)
@@ -394,13 +401,13 @@ public class AssignerService {
         }
     }
 
-    private OrderDeliveryDto convertToOrderDeliveryDto(Order order) {
+    private OrderDeliveryDto convertToOrderDeliveryDto(Order order,User user) {
         OrderDeliveryDto dto = new OrderDeliveryDto();
         dto.setId(order.getId());
         dto.setUserId(order.getUserId());
-        dto.setFirstName(order.getUser().getFirst_name());
-        dto.setLastName(order.getUser().getLast_name());
-        dto.setPhone(order.getUser().getPhone());
+        dto.setFirstName(user.getFirst_name());
+        dto.setLastName(user.getLast_name());
+        dto.setPhone(user.getPhone());
         dto.setShopId(order.getShopId());
         dto.setStatus(order.getStatus());
         dto.setTotalPrice(order.getTotalPrice());
@@ -417,14 +424,19 @@ public class AssignerService {
         }
 
         if (order.getUserId() != null) {
-            userRepository.findById(order.getUserId()).ifPresent(user -> {
-                Address userAddress = user.getAddresses()
+            userRepository.findById(order.getUserId()).ifPresent(fetchedUser -> {
+                Address userAddress = fetchedUser.getAddresses()
                         .stream().filter(Address::isDefault).findFirst()
-                        .orElse(user.getAddresses().stream().findFirst().orElse(null));
-                log.info("🔍 User Address: {}", userAddress != null ? userAddress.getStreet() : "NO ADDRESSES");
+                        .orElse(fetchedUser.getAddresses().stream().findFirst().orElse(null));
+
+                log.info("🔍 User Address: {}", 
+                    userAddress != null ? userAddress.getStreet() : "NO ADDRESSES"
+                );
+
                 dto.setUserAddress(convertAddressDto(userAddress, OrderDeliveryDto.AddressDto.class));
             });
         }
+
 
         return dto;
     }

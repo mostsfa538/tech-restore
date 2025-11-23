@@ -156,22 +156,21 @@ public class RepairDeliveryService {
     }
 
     private RepairDeliveryDto convertToRepairDeliveryDTO(RepairRequest repairRequest) {
+        User user =userRepository.findById(repairRequest.getUserId()).orElseThrow(() -> new NotFoundException("User not found"));
         RepairDeliveryDto dto = new RepairDeliveryDto();
         dto.setId(repairRequest.getId());
         dto.setUserId(repairRequest.getUserId());
-        dto.setFirstName(repairRequest.getUser().getFirst_name());
-        dto.setLastName(repairRequest.getUser().getLast_name());    
-        dto.setPhone(repairRequest.getUser().getPhone());
+        dto.setFirstName(user.getFirst_name());
+        dto.setLastName(user.getLast_name());    
+        dto.setPhone(user.getPhone());
         dto.setShopId(repairRequest.getShopId());
         dto.setDeliveryId(repairRequest.getDeliveryId());
         dto.setStatus(repairRequest.getStatus());
         dto.setPrice(repairRequest.getPrice());
         dto.setCreatedAt(repairRequest.getCreatedAt());
 
-        User user = userRepository.findById(repairRequest.getUserId())
-                .orElseThrow(() -> new NotFoundException("User not found with ID: " + repairRequest.getUserId()));
         if (user.getAddresses() != null && !user.getAddresses().isEmpty()) {
-            Address userAddress = user.getAddresses().get(0); // Select first address
+            Address userAddress = user.getAddresses().get(0);
             RepairDeliveryDto.AddressDto userAddressDto = new RepairDeliveryDto.AddressDto();
             userAddressDto.setId(userAddress.getId());
             userAddressDto.setStreet(userAddress.getStreet());
