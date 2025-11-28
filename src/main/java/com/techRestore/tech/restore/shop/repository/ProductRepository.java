@@ -19,7 +19,7 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
       @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.shop.verified = true")
       Page<Product> findByShopId(@Param("shopId") UUID shopId, Pageable pageable);
 
-      @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.stock <= :stockThreshold")
+      @Query("SELECT p FROM Product p WHERE p.shop.id = :shopId AND p.stock <= :stockThreshold AND p.stock > 0")
       Page<Product> findByStockLessThanEqual(UUID shopId, int stockThreshold, Pageable pageable);
 
       @Modifying
