@@ -65,6 +65,11 @@ public class UserCartService {
         CartItem existingItem = cartItemRepository.findByUserIdAndProductId(userId, request.getProductId())
                 .orElse(null);
 
+    
+        if (product.getStock() < request.getQuantity()) {
+            throw new IllegalArgumentException("Product out of stock or not enough quantity available");
+        }
+
         if (existingItem != null) {
             existingItem.setQuantity(existingItem.getQuantity() + request.getQuantity());
             cartItemRepository.save(existingItem);
@@ -90,8 +95,14 @@ public class UserCartService {
         if (request.getQuantity() <= 0) {
             cartItemRepository.delete(cartItem);
         } else {
-            cartItem.setQuantity(request.getQuantity());
-            cartItemRepository.save(cartItem);
+            Product product=productRepository.findById(cartItem.getProductId()).orElseThrow(()-> new NotFoundException("product Not found"));
+            if(product.getStock()<request.getQuantity()){
+                throw new IllegalArgumentException("the quantity you add is more than what in stock");
+            }
+            else{
+                cartItem.setQuantity(request.getQuantity());
+                cartItemRepository.save(cartItem);
+            }
         }
 
         return getCart(pageable);
