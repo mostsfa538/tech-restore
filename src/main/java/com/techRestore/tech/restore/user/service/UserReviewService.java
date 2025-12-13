@@ -29,95 +29,113 @@ import lombok.RequiredArgsConstructor;
 @Service
 @RequiredArgsConstructor
 public class UserReviewService {
-  private final ReviewRepository reviewRepository;
-  private final OrderRepository orderRepository;
-  private final RepairRequestRepository repairRequestRepository;
-  private final ShopRepository shopRepository;
-  private final AuthUtil authUtil;
 
-  @PreAuthorize("hasRole('GUEST')")
-  @Transactional
-  public ReviewResponseDTO createReview(UUID shopId, ReviewRequestDTO reviewRequestDTO) {
+    private final ReviewRepository reviewRepository;
+    private final OrderRepository orderRepository;
+    private final RepairRequestRepository repairRequestRepository;
+    private final ShopRepository shopRepository;
+    private final AuthUtil authUtil;
 
-    User user = authUtil.getCurrentUser();
+    @PreAuthorize("hasRole('GUEST')")
+    @Transactional
+    public ReviewResponseDTO createReview(UUID shopId, ReviewRequestDTO dto) {
 
-    boolean hasDeliveredOrder = orderRepository.findByUserId(user.getId()).stream()
-        .filter(order -> order.getStatus() == OrderStatus.DELIVERED)
-        .flatMap(order -> order.getOrderItems().stream())
-        .anyMatch(item -> item.getShopId().equals(shopId));
+        User user = authUtil.getCurrentUser();
 
-    boolean hasDeliveredRepair = repairRequestRepository.findAllByShopId(shopId, Pageable.unpaged())
-        .stream()
-        .anyMatch(request -> request.getUserId().equals(user.getId())
-            && request.getStatus() == RepairStatus.DEVICE_DELIVERED);
+        boolean hasDeliveredOrder = orderRepository.findByUserId(user.getId()).stream()
+                .filter(o -> o.getStatus() == OrderStatus.DELIVERED)
+                .flatMap(o -> o.getOrderItems().stream())
+                .anyMatch(i -> i.getShopId().equals(shopId));
 
-    if (!hasDeliveredOrder && !hasDeliveredRepair) {
-      throw new IllegalArgumentException(
-          "You can only review a shop after an order or repair has been delivered.");
+        boolean hasDeliveredRepair = repairRequestRepository.findAllByShopId(shopId, Pageable.unpaged()).stream()
+                .anyMatch(r -> r.getUserId().equals(user.getId()) && r.getStatus() == RepairStatus.DEVICE_DELIVERED);
+
+        if (!hasDeliveredOrder && !hasDeliveredRepair) {
+            throw new IllegalArgumentException("You can only review a shop after delivery.");
+        }
+
+        if (reviewRepository.existsByUserIdAndShopId(user.getId(), shopId)) {
+            throw new IllegalArgumentException("You have already submitted a review for this shop.");
+        }
+
+        Review review = new Review();
+        review.setUserId(user.getId());
+        review.setShopId(shopId);
+        review.setRating(dto.getRating());
+        review.setComment(dto.getComment());
+        review.setCreatedAt(LocalDateTime.now());
+
+        reviewRepository.save(review);
+
+        recalculateShopRating(shopId);
+
+        return DTOConverter.toReviewResponseDTO(review);
     }
 
-    if (reviewRepository.existsByUserIdAndShopId(user.getId(), shopId)) {
-      throw new IllegalArgumentException("You have already submitted a review for this shop.");
+    @PreAuthorize("hasRole('GUEST')")
+    @Transactional
+    public ReviewResponseDTO updateReview(UUID reviewId, ReviewRequestDTO dto) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new NotFoundException("Review not found"));
+
+        User user = authUtil.getCurrentUser();
+        if (!review.getUserId().equals(user.getId())) {
+            throw new IllegalArgumentException("You can only update your review.");
+        }
+
+        review.setRating(dto.getRating());
+        review.setComment(dto.getComment());
+        reviewRepository.save(review);
+
+        recalculateShopRating(review.getShopId());
+
+        return DTOConverter.toReviewResponseDTO(review);
     }
 
-    Review review = new Review();
-    review.setUserId(user.getId());
-    review.setShopId(shopId);
-    review.setRating(reviewRequestDTO.getRating());
-    review.setComment(reviewRequestDTO.getComment());
-    review.setCreatedAt(LocalDateTime.now());
-    review = reviewRepository.save(review);
+    @PreAuthorize("hasRole('GUEST')")
+    @Transactional
+    public void deleteGuestReview(UUID reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new NotFoundException("Review not found"));
 
-    Shop shop=shopRepository.findById(shopId)
-        .orElseThrow(() -> new NotFoundException("Shop not found with id: " + shopId));
-    
-    if(shop.getRating()==null){
-      shop.setRating(BigDecimal.ZERO);
-    }
-    BigDecimal totalRating = shop.getRating().add(review.getRating()).divide(reviewRepository.countByShopId(shopId));
-    shop.setRating(totalRating);
-    shopRepository.save(shop);
-    return DTOConverter.toReviewResponseDTO(review);
-  }
+        User user = authUtil.getCurrentUser();
+        if (!review.getUserId().equals(user.getId())) {
+            throw new IllegalArgumentException("You can only delete your review.");
+        }
 
-  public ReviewResponseDTO getReviewById(UUID id) {
-    Review review = reviewRepository.findById(id)
-        .orElseThrow(() -> new NotFoundException("Review not found with id: " + id));
-    return DTOConverter.toReviewResponseDTO(review);
-  }
-
-  @PreAuthorize("hasRole('GUEST')")
-  public ReviewResponseDTO updateReview(UUID reviewId, ReviewRequestDTO reviewRequestDTO) {
-    Review review = reviewRepository.findById(reviewId)
-        .orElseThrow(() -> new NotFoundException("Review not found with id: " + reviewId));
-
-    User user = authUtil.getCurrentUser();
-
-    if (!review.getUserId().equals(user.getId())) {
-      throw new IllegalArgumentException("You can only update your own reviews.");
+        UUID shopId = review.getShopId();
+        reviewRepository.delete(review);
+        recalculateShopRating(shopId);
     }
 
-    review.setRating(reviewRequestDTO.getRating());
-    review.setComment(reviewRequestDTO.getComment());
-    review = reviewRepository.save(review);
-    return DTOConverter.toReviewResponseDTO(review);
-  }
-
-  public Page<ReviewResponseDTO> getReviewsByShopId(UUID shopId, Pageable pageable) {
-    Page<Review> reviews = reviewRepository.findAllByShopId(shopId, pageable);
-    return reviews.map(DTOConverter::toReviewResponseDTO);
-  }
-
-  @PreAuthorize("hasRole('GUEST')")
-  public void deleteGuestReview(UUID id) {
-    Review review = reviewRepository.findById(id)
-        .orElseThrow(() -> new NotFoundException("Review not found with id: " + id));
-
-    User user = authUtil.getCurrentUser();
-
-    if (!review.getUserId().equals(user.getId())) {
-      throw new IllegalArgumentException("You can only delete your own reviews.");
+    public ReviewResponseDTO getReviewById(UUID reviewId) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new NotFoundException("Review not found"));
+        return DTOConverter.toReviewResponseDTO(review);
     }
-    reviewRepository.delete(review);
-  }
+
+    public Page<ReviewResponseDTO> getReviewsByShopId(UUID shopId, Pageable pageable) {
+        Page<Review> reviews = reviewRepository.findAllByShopId(shopId, pageable);
+        return reviews.map(DTOConverter::toReviewResponseDTO);
+    }
+
+    private void recalculateShopRating(UUID shopId) {
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> new NotFoundException("Shop not found"));
+
+        long count = reviewRepository.countByShopId(shopId);
+        if (count == 0) {
+            shop.setRating(BigDecimal.ZERO);
+            shopRepository.save(shop);
+            return;
+        }
+
+        BigDecimal sum = reviewRepository.findAllByShopId(shopId).stream()
+                .map(Review::getRating)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal average = sum.divide(BigDecimal.valueOf(count), 2, BigDecimal.ROUND_HALF_UP);
+        shop.setRating(average);
+        shopRepository.save(shop);
+    }
 }

@@ -9,6 +9,7 @@ import com.techRestore.tech.restore.common.model.entities.*;
 import com.techRestore.tech.restore.common.model.enums.ApprovalStatus;
 import com.techRestore.tech.restore.common.model.enums.OrderStatus;
 import com.techRestore.tech.restore.common.model.enums.RepairStatus;
+import com.techRestore.tech.restore.common.repository.AddressRepository;
 import com.techRestore.tech.restore.common.repository.AssignmentLogRepository;
 import com.techRestore.tech.restore.common.security.userdetails.AssignerPrincipal;
 import com.techRestore.tech.restore.common.services.notification.NotificationService;
@@ -51,6 +52,7 @@ public class AssignerService {
     private final AssignmentLogRepository assignmentLogRepository;
     private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
+    private final AddressRepository addressRepository;
 
     private Assigner getCurrentAssigner() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -423,21 +425,13 @@ public class AssignerService {
             });
         }
 
-        if (order.getUserId() != null) {
-            userRepository.findById(order.getUserId()).ifPresent(fetchedUser -> {
-                Address userAddress = fetchedUser.getAddresses()
-                        .stream().filter(Address::isDefault).findFirst()
-                        .orElse(fetchedUser.getAddresses().stream().findFirst().orElse(null));
-
-                log.info("🔍 User Address: {}", 
-                    userAddress != null ? userAddress.getStreet() : "NO ADDRESSES"
-                );
-
-                dto.setUserAddress(convertAddressDto(userAddress, OrderDeliveryDto.AddressDto.class));
-            });
-        }
-
-
+        Address userAddress= addressRepository.findById(order.getDeliveryAddressId()).orElseThrow(()->new NotFoundException("Address not found"));
+        OrderDeliveryDto.AddressDto userAddressDto = new OrderDeliveryDto.AddressDto();
+        userAddressDto.setId(userAddress.getId());
+        userAddressDto.setStreet(userAddress.getStreet());
+        userAddressDto.setCity(userAddress.getCity());
+        userAddressDto.setState(userAddress.getState());
+        dto.setUserAddress(userAddressDto);
         return dto;
     }
 
@@ -466,12 +460,14 @@ public class AssignerService {
             });
         }
 
-        Address userAddress = user.getAddresses()
-            .stream()
-            .filter(Address::isDefault)
-            .findFirst()
-            .orElse(user.getAddresses().stream().findFirst().orElse(null));
-    dto.setUserAddress(convertAddressDto(userAddress, RepairDeliveryDto.AddressDto.class));
+        Address userAddress=addressRepository.findById(repairRequest.getDeliveryId()).orElseThrow(()-> new NotFoundException("address not found "));
+        RepairDeliveryDto.AddressDto userAddressDto = new RepairDeliveryDto.AddressDto();
+        userAddressDto.setId(userAddress.getId());
+        userAddressDto.setStreet(userAddress.getStreet());
+        userAddressDto.setCity(userAddress.getCity());
+        userAddressDto.setState(userAddress.getState());
+        dto.setUserAddress(userAddressDto);
+
 
         if (repairRequest.getDeliveryId() != null) {
             deliveryRepository.findById(repairRequest.getDeliveryId()).ifPresent(delivery -> {
