@@ -1,6 +1,7 @@
 package com.techRestore.tech.restore.user.repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -18,5 +19,8 @@ public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
   boolean existsByUserIdAndShopId(UUID userId, UUID shopId);
 
-  BigDecimal countByShopId(UUID shopId);
+  long countByShopId(UUID shopId);
+
+  List<Review>findAllByShopId(UUID shopId);
+
 }

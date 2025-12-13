@@ -15,6 +15,7 @@ import com.techRestore.tech.restore.common.model.enums.OrderStatus;
 import com.techRestore.tech.restore.common.model.enums.PaymentMethod;
 import com.techRestore.tech.restore.common.model.enums.PaymentStatus;
 import com.techRestore.tech.restore.common.model.enums.RepairStatus;
+import com.techRestore.tech.restore.common.repository.AddressRepository;
 import com.techRestore.tech.restore.common.repository.PaymentRepository;
 import com.techRestore.tech.restore.common.services.notification.NotificationService;
 import com.techRestore.tech.restore.delivery.dto.DeliveryProfileUpdateDto;
@@ -51,6 +52,7 @@ public class DeliveryService {
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
     private final RepairRequestRepository repairRequestRepository;
+    private final AddressRepository addressRepository;
 
     private UUID getCurrentDeliveryId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -179,22 +181,8 @@ public class DeliveryService {
         dto.setTotalPrice(order.getTotalPrice());
         dto.setCreatedAt(order.getCreatedAt());
 
-        User userAd = userRepository.findByIdWithAddresses(order.getUserId())
-                .orElseThrow(() -> new NotFoundException("User not found with ID: " + order.getUserId()));
-        if (userAd.getAddresses() != null && !userAd.getAddresses().isEmpty()) {
-            Address userAddress = userAd.getAddresses().stream()
-                    .filter(addr->addr.getId().equals(order.getDeliveryAddressId()))
-                    .findFirst()
-                    .orElse(null);
-            if(userAddress!=null){        
-                OrderDeliveryDto.AddressDto userAddressDto = new OrderDeliveryDto.AddressDto();
-                userAddressDto.setId(userAddress.getId());
-                userAddressDto.setStreet(userAddress.getStreet());
-                userAddressDto.setCity(userAddress.getCity());
-                userAddressDto.setState(userAddress.getState());
-                dto.setUserAddress(userAddressDto);
-            }
-        }
+        Address userAddress=addressRepository.findById(order.getDeliveryAddressId()).orElseThrow(()-> new NotFoundException("address not found yet"));
+        dto.setUserAddress(toAddressDto(userAddress));
 
         Shop shop = shopRepository.findByIdWithAddresses(order.getShopId())
                 .orElseThrow(() -> new NotFoundException("Shop not found with ID: " + order.getShopId()));
@@ -209,6 +197,16 @@ public class DeliveryService {
         }
         return dto;
     }
+
+    private OrderDeliveryDto.AddressDto toAddressDto(Address address) {
+        OrderDeliveryDto.AddressDto dto = new OrderDeliveryDto.AddressDto();
+        dto.setId(address.getId());
+        dto.setStreet(address.getStreet());
+        dto.setCity(address.getCity());
+        dto.setState(address.getState());
+        return dto;
+    }
+
 
 
     private DeliveryResponseDto convertToDeliveryResponseDto(Delivery delivery) {

@@ -14,9 +14,11 @@ import com.techRestore.tech.restore.common.model.enums.ApprovalStatus;
 import com.techRestore.tech.restore.common.model.enums.PaymentMethod;
 import com.techRestore.tech.restore.common.model.enums.PaymentStatus;
 import com.techRestore.tech.restore.common.model.enums.RepairStatus;
+import com.techRestore.tech.restore.common.repository.AddressRepository;
 import com.techRestore.tech.restore.common.repository.PaymentRepository;
 import com.techRestore.tech.restore.common.services.notification.NotificationService;
 import com.techRestore.tech.restore.delivery.dto.DeliveryProfileUpdateDto;
+import com.techRestore.tech.restore.delivery.dto.OrderDeliveryDto;
 import com.techRestore.tech.restore.delivery.dto.RepairDeliveryDto;
 import com.techRestore.tech.restore.delivery.dto.RepairDeliveryStateUpdate;
 import com.techRestore.tech.restore.delivery.repository.DeliveryRepository;
@@ -46,6 +48,7 @@ public class RepairDeliveryService {
     private final PaymentRepository paymentRepository;
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
+    private final AddressRepository addressRepository;
 
     private UUID getCurrentDeliveryId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -169,15 +172,9 @@ public class RepairDeliveryService {
         dto.setPrice(repairRequest.getPrice());
         dto.setCreatedAt(repairRequest.getCreatedAt());
 
-        if (user.getAddresses() != null && !user.getAddresses().isEmpty()) {
-            Address userAddress = user.getAddresses().get(0);
-            RepairDeliveryDto.AddressDto userAddressDto = new RepairDeliveryDto.AddressDto();
-            userAddressDto.setId(userAddress.getId());
-            userAddressDto.setStreet(userAddress.getStreet());
-            userAddressDto.setCity(userAddress.getCity());
-            userAddressDto.setState(userAddress.getState());
-            dto.setUserAddress(userAddressDto);
-        }
+        Address userAddress= addressRepository.findById(repairRequest.getDeliveryId()).orElseThrow(()->new NotFoundException("address not found"));
+        dto.setDeliveryAddress(toAddressDto(userAddress));
+
 
         Shop shop = shopRepository.findById(repairRequest.getShopId())
                 .orElseThrow(() -> new NotFoundException("Shop not found with ID: " + repairRequest.getShopId()));
@@ -190,6 +187,15 @@ public class RepairDeliveryService {
             shopAddressDto.setState(shopAddress.getState());
             dto.setShopAddress(shopAddressDto);
         }
+        return dto;
+    }
+
+    private RepairDeliveryDto.AddressDto toAddressDto(Address address) {
+        RepairDeliveryDto.AddressDto dto = new RepairDeliveryDto.AddressDto();
+        dto.setId(address.getId());
+        dto.setStreet(address.getStreet());
+        dto.setCity(address.getCity());
+        dto.setState(address.getState());
         return dto;
     }
 }
