@@ -25,32 +25,24 @@ import lombok.RequiredArgsConstructor;
 @Component
 @RequiredArgsConstructor
 public class WebSocketAuthenticationInterceptor implements ChannelInterceptor {
-    
+
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
-    
-    // Constructor to verify interceptor is created
-    // public WebSocketAuthenticationInterceptor(JwtService jwtService, UserRepository userRepository, ShopRepository shopRepository) {
-    //     this.jwtService = jwtService;
-    //     this.userRepository = userRepository;
-    //     this.shopRepository = shopRepository;
-    //     System.out.println("WebSocketAuthenticationInterceptor created successfully");
-    // }
-    
+
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
-        
+
         System.out.println("=== WebSocket Interceptor Called ===");
         System.out.println("WebSocket interceptor - Command: " + accessor.getCommand());
         System.out.println("WebSocket interceptor - Headers: " + accessor.toNativeHeaderMap());
         System.out.println("WebSocket interceptor - Message Type: " + message.getClass().getSimpleName());
-        
-        if (StompCommand.CONNECT.equals(accessor.getCommand()) || 
-            StompCommand.SEND.equals(accessor.getCommand()) ||
-            StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
-            
+
+        if (StompCommand.CONNECT.equals(accessor.getCommand()) ||
+                StompCommand.SEND.equals(accessor.getCommand()) ||
+                StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+
             String token = accessor.getFirstNativeHeader("Authorization");
             if (token != null && token.startsWith("Bearer ")) {
                 try {
@@ -80,49 +72,53 @@ public class WebSocketAuthenticationInterceptor implements ChannelInterceptor {
                 }
             }
         }
-        
-        
+
+
         return message;
     }
-    
+
     private void authenticateUser(String token, StompHeaderAccessor accessor) {
         try {
             String jwtToken = token.substring(7);
-            
+
             if (!jwtService.isTokenExpired(jwtToken) && jwtService.isAccessToken(jwtToken)) {
                 String userEmail = jwtService.extractClaim(jwtToken,
-                    claims -> claims.get("username", String.class));
-                
+                        claims -> claims.get("username", String.class));
+
                 if (jwtService.isValidToken(jwtToken, userEmail)) {
                     AuthenticatedUser authenticatedUser = resolveUserDetails(userEmail);
-                    
+
                     if (authenticatedUser == null) {
                         throw new AuthenticationException("User not found: " + userEmail) {
                             private static final long serialVersionUID = 1L;
                         };
                     }
-                    
+
                     List<GrantedAuthority> authorities = Collections.singletonList(
-                        new SimpleGrantedAuthority("ROLE_" + authenticatedUser.getRole())
+                            new SimpleGrantedAuthority("ROLE_" + authenticatedUser.getRole())
                     );
-                    
+
                     Authentication authentication = new UsernamePasswordAuthenticationToken(
-                        userEmail, null, authorities
+                            userEmail, null, authorities
                     );
-                    
+
                     SecurityContextHolder.getContext().setAuthentication(authentication);
-                    
-                    Principal principal = () -> userEmail;
+
+                    String uniquePrincipalName = authenticatedUser.getUserType() + "-" + authenticatedUser.getUserId();
+                    Principal principal = () -> uniquePrincipalName;
                     accessor.setUser(principal);
-                    
+
+                    // Store everything needed in session
                     accessor.getSessionAttributes().put("userId", authenticatedUser.getUserId());
                     accessor.getSessionAttributes().put("userEmail", userEmail);
                     accessor.getSessionAttributes().put("userRole", authenticatedUser.getRole());
                     accessor.getSessionAttributes().put("userType", authenticatedUser.getUserType());
                     accessor.getSessionAttributes().put("authentication", authentication);
-                    
+                    accessor.getSessionAttributes().put("authorities", authorities);
+
                     System.out.println("WebSocket authentication successful for user: " + userEmail);
-                    
+                    System.out.println("Stored authorities: " + authorities);
+
                 } else {
                     throw new AuthenticationException("Token validation failed") {
                         private static final long serialVersionUID = 1L;
@@ -144,36 +140,36 @@ public class WebSocketAuthenticationInterceptor implements ChannelInterceptor {
         var user = userRepository.findByEmail(email);
         if (user != null) {
             return new AuthenticatedUser(
-                user.getId().toString(),
-                user.getRole().name(),
-                "USER"
+                    user.getId().toString(),
+                    user.getRole().name(),
+                    "USER"
             );
         }
-        
+
         var shop = shopRepository.findByEmail(email);
         if (shop.isPresent()) {
             return new AuthenticatedUser(
-                shop.get().getId().toString(),
-                "SHOP_OWNER",
-                "SHOP"
+                    shop.get().getId().toString(),
+                    "SHOP_OWNER",
+                    "SHOP"
             );
         }
-        
+
         return null;
     }
-    
+
 
     private static class AuthenticatedUser {
         private final String userId;
         private final String role;
         private final String userType;
-        
+
         public AuthenticatedUser(String userId, String role, String userType) {
             this.userId = userId;
             this.role = role;
             this.userType = userType;
         }
-        
+
         public String getUserId() { return userId; }
         public String getRole() { return role; }
         public String getUserType() { return userType; }

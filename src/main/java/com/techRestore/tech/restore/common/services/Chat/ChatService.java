@@ -1,224 +1,154 @@
 package com.techRestore.tech.restore.common.services.Chat;
 
-
-import com.techRestore.tech.restore.common.dto.chat.*;
+import com.techRestore.tech.restore.common.dto.chat.ChatMessageDTO;
 import com.techRestore.tech.restore.common.model.entities.*;
-import com.techRestore.tech.restore.common.repository.*;
+import com.techRestore.tech.restore.common.repository.ChatMessageRepository;
+import com.techRestore.tech.restore.common.repository.ChatSessionRepository;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
 import com.techRestore.tech.restore.user.repository.UserRepository;
-
 import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Transactional
+@RequiredArgsConstructor
+@Slf4j
 public class ChatService {
 
-    private final ChatSessionRepository chatSessionRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final ChatSessionRepository chatSessionRepository;
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
-    private final SimpMessagingTemplate messagingTemplate;
 
-    public ChatResponse startChat(UUID userId, UUID shopId) {
-        try {
-            User user = userRepository.findById(userId)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
-            
-            Shop shop = shopRepository.findById(shopId)
-                    .orElseThrow(() -> new RuntimeException("Shop not found"));
+    public ChatSession getOrCreateChatSession(UUID userId, UUID shopId) {
+        log.debug("Getting or creating chat session for user: {} and shop: {}", userId, shopId);
 
-            Optional<ChatSession> existingSession = chatSessionRepository
-                    .findActiveSessionBetweenUserAndShop(user, shop);
-
-            if (existingSession.isPresent()) {
-                ChatSessionDTO sessionDTO = convertToSessionDTO(existingSession.get());
-                return ChatResponse.success("Chat session already exists", sessionDTO);
+        Optional<ChatSession> existingSession = chatSessionRepository.findByUserIdAndShopId(userId, shopId);
+        if (existingSession.isPresent()) {
+            ChatSession session = existingSession.get();
+            if (!session.isActive()) {
+                session.setActive(true);
+                session.setEndedAt(null);
+                return chatSessionRepository.save(session);
             }
-
-            ChatSession chatSession = new ChatSession();
-            chatSession.setUser(user);
-            chatSession.setShop(shop);
-            chatSession.setActive(true);
-
-            chatSession = chatSessionRepository.save(chatSession);
-
-            ChatSessionDTO sessionDTO = convertToSessionDTO(chatSession);
-            messagingTemplate.convertAndSendToUser(
-                    shop.getEmail(),
-                    "/queue/chat/new-session",
-                    sessionDTO
-            );
-
-            return ChatResponse.success("Chat started successfully", sessionDTO);
-
-        } catch (Exception e) {
-            return ChatResponse.error("Failed to start chat: " + e.getMessage());
+            return session;
         }
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+        Shop shop = shopRepository.findById(shopId)
+                .orElseThrow(() -> new IllegalArgumentException("Shop not found: " + shopId));
+
+        ChatSession newSession = new ChatSession();
+        newSession.setUser(user);
+        newSession.setShop(shop);
+        newSession.setActive(true);
+        newSession.setCreatedAt(LocalDateTime.now());
+
+        return chatSessionRepository.save(newSession);
     }
 
-    public ChatResponse sendMessage(UUID senderId, String senderType, SendMessageRequest request) {
-        try {
-            ChatSession chatSession = chatSessionRepository.findById(request.getSessionId())
-                    .orElseThrow(() -> new RuntimeException("Chat session not found"));
+    public ChatMessageDTO saveChatMessage(UUID userId, UUID shopId, String message, ChatMessage.SenderType senderType) {
+        log.debug("Saving chat message from {} to session (user: {}, shop: {})", senderType, userId, shopId);
+        log.info("Saving message: userId={}, shopId={}, senderType={}, content={}", userId, shopId, senderType, message);
 
-            if (!chatSession.isActive()) {
-                return ChatResponse.error("Chat session is not active");
-            }
+        ChatSession chatSession = getOrCreateChatSession(userId, shopId);
 
-            boolean isValidSender = (senderType.equals("USER") && chatSession.getUser().getId().equals(senderId)) ||
-                                  (senderType.equals("SHOP") && chatSession.getShop().getId().equals(senderId));
+        ChatMessage chatMessage = new ChatMessage();
+        chatMessage.setChatSession(chatSession);
+        chatMessage.setSenderId(senderType == ChatMessage.SenderType.USER ? userId : shopId);
+        chatMessage.setSenderType(senderType);
+        chatMessage.setContent(message);
+        chatMessage.setCreatedAt(LocalDateTime.now());
 
-            if (!isValidSender) {
-                return ChatResponse.error("Unauthorized to send message in this chat");
-            }
-
-            ChatMessage message = new ChatMessage();
-            message.setChatSession(chatSession);
-            message.setSenderId(senderId);
-            message.setSenderType(ChatMessage.SenderType.valueOf(senderType));
-            message.setContent(request.getContent());
-
-            message = chatMessageRepository.save(message);
-
-            ChatMessageDTO messageDTO = convertToMessageDTO(message);
-
-            messagingTemplate.convertAndSendToUser(
-                    chatSession.getUser().getEmail(),
-                    "/queue/chat/messages/" + chatSession.getId(),
-                    messageDTO
-            );
-
-            messagingTemplate.convertAndSendToUser(
-                    chatSession.getShop().getEmail(),
-                    "/queue/chat/messages/" + chatSession.getId(),
-                    messageDTO
-            );
-
-            return ChatResponse.success("Message sent successfully", messageDTO);
-
-        } catch (Exception e) {
-            return ChatResponse.error("Failed to send message: " + e.getMessage());
-        }
+        ChatMessage savedMessage = chatMessageRepository.save(chatMessage);
+        return convertToDTO(savedMessage, chatSession);
     }
 
-    public ChatResponse endChat(UUID userId, String userType, UUID sessionId) {
-        try {
-            ChatSession chatSession = chatSessionRepository.findById(sessionId)
-                    .orElseThrow(() -> new RuntimeException("Chat session not found"));
+    public List<ChatMessageDTO> getChatMessages(UUID userId, UUID shopId) {
+        log.debug("Fetching chat messages for user: {} and shop: {}", userId, shopId);
 
-            boolean canEnd = (userType.equals("USER") && chatSession.getUser().getId().equals(userId)) ||
-                           (userType.equals("SHOP") && chatSession.getShop().getId().equals(userId));
+        ChatSession chatSession = chatSessionRepository.findByUserIdAndShopId(userId, shopId)
+                .orElseThrow(() -> new IllegalArgumentException("Chat session not found"));
 
-            if (!canEnd) {
-                return ChatResponse.error("Unauthorized to end this chat");
-            }
-
-            chatSession.endChat();
-            chatSessionRepository.save(chatSession);
-
-            messagingTemplate.convertAndSendToUser(
-                    chatSession.getUser().getEmail(),
-                    "/queue/chat/ended/" + sessionId,
-                    "Chat ended"
-            );
-
-            messagingTemplate.convertAndSendToUser(
-                    chatSession.getShop().getEmail(),
-                    "/queue/chat/ended/" + sessionId,
-                    "Chat ended"
-            );
-
-            return ChatResponse.success("Chat ended successfully", null);
-
-        } catch (Exception e) {
-            return ChatResponse.error("Failed to end chat: " + e.getMessage());
-        }
-    }
-
-    public List<ChatSessionDTO> getUserActiveSessions(UUID userId) {
-        List<ChatSession> sessions = chatSessionRepository.findActiveSessionsByUserId(userId);
-        return sessions.stream()
-                .map(this::convertToSessionDTO)
-                .collect(Collectors.toList());
-    }
-
-    public List<ChatSessionDTO> getShopActiveSessions(UUID shopId) {
-        List<ChatSession> sessions = chatSessionRepository.findActiveSessionsByShopId(shopId);
-        return sessions.stream()
-                .map(this::convertToSessionDTO)
-                .collect(Collectors.toList());
-    }
-
-    public List<ChatMessageDTO> getSessionMessages(UUID sessionId) {
-        List<ChatMessage> messages = chatMessageRepository.findByChatSessionIdOrderByCreatedAt(sessionId);
+        List<ChatMessage> messages = chatMessageRepository.findByChatSessionIdOrderByCreatedAt(chatSession.getId());
         return messages.stream()
-                .map(this::convertToMessageDTO)
+                .map(msg -> convertToDTO(msg, chatSession))
                 .collect(Collectors.toList());
     }
 
-    private ChatSessionDTO convertToSessionDTO(ChatSession session) {
-        ChatSessionDTO dto = new ChatSessionDTO();
-        dto.setId(session.getId());
-        dto.setUserId(session.getUser().getId());
-        dto.setUserName(session.getUser().getDisplayName());
-        dto.setShopId(session.getShop().getId());
-        dto.setShopName(session.getShop().getName());
-        dto.setActive(session.isActive());
-        dto.setCreatedAt(session.getCreatedAt());
+    public Page<ChatMessageDTO> getChatMessagesPaginated(UUID userId, UUID shopId, Pageable pageable) {
+        log.debug("Fetching paginated chat messages for user: {} and shop: {}", userId, shopId);
 
-        // Get last message if exists
-        if (!session.getMessages().isEmpty()) {
-            ChatMessage lastMessage = session.getMessages().get(session.getMessages().size() - 1);
-            dto.setLastMessage(convertToMessageDTO(lastMessage));
-        }
+        ChatSession chatSession = chatSessionRepository.findByUserIdAndShopId(userId, shopId)
+                .orElseThrow(() -> new IllegalArgumentException("Chat session not found"));
 
-        return dto;
+        Page<ChatMessage> messagesPage = chatMessageRepository.findByChatSessionOrderByCreatedAtDesc(chatSession, pageable);
+        return messagesPage.map(msg -> convertToDTO(msg, chatSession));
     }
 
-    public boolean hasAccessToSession(UUID sessionId, UUID userId, String userType) {
-        try {
-            ChatSession session = chatSessionRepository.findById(sessionId)
-                    .orElse(null);
-            
-            if (session == null) {
-                return false;
-            }
+    public void markMessagesAsRead(UUID userId, UUID shopId, ChatMessage.SenderType readerType) {
+        log.debug("Marking messages as read in chat between user: {} and shop: {}", userId, shopId);
 
-            if (userType.equals("USER")) {
-                return session.getUser().getId().equals(userId);
-            } else if (userType.equals("SHOP")) {
-                return session.getShop().getId().equals(userId);
-            }
+        ChatSession chatSession = chatSessionRepository.findByUserIdAndShopId(userId, shopId)
+                .orElseThrow(() -> new IllegalArgumentException("Chat session not found"));
 
-            return false;
-        } catch (Exception e) {
-            return false;
-        }
+        ChatMessage.SenderType messageSenderType = (readerType == ChatMessage.SenderType.USER)
+                ? ChatMessage.SenderType.SHOP : ChatMessage.SenderType.USER;
+
+        List<ChatMessage> unreadMessages = chatMessageRepository.findByChatSessionAndSenderTypeAndIsReadFalse(
+                chatSession,
+                messageSenderType);
+
+        unreadMessages.forEach(msg -> {
+            msg.setRead(true);
+            msg.setReadAt(LocalDateTime.now());
+        });
+
+        chatMessageRepository.saveAll(unreadMessages);
+        log.info("Marked {} messages as read", unreadMessages.size());
     }
 
-    private ChatMessageDTO convertToMessageDTO(ChatMessage message) {
-        ChatMessageDTO dto = new ChatMessageDTO();
-        dto.setId(message.getId());
-        dto.setSessionId(message.getChatSession().getId());
-        dto.setSenderId(message.getSenderId());
-        dto.setSenderType(message.getSenderType().name());
-        dto.setContent(message.getContent());
-        dto.setCreatedAt(message.getCreatedAt());
+    public long getUnreadMessageCount(UUID userId) {
+        log.debug("Getting unread message count for user: {}", userId);
 
-        if (message.getSenderType() == ChatMessage.SenderType.USER) {
-            dto.setSenderName(message.getChatSession().getUser().getDisplayName());
-        } else {
-            dto.setSenderName(message.getChatSession().getShop().getName());
-        }
+        return chatSessionRepository.findByUserId(userId).stream()
+                .mapToLong(session -> chatMessageRepository.countByChatSessionAndIsReadFalse(session))
+                .sum();
+    }
 
-        return dto;
+    public void closeChatSession(UUID userId, UUID shopId) {
+        log.debug("Closing chat session for user: {} and shop: {}", userId, shopId);
+
+        ChatSession chatSession = chatSessionRepository.findByUserIdAndShopId(userId, shopId)
+                .orElseThrow(() -> new IllegalArgumentException("Chat session not found"));
+
+        chatSession.endChat();
+        chatSessionRepository.save(chatSession);
+    }
+
+    private ChatMessageDTO convertToDTO(ChatMessage message, ChatSession session) {
+        return ChatMessageDTO.builder()
+                .id(message.getId())
+                .userId(session.getUser().getId())
+                .userName(session.getUser().getFirst_name() + " " + session.getUser().getLast_name())
+                .shopId(session.getShop().getId())
+                .shopName(session.getShop().getName())
+                .message(message.getContent())
+                .sentBy(message.getSenderType().toString())
+                .createdAt(message.getCreatedAt())
+                .isRead(message.isRead())
+                .readAt(message.getReadAt())
+                .build();
     }
 }
