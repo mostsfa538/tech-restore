@@ -1,212 +1,321 @@
 package com.techRestore.tech.restore.common.controller.chat;
 
-import com.techRestore.tech.restore.common.dto.chat.*;
-import com.techRestore.tech.restore.common.model.entities.Shop;
-import com.techRestore.tech.restore.common.model.entities.User;
-import com.techRestore.tech.restore.common.security.userdetails.ShopPrincipal;
-import com.techRestore.tech.restore.common.security.userdetails.UserPrincipal;
+import com.techRestore.tech.restore.common.dto.chat.ChatMessageDTO;
+import com.techRestore.tech.restore.common.dto.WebSocketMessageDTO;
+import com.techRestore.tech.restore.common.model.entities.ChatMessage;
 import com.techRestore.tech.restore.common.services.Chat.ChatService;
-import com.techRestore.tech.restore.shop.repository.ShopRepository;
-import com.techRestore.tech.restore.user.repository.UserRepository;
-
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Controller
-@RestController
-@RequestMapping("/api/chats")
 @RequiredArgsConstructor
+@Slf4j
 public class ChatController {
 
     private final ChatService chatService;
-    private final UserRepository userRepository;
-    private final ShopRepository shopRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    @PostMapping("/start")
-    public ResponseEntity<ChatResponse> startChat(@RequestBody StartChatRequest request) {
+    @MessageMapping("/chat/user/{userId}/shop/{shopId}")
+    @SendTo("/topic/chat/{userId}/{shopId}")
+    public WebSocketMessageDTO handleChatMessage(
+            @DestinationVariable UUID userId,
+            @DestinationVariable UUID shopId,
+            @Payload WebSocketMessageDTO messageDTO,
+            SimpMessageHeaderAccessor headerAccessor) {
+        log.info("Handling chat message from user: {} to shop: {}", userId, shopId);
+
         try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-            AuthInfo authInfo = extractAuthInfo(auth);
-
-            if (!authInfo.getUserType().equals("USER")) {
-                return ResponseEntity.badRequest()
-                        .body(ChatResponse.error("Only users can start chats with shops"));
-            }
-
-            ChatResponse response = chatService.startChat(authInfo.getUserId(), request.getShopId());
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ChatResponse.error("Failed to start chat: " + e.getMessage()));
-        }
-    }
-
-    @GetMapping("/sessions")
-    public ResponseEntity<List<ChatSessionDTO>> getActiveSessions() {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            AuthInfo authInfo = extractAuthInfo(auth);
-
-            List<ChatSessionDTO> sessions;
-            if (authInfo.getUserType().equals("USER")) {
-                sessions = chatService.getUserActiveSessions(authInfo.getUserId());
+            Authentication sessionAuth = (Authentication) headerAccessor.getSessionAttributes().get("authentication");
+            if (sessionAuth != null) {
+                SecurityContextHolder.getContext().setAuthentication(sessionAuth);
+                log.info("Set authentication from session: {}", sessionAuth.getName());
+                log.info("Authorities: {}", sessionAuth.getAuthorities());
             } else {
-                sessions = chatService.getShopActiveSessions(authInfo.getUserId());
+                throw new SecurityException("No authentication found in session");
             }
 
-            return ResponseEntity.ok(sessions);
+            String senderType = determineSenderType();
 
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(List.of());
-        }
-    }
+            String principalName = null;
 
-    @GetMapping("/{sessionId}/messages")
-    public ResponseEntity<List<ChatMessageDTO>> getSessionMessages(@PathVariable UUID sessionId) {
-        try {
-
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            AuthInfo authInfo = extractAuthInfo(auth);
-
-            if (!chatService.hasAccessToSession(sessionId, authInfo.getUserId(), authInfo.getUserType())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(List.of());
-            }
-
-            List<ChatMessageDTO> messages = chatService.getSessionMessages(sessionId);
-            return ResponseEntity.ok(messages);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(List.of());
-        }
-    }
-
-    @PostMapping("/{sessionId}/end")
-    public ResponseEntity<ChatResponse> endChat(@PathVariable UUID sessionId) {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            AuthInfo authInfo = extractAuthInfo(auth);
-
-            ChatResponse response = chatService.endChat(authInfo.getUserId(), authInfo.getUserType(), sessionId);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ChatResponse.error("Failed to end chat: " + e.getMessage()));
-        }
-    }
-
-    @MessageMapping("/chat/send")
-    public void sendMessage(@Payload SendMessageRequest request, SimpMessageHeaderAccessor headerAccessor) {
-        try {
-            System.out.println("WebSocket sendMessage - Session attributes: " + headerAccessor.getSessionAttributes());
-
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            System.out.println("WebSocket sendMessage - SecurityContext Authentication: "
-                    + (auth != null ? auth.getName() : "null"));
-
-            if (auth == null || !auth.isAuthenticated()) {
-                System.out.println("WebSocket sendMessage - SecurityContext empty, checking session attributes");
-
-                String userEmail = (String) headerAccessor.getSessionAttributes().get("userEmail");
-                String userId = (String) headerAccessor.getSessionAttributes().get("userId");
+            if (headerAccessor.getUser() != null) {
+                principalName = headerAccessor.getUser().getName();
+            } else {
                 String userType = (String) headerAccessor.getSessionAttributes().get("userType");
-
-                if (userEmail != null && userId != null && userType != null) {
-                    AuthInfo authInfo = new AuthInfo(UUID.fromString(userId), userType, userEmail);
-                    System.out.println("WebSocket sendMessage - Using session AuthInfo: " + authInfo.getUserId() + ", "
-                            + authInfo.getUserType());
-
-                    chatService.sendMessage(authInfo.getUserId(), authInfo.getUserType(), request);
-                    System.out.println("WebSocket sendMessage - Message sent successfully using session data");
-                    return;
-                } else {
-                    System.err.println(
-                            "WebSocket sendMessage - No authentication found in SecurityContext or session attributes");
-                    return;
+                String userIdFromSession = (String) headerAccessor.getSessionAttributes().get("userId");
+                if (userType != null && userIdFromSession != null) {
+                    principalName = userType + "-" + userIdFromSession;
                 }
             }
 
-            AuthInfo authInfo = extractAuthInfo(auth);
+            if (principalName == null) {
+                throw new SecurityException("Unable to determine principal");
+            }
 
-            chatService.sendMessage(authInfo.getUserId(), authInfo.getUserType(), request);
+            log.info("Principal name: {}", principalName);
 
+            int firstHyphen = principalName.indexOf("-");
+            if (firstHyphen == -1) {
+                throw new SecurityException("Invalid principal format");
+            }
+
+            String authType = principalName.substring(0, firstHyphen);
+            String authIdString = principalName.substring(firstHyphen + 1);
+            UUID authId = UUID.fromString(authIdString);
+
+            log.info("Auth type: {}, Auth ID: {}", authType, authId);
+
+            if ("USER".equals(senderType)) {
+                if (!authId.equals(userId)) {
+                    throw new SecurityException("Unauthorized: Mismatched user ID");
+                }
+            } else if ("SHOP".equals(senderType)) {
+                if (!authId.equals(shopId)) {
+                    throw new SecurityException("Unauthorized: Mismatched shop ID");
+                }
+            }
+
+            log.info("Received payload: {}", messageDTO.getPayload());
+
+            ChatMessageDTO savedMessage = chatService.saveChatMessage(
+                    userId,
+                    shopId,
+                    messageDTO.getPayload() != null ? messageDTO.getPayload().toString() : "",
+                    ChatMessage.SenderType.valueOf(senderType));
+
+            return WebSocketMessageDTO.builder()
+                    .type("CHAT")
+                    .action("SEND")
+                    .payload(savedMessage)
+                    .senderId(messageDTO.getSenderId())
+                    .senderType(senderType)
+                    .recipientId(messageDTO.getRecipientId())
+                    .status("SUCCESS")
+                    .timestamp(LocalDateTime.now())
+                    .build();
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error handling chat message", e);
+            return WebSocketMessageDTO.builder()
+                    .type("CHAT")
+                    .action("SEND")
+                    .status("ERROR")
+                    .message(e.getMessage())
+                    .timestamp(LocalDateTime.now())
+                    .build();
         }
     }
 
-    private AuthInfo extractAuthInfo(Authentication auth) {
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new RuntimeException("User not authenticated");
-        }
+    @MessageMapping("/chat/{userId}/{shopId}/read")
+    public void handleMarkAsRead(
+            @DestinationVariable UUID userId,
+            @DestinationVariable UUID shopId,
+            @Payload WebSocketMessageDTO messageDTO,
+            SimpMessageHeaderAccessor headerAccessor) {
+        log.info("Marking messages as read for user: {} and shop: {}", userId, shopId);
 
-        String username = auth.getName();
-        Object principal = auth.getPrincipal();
-
-        UUID userId;
-        String userType;
-
-        if (principal instanceof UserPrincipal userPrincipal) {
-            userId = userPrincipal.getUser().getId();
-            userType = "USER";
-        } else if (principal instanceof ShopPrincipal shopPrincipal) {
-            userId = shopPrincipal.getShop().getId();
-            userType = "SHOP";
-        } else {
-            User user = userRepository.findByEmail(username);
-            if (user != null) {
-                userId = user.getId();
-                userType = "USER";
+        try {
+            Authentication sessionAuth = (Authentication) headerAccessor.getSessionAttributes().get("authentication");
+            if (sessionAuth != null) {
+                SecurityContextHolder.getContext().setAuthentication(sessionAuth);
             } else {
-                Shop shop = shopRepository.findByEmail(username).orElse(null);
-                if (shop != null) {
-                    userId = shop.getId();
-                    userType = "SHOP";
-                } else {
-                    throw new RuntimeException("Unable to identify user from authentication");
+                throw new SecurityException("No authentication found in session");
+            }
+
+            String senderType = determineSenderType();
+
+            String principalName = null;
+            if (headerAccessor.getUser() != null) {
+                principalName = headerAccessor.getUser().getName();
+            } else {
+                String userType = (String) headerAccessor.getSessionAttributes().get("userType");
+                String userIdFromSession = (String) headerAccessor.getSessionAttributes().get("userId");
+                if (userType != null && userIdFromSession != null) {
+                    principalName = userType + "-" + userIdFromSession;
                 }
             }
-        }
 
-        return new AuthInfo(userId, userType, username);
+            if (principalName != null) {
+                int firstHyphen = principalName.indexOf("-");
+                if (firstHyphen != -1) {
+                    String authType = principalName.substring(0, firstHyphen);
+                    String authIdString = principalName.substring(firstHyphen + 1);
+                    UUID authId = UUID.fromString(authIdString);
+
+                    if ("USER".equals(senderType)) {
+                        if (!authId.equals(userId)) {
+                            throw new SecurityException("Unauthorized: Mismatched user ID");
+                        }
+                    } else if ("SHOP".equals(senderType)) {
+                        if (!authId.equals(shopId)) {
+                            throw new SecurityException("Unauthorized: Mismatched shop ID");
+                        }
+                    }
+                }
+            }
+
+            chatService.markMessagesAsRead(userId, shopId, ChatMessage.SenderType.valueOf(senderType));
+
+            messagingTemplate.convertAndSend(
+                    "/topic/chat/" + userId + "/" + shopId,
+                    WebSocketMessageDTO.builder()
+                            .type("READ_RECEIPT")
+                            .action("READ")
+                            .senderId(messageDTO.getSenderId())
+                            .senderType(senderType)
+                            .recipientId(messageDTO.getRecipientId())
+                            .status("SUCCESS")
+                            .timestamp(LocalDateTime.now())
+                            .build());
+        } catch (Exception e) {
+            log.error("Error marking messages as read", e);
+        }
     }
 
-    private static class AuthInfo {
-        private final UUID userId;
-        private final String userType;
-        private final String username;
+    @MessageMapping("/chat/{userId}/{shopId}/typing")
+    public void handleTypingIndicator(
+            @DestinationVariable UUID userId,
+            @DestinationVariable UUID shopId,
+            @Payload WebSocketMessageDTO messageDTO,
+            SimpMessageHeaderAccessor headerAccessor) {
+        log.debug("Typing indicator from user: {} to shop: {}", userId, shopId);
 
-        public AuthInfo(UUID userId, String userType, String username) {
-            this.userId = userId;
-            this.userType = userType;
-            this.username = username;
-        }
+        try {
+            Authentication sessionAuth = (Authentication) headerAccessor.getSessionAttributes().get("authentication");
+            if (sessionAuth != null) {
+                SecurityContextHolder.getContext().setAuthentication(sessionAuth);
+            } else {
+                throw new SecurityException("No authentication found in session");
+            }
 
-        public UUID getUserId() {
-            return userId;
-        }
+            String senderType = determineSenderType();
 
-        public String getUserType() {
-            return userType;
-        }
+            String principalName = null;
+            if (headerAccessor.getUser() != null) {
+                principalName = headerAccessor.getUser().getName();
+            } else {
+                String userType = (String) headerAccessor.getSessionAttributes().get("userType");
+                String userIdFromSession = (String) headerAccessor.getSessionAttributes().get("userId");
+                if (userType != null && userIdFromSession != null) {
+                    principalName = userType + "-" + userIdFromSession;
+                }
+            }
 
-        public String getUsername() {
-            return username;
+            if (principalName != null) {
+                int firstHyphen = principalName.indexOf("-");
+                if (firstHyphen != -1) {
+                    String authIdString = principalName.substring(firstHyphen + 1);
+                    UUID authId = UUID.fromString(authIdString);
+
+                    if ("USER".equals(senderType) && !authId.equals(userId)) {
+                        throw new SecurityException("Unauthorized: Mismatched user ID");
+                    } else if ("SHOP".equals(senderType) && !authId.equals(shopId)) {
+                        throw new SecurityException("Unauthorized: Mismatched shop ID");
+                    }
+                }
+            }
+
+            messagingTemplate.convertAndSend(
+                    "/topic/chat/" + userId + "/" + shopId,
+                    WebSocketMessageDTO.builder()
+                            .type("TYPING")
+                            .action("TYPING_START")
+                            .senderId(messageDTO.getSenderId())
+                            .senderType(senderType)
+                            .recipientId(messageDTO.getRecipientId())
+                            .timestamp(LocalDateTime.now())
+                            .build());
+        } catch (Exception e) {
+            log.error("Error handling typing indicator", e);
         }
+    }
+
+    @MessageMapping("/chat/{userId}/{shopId}/end")
+    public void handleEndChat(
+            @DestinationVariable UUID userId,
+            @DestinationVariable UUID shopId,
+            SimpMessageHeaderAccessor headerAccessor) {
+        log.info("Ending chat session for user: {} and shop: {}", userId, shopId);
+
+        try {
+            // Get authentication from session
+            Authentication sessionAuth = (Authentication) headerAccessor.getSessionAttributes().get("authentication");
+            if (sessionAuth != null) {
+                SecurityContextHolder.getContext().setAuthentication(sessionAuth);
+            } else {
+                throw new SecurityException("No authentication found in session");
+            }
+
+            String senderType = determineSenderType();
+
+            // Get principal and validate
+            String principalName = null;
+            if (headerAccessor.getUser() != null) {
+                principalName = headerAccessor.getUser().getName();
+            } else {
+                String userType = (String) headerAccessor.getSessionAttributes().get("userType");
+                String userIdFromSession = (String) headerAccessor.getSessionAttributes().get("userId");
+                if (userType != null && userIdFromSession != null) {
+                    principalName = userType + "-" + userIdFromSession;
+                }
+            }
+
+            if (principalName != null) {
+                // Parse principal name correctly
+                int firstHyphen = principalName.indexOf("-");
+                if (firstHyphen != -1) {
+                    String authIdString = principalName.substring(firstHyphen + 1);
+                    UUID authId = UUID.fromString(authIdString);
+
+                    if ("USER".equals(senderType) && !authId.equals(userId)) {
+                        throw new SecurityException("Unauthorized: Mismatched user ID");
+                    } else if ("SHOP".equals(senderType) && !authId.equals(shopId)) {
+                        throw new SecurityException("Unauthorized: Mismatched shop ID");
+                    }
+                }
+            }
+
+            chatService.closeChatSession(userId, shopId);
+
+            messagingTemplate.convertAndSend(
+                    "/topic/chat/" + userId + "/" + shopId,
+                    WebSocketMessageDTO.builder()
+                            .type("CHAT")
+                            .action("CLOSED")
+                            .status("SUCCESS")
+                            .message("Chat session closed")
+                            .timestamp(LocalDateTime.now())
+                            .build());
+        } catch (Exception e) {
+            log.error("Error ending chat session", e);
+        }
+    }
+
+    private String determineSenderType() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null) {
+            log.debug("Determining sender type. Authorities: {}", auth.getAuthorities());
+
+            if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_SHOP_OWNER"))) {
+                return "SHOP";
+            } else if (auth.getAuthorities().stream().anyMatch(a ->
+                    a.getAuthority().equals("ROLE_USER") ||
+                            a.getAuthority().equals("ROLE_GUEST"))) {
+                return "USER";
+            }
+        }
+        throw new SecurityException("Unable to determine sender type. Authorities: " +
+                (auth != null ? auth.getAuthorities() : "No authentication"));
     }
 }

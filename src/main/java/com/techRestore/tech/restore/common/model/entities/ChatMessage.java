@@ -42,6 +42,12 @@ public class ChatMessage {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
+    @Column(name = "is_read")
+    private boolean isRead = false;
+
+    @Column(name = "read_at")
+    private LocalDateTime readAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -51,4 +57,3 @@ public class ChatMessage {
         USER, SHOP
     }
 }
-

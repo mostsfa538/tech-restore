@@ -13,13 +13,22 @@ import java.util.UUID;
 
 @Repository
 public interface ChatSessionRepository extends JpaRepository<ChatSession, UUID> {
-    
+
     @Query("SELECT cs FROM ChatSession cs WHERE cs.user = :user AND cs.shop = :shop AND cs.isActive = true")
     Optional<ChatSession> findActiveSessionBetweenUserAndShop(@Param("user") User user, @Param("shop") Shop shop);
-    
+
     @Query("SELECT cs FROM ChatSession cs WHERE cs.user.id = :userId AND cs.isActive = true")
     List<ChatSession> findActiveSessionsByUserId(@Param("userId") UUID userId);
-    
+
     @Query("SELECT cs FROM ChatSession cs WHERE cs.shop.id = :shopId AND cs.isActive = true")
     List<ChatSession> findActiveSessionsByShopId(@Param("shopId") UUID shopId);
+
+    @Query("SELECT cs FROM ChatSession cs WHERE cs.user.id = :userId AND cs.shop.id = :shopId")
+    Optional<ChatSession> findByUserIdAndShopId(@Param("userId") UUID userId, @Param("shopId") UUID shopId);
+
+    @Query("SELECT cs FROM ChatSession cs WHERE cs.user.id = :userId AND cs.isActive = true")
+    List<ChatSession> findByUserId(@Param("userId") UUID userId);
+
+    @Query("SELECT cs FROM ChatSession cs WHERE cs.shop.id = :shopId AND cs.isActive = true")
+    List<ChatSession> findByShopId(@Param("shopId") UUID shopId);
 }
