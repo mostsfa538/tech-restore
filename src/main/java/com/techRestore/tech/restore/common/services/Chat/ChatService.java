@@ -1,15 +1,18 @@
 package com.techRestore.tech.restore.common.services.Chat;
 
 import com.techRestore.tech.restore.common.dto.chat.ChatMessageDTO;
+import com.techRestore.tech.restore.common.dto.chat.ChatSessionDTO;
 import com.techRestore.tech.restore.common.model.entities.*;
 import com.techRestore.tech.restore.common.repository.ChatMessageRepository;
 import com.techRestore.tech.restore.common.repository.ChatSessionRepository;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
 import com.techRestore.tech.restore.user.repository.UserRepository;
+import com.techRestore.tech.restore.user.service.AuthUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +32,7 @@ public class ChatService {
     private final ChatSessionRepository chatSessionRepository;
     private final UserRepository userRepository;
     private final ShopRepository shopRepository;
+    private final AuthUtil authUtil;
 
     public ChatSession getOrCreateChatSession(UUID userId, UUID shopId) {
         log.debug("Getting or creating chat session for user: {} and shop: {}", userId, shopId);
@@ -136,6 +140,50 @@ public class ChatService {
         chatSession.endChat();
         chatSessionRepository.save(chatSession);
     }
+
+    @Transactional(readOnly = true)
+    public List<ChatSessionDTO> getSessionsForCurrentUser() {
+        UUID userId = authUtil.getCurrentUser().getId();
+        List<ChatSession> sessions = chatSessionRepository.findByUserId(userId);
+
+        return sessions.stream()
+                .map(this::toSessionDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<ChatSessionDTO> getSessionsForCurrentShop() {
+        UUID shopId = authUtil.getCurrentShop().getId() ;
+        List<ChatSession> sessions = chatSessionRepository.findByShopId(shopId);
+
+        return sessions.stream()
+                .map(this::toSessionDTO)
+                .collect(Collectors.toList());
+    }
+
+
+
+
+    private ChatSessionDTO toSessionDTO(ChatSession session) {
+        ChatSessionDTO dto = new ChatSessionDTO();
+        dto.setId(session.getId());
+        dto.setUserId(session.getUser().getId());
+        dto.setUserName(
+                session.getUser().getFirst_name() + " " + session.getUser().getLast_name()
+        );
+        dto.setShopId(session.getShop().getId());
+        dto.setShopName(session.getShop().getName());
+        dto.setActive(session.isActive());
+        dto.setCreatedAt(session.getCreatedAt());
+        chatMessageRepository
+                .findTopByChatSessionOrderByCreatedAtDesc(session)
+                .ifPresent(msg ->
+                        dto.setLastMessage(convertToDTO(msg, session))
+                );
+
+        return dto;
+    }
+
 
     private ChatMessageDTO convertToDTO(ChatMessage message, ChatSession session) {
         return ChatMessageDTO.builder()
