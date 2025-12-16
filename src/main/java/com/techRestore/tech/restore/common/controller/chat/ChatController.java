@@ -309,9 +309,7 @@ public class ChatController {
 
             if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_SHOP_OWNER"))) {
                 return "SHOP";
-            } else if (auth.getAuthorities().stream().anyMatch(a ->
-                    a.getAuthority().equals("ROLE_USER") ||
-                            a.getAuthority().equals("ROLE_GUEST"))) {
+            } else if (auth.getAuthorities().stream().anyMatch(a ->  a.getAuthority().equals("ROLE_GUEST"))) {
                 return "USER";
             }
         }

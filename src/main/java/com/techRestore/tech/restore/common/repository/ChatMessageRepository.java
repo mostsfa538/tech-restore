@@ -1,6 +1,7 @@
 package com.techRestore.tech.restore.common.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -37,5 +38,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> 
             ChatSession chatSession,
             SenderType senderType
     );
+
+    Optional<ChatMessage> findTopByChatSessionOrderByCreatedAtDesc(ChatSession session);
 
 }

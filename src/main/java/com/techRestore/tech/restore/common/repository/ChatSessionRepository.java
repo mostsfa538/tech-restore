@@ -26,9 +26,7 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, UUID> 
     @Query("SELECT cs FROM ChatSession cs WHERE cs.user.id = :userId AND cs.shop.id = :shopId")
     Optional<ChatSession> findByUserIdAndShopId(@Param("userId") UUID userId, @Param("shopId") UUID shopId);
 
-    @Query("SELECT cs FROM ChatSession cs WHERE cs.user.id = :userId AND cs.isActive = true")
-    List<ChatSession> findByUserId(@Param("userId") UUID userId);
+    List<ChatSession> findByUserId(UUID userId);
 
-    @Query("SELECT cs FROM ChatSession cs WHERE cs.shop.id = :shopId AND cs.isActive = true")
-    List<ChatSession> findByShopId(@Param("shopId") UUID shopId);
+    List<ChatSession> findByShopId(UUID shopId);
 }
