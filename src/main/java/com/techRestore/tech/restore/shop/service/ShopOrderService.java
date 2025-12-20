@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import com.techRestore.tech.restore.common.services.emailVerification.OrderEmailService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -39,17 +40,20 @@ public class ShopOrderService extends BaseService<Order, UUID> {
     private final ProductRepository productRepository;
     private final NotificationService notificationService;
     private final UserRepository userRepository;
+    private final OrderEmailService orderEmailService;
 
     public ShopOrderService(OrderRepository orderRepository, ShopRepository shopRepository,
             OrderItemRepository orderItemRepository, ProductRepository productRepository,
             NotificationService notificationService
-            ,UserRepository userRepository) {
+            ,UserRepository userRepository
+            ,OrderEmailService orderEmailService) {
         super(orderRepository);
         this.shopRepository = shopRepository;
         this.orderItemRepository = orderItemRepository;
         this.productRepository = productRepository;
         this.notificationService = notificationService;
         this.userRepository=userRepository;
+        this.orderEmailService=orderEmailService;
     }
 
     private UUID getCurrentShopId() {

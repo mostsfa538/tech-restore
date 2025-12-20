@@ -1,7 +1,10 @@
 package com.techRestore.tech.restore.shop.service;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.techRestore.tech.restore.common.model.entities.Order;
+import com.techRestore.tech.restore.common.services.emailVerification.OrderEmailService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,12 +31,14 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
 
     private final ShopRepository shopRepository;
     private final NotificationService notificationService;
+    private final OrderEmailService orderEmailService;
 
     public ShopRepairService(RepairRequestRepository repairRequestRepository, ShopRepository shopRepository,
-            NotificationService notificationService) {
+                             NotificationService notificationService, OrderEmailService orderEmailService) {
         super(repairRequestRepository);
         this.shopRepository = shopRepository;
         this.notificationService = notificationService;
+        this.orderEmailService=orderEmailService;
     }
 
     /**
@@ -73,6 +78,7 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
                 "Price for repair request " + id + " has been updated to " + repairPriceUpdateDto.price());
     }
 
+    @Transactional
     public void setStatus(UUID id, RepairStatusDto repairStatusDto) {
         RepairRequest repairRequest = findByIdOrThrow(id, "Repair request");
         RepairStatus current = repairRequest.getStatus();
@@ -107,6 +113,13 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
     }
 
     private void handleNotifications(RepairRequest request, RepairStatus newStatus) {
+        String customerEmail = request.getUser().getEmail();
+        String customerName = request.getUser().getFirst_name()+" "+ request.getUser().getLast_name();
+        String repairId=request.getId().toString();
+        String deviceType= request.getCategory().getName();
+        String issueDescription= request.getDescription();
+        LocalDateTime time= LocalDateTime.now();
+        String shopName=request.getShop().getName();
         if (newStatus == RepairStatus.REPAIR_COMPLETED) {
             notificationService.sendToUser(request.getUserId(),
                     "Repair request " + request.getId() + " is now REPAIR_COMPLETED");
@@ -117,6 +130,8 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
                 notificationService.sendToAssigners(
                         "Repair request " + request.getId() + " is ready to be assigned");
             }
+            orderEmailService.sendRepairCompletedEmail(customerEmail,customerName,repairId,deviceType,deviceType,time,shopName,"Please Check your device before pick it up from the delivery or from the shop");
+
         }
     }
 
