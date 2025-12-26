@@ -1,11 +1,9 @@
 package com.techRestore.tech.restore.user.service;
 
+import com.techRestore.tech.restore.admin.repository.CategoryRepository;
 import com.techRestore.tech.restore.common.exception.AccessDeniedException;
 import com.techRestore.tech.restore.common.exception.NotFoundException;
-import com.techRestore.tech.restore.common.model.entities.Payment;
-import com.techRestore.tech.restore.common.model.entities.RepairRequest;
-import com.techRestore.tech.restore.common.model.entities.Shop;
-import com.techRestore.tech.restore.common.model.entities.User;
+import com.techRestore.tech.restore.common.model.entities.*;
 import com.techRestore.tech.restore.common.model.enums.PaymentStatus;
 import com.techRestore.tech.restore.common.model.enums.PaymentType;
 import com.techRestore.tech.restore.common.model.enums.RepairStatus;
@@ -36,6 +34,7 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
     private final NotificationService notificationService;
     private final RepairRequestRepository repairRequestRepository;
     private final AuthUtil authUtil;
+    private final CategoryRepository catRepo;
 
     public RepairRequestService(
             RepairRequestRepository repairRequestRepository,
@@ -44,7 +43,8 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
             ShopRepository shopRepository,
             AddressRepository addressRepository,
             NotificationService notificationService,
-            AuthUtil authUtil) {
+            AuthUtil authUtil,
+            CategoryRepository cateRepo) {
         super(repairRequestRepository);
         this.repairRequestRepository = repairRequestRepository;
         this.paymentRepository = paymentRepository;
@@ -53,6 +53,7 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         this.addressRepository = addressRepository;
         this.notificationService = notificationService;
         this.authUtil = authUtil;
+        this.catRepo=cateRepo;
     }
 
     private UUID getCurrentUserId() {
@@ -119,6 +120,9 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         UUID userId = getCurrentUserId();
 
         Shop shop = getShopOrThrow(shopId);
+        Category cat = catRepo.findById(dto.deviceCategory())
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+
 
         RepairRequest req = new RepairRequest();
         req.setUserId(userId);
@@ -128,6 +132,7 @@ public class RepairRequestService extends BaseService<RepairRequest, UUID> {
         req.setConfirmed(false);
         req.setDeliveryAddress(null);
         req.setDeliveryAddressEntity(null);
+        req.setCategory(cat);
         RepairRequest savedReq = repository.save(req);
 
         notificationService.sendToShop(shopId,
