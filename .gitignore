@@ -1,4 +1,7 @@
 /target/
 /src/main/resources/application.properties
+/orchestration/apps/application-prod.properties
 /.idea/
 .vscode/
+
+.env

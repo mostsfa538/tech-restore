@@ -1,0 +1,15 @@
+services:
+  backend:
+    image: tech-restore:latest
+    ports:
+      - "8000:8000"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    volumes:
+      - ./application.properties:/config/application-prod.properties:ro
+    networks:
+      - proxy
+
+networks:
+  proxy:
+    external: true
