@@ -5,3 +5,14 @@
 .vscode/
 
 .env
+
+# Certifications
+
+cert/*
+certs/*
+!certs/gen.sh
+!cert/gen.sh
+*.pem
+*.crt
+*.cert
+*.key

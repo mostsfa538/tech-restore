@@ -2,7 +2,7 @@ services:
   perms-fixer:
     image: alpine
     volumes:
-      - ./certs:/certs_source:ro
+      - ../certs:/certs_source:ro
       - certs_processed:/certs_ready
     user: root
     command: >
