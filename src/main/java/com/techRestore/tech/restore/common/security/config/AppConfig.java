@@ -193,7 +193,7 @@ public class AppConfig {
                 cookieUtil.addRefreshTokenCookie(response, refreshToken);
 
                 cookieUtil.addClientAccessTokenCookie(response, accessToken);
-                response.sendRedirect("http://localhost:3000/oauth2/success");
+                response.sendRedirect("https://api.tech-restore.net/oauth2/success");
 
             } catch (Exception e) {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
