@@ -29,7 +29,6 @@ public class EmailServices {
   @Value("${spring.mail.username}")
   private String fromEmail;
 
-  @Async
   public void generateAndSendOtp(String email) {
     OtpVerifiable entity = entityRepositoryService.findByEmail(email);
 
@@ -42,6 +41,7 @@ public class EmailServices {
     sendOtpEmail(email);
   }
 
+  @Async
   public void sendOtpEmail(String email) {
     try {
       OtpVerifiable entity = entityRepositoryService.findByEmail(email);
