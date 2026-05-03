@@ -1,0 +1,159 @@
+services:
+  perms-fixer:
+    image: alpine
+    volumes:
+      - ../certs:/certs_source:ro
+      - certs_processed:/certs_ready
+    user: root
+    command: >
+      sh -c "cp /certs_source/* /certs_ready/ &&
+             chown -R 999:999 /certs_ready &&
+             chmod 600 /certs_ready/server.key &&
+             chmod 644 /certs_ready/server.pem"
+  ############################################
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    command:
+      - redis-server
+      - /usr/local/etc/redis/redis.conf
+      - --requirepass ${REDIS_PASSWORD}
+      - --protected-mode yes
+      - --replicaof no one
+      - --tls-port ${REDIS_INTERNAL_PORT_TLS:-6379}
+      - --port ${REDIS_INTERNAL_PORT}
+      - --tls-cert-file /certs_ready/server.crt
+      - --tls-key-file /certs_ready/server.key
+      - --tls-ca-cert-file /certs_ready/server.crt
+      - --tls-auth-clients ${REDIS_TLS_AUTH_CLIENTS:-no}
+    ports:
+      - "${REDIS_PORT:-6380}:6380"
+      - "${REDIS_PORT_TLS:-6379}:${REDIS_INTERNAL_PORT_TLS:-6379}"
+    volumes:
+      - redis_data:/data
+      - ./config/redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - certs_processed:/certs_ready:ro
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    sysctls:
+      - net.core.somaxconn=511
+    depends_on:
+      perms-fixer:
+        condition: service_completed_successfully
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10mb"
+        max-file: "5"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "redis-cli",
+          "-s",
+          "/tmp/redis.sock",
+          "-a",
+          "${REDIS_PASSWORD}",
+          "ping",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    networks:
+      - redis_network
+  ############################################
+  postgres:
+    image: postgres:16
+    container_name: postgres2
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-admin}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB:-prod_db}
+      - PGSSLMODE=${POSTGRES_SSL_MODE:-prefer}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - certs_processed:/certs_ready:ro
+    shm_size: 1gb
+    command:
+      - postgres
+      - "-c"
+      - "shared_buffers=${POSTGRES_SHARED_BUFFERS:-1GB}"
+      - "-c"
+      - "work_mem=${POSTGRES_WORK_MEM:-32MB}"
+      - "-c"
+      - "maintenance_work_mem=${POSTGRES_MAINTENANCE_WORK_MEM:-256MB}"
+      - "-c"
+      - "max_connections=${POSTGRES_MAX_CONNECTIONS:-100}"
+      - "-c"
+      - "wal_level=replica"
+      - "-c"
+      - "hot_standby=on"
+      - "-c"
+      - "logging_collector=on"
+      - "-c"
+      - "log_destination=stderr"
+      - "-c"
+      - "log_min_duration_statement=1000"
+      - "-c"
+      - "ssl=on"
+      - "-c"
+      - "ssl_cert_file=/certs_ready/server.crt"
+      - "-c"
+      - "ssl_key_file=/certs_ready/server.key"
+    depends_on:
+      perms-fixer:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U $${POSTGRES_USER:-admin} -d $${POSTGRES_DB:-prod_db}",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "5"
+    networks:
+      - db
+  ###########
+  databasus:
+    image: databasus/databasus:latest
+    container_name: databasus
+    restart: unless-stopped
+    ports:
+      - "${DATABASUS_UI_PORT:-4005}:4005"
+    volumes:
+      - databasus_data:/databasus-data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - db
+      - proxy
+  ############################################
+
+
+
+networks:
+  db:
+  default:
+  redis_network:
+  proxy:
+    external: true
+
+volumes:
+  databasus_data:
+  redis_data:
+  pg_data:
+  certs_processed:
