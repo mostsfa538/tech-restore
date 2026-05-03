@@ -1,14 +1,32 @@
 services:
   backend:
     image: tech-restore:latest
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
     volumes:
-      - ./application.properties:/config/application-prod.properties:ro
+      - ${PWD}/application.properties:/config/application-prod.properties:ro
     networks:
       - proxy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
+  ui:
+    image: tech-restore-ui:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - proxy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "3"
 
 networks:
   proxy:
