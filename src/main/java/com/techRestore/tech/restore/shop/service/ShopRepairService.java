@@ -130,8 +130,16 @@ public class ShopRepairService extends BaseService<RepairRequest, UUID> {
                 notificationService.sendToAssigners(
                         "Repair request " + request.getId() + " is ready to be assigned");
             }
-            orderEmailService.sendRepairCompletedEmail(customerEmail,customerName,repairId,deviceType,deviceType,time,shopName,"Please Check your device before pick it up from the delivery or from the shop");
-
+            orderEmailService.sendRepairCompletedEmail(
+                    customerEmail,
+                    customerName,
+                    repairId,
+                    deviceType,
+                    issueDescription,
+                    time,
+                    shopName,
+                    "Please Check your device before pick it up from the delivery or from the shop"
+            );
         }
     }
 
