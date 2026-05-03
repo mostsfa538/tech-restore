@@ -138,6 +138,7 @@ public class AppConfig {
     private CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedOrigins(Arrays.asList(
+                "https://tech-restore.net",
                 "http://localhost:4200", // Your existing Angular frontend
                 "http://127.0.0.1:5500", // Your HTML file served by Live Server
                 "http://localhost:5500", // Alternative localhost format
