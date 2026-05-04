@@ -118,4 +118,13 @@ public class SubscriptionController extends BaseController {
         paymentService.updateCashPaymentStatus(paymentId, status);
         return ResponseEntity.ok(Map.of("message", "Subscription payment confirmed"));
     }
+
+    @GetMapping("/renew/status/{shopEmail}")
+    @PreAuthorize("hasRole('')")
+    public ResponseEntity<SubscriptionResponseDto> getSubscriptionStatus(@PathVariable String shopEmail) {
+        Shop shop = shopRepository.findByEmail(shopEmail)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "Shop not found"));
+        SubscriptionResponseDto dto = paymentService.getShopSubscription(shop.getId());
+        return ResponseEntity.ok(dto);
+    }
 }

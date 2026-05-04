@@ -88,7 +88,7 @@ public class PaymentService {
 
         User user = getUserById(userId);
         Payment payment = findPaymentByReferenceId(referenceId);
-        
+
         if (payment == null) {
             payment = createNewPayment(referenceId, paymentType, user);
         } else {
@@ -114,11 +114,11 @@ public class PaymentService {
     public PaymentInitiationDto initiateCardSubscriptionPayment(UUID shopId, SubscriptionRequestDto request) {
         validateSubscriptionRequest(request);
         Shop shop = getShopById(shopId);
-        
+
         if (!shop.isSubscriptionActive()) {
             shop.setActivate(true);
         }
-        
+
         BigDecimal totalAmount = BigDecimal.valueOf(1000).multiply(BigDecimal.valueOf(request.getMonths()));
         Payment payment = createSubscriptionPayment(shopId, request, totalAmount);
 
@@ -188,13 +188,20 @@ public class PaymentService {
     // SUBSCRIPTION
     // ============================================================================
 
-    /** Get current subscription for a shop */
+    /** Get current subscription or pending payment for a shop */
     @Transactional(readOnly = true)
-    public SubscriptionResponseDto getShopSubscription(UUID shopId) { 
-        Subscription subscription = subscriptionRepository
-            .findFirstByShopIdOrderByCreatedAtDesc(shopId)
-            .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "Subscription not found"));
-        return toSubscriptionDto(subscription);
+    public SubscriptionResponseDto getShopSubscription(UUID shopId) {
+        Optional<Subscription> subscription = subscriptionRepository
+                .findFirstByShopIdOrderByCreatedAtDesc(shopId);
+
+        if (subscription.isPresent()) {
+            return toSubscriptionDto(subscription.get());
+        }
+
+        // If no confirmed subscription, check for the latest subscription payment (e.g., PENDING cash)
+        return paymentRepository.findFirstByShopIdAndPaymentTypeOrderByCreatedAtDesc(shopId, PaymentType.SUBSCRIPTION_PAYMENT)
+                .map(this::fromPaymentToSubscriptionDto)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "Subscription not found"));
     }
 
     @Transactional(readOnly = true)
@@ -204,8 +211,8 @@ public class PaymentService {
             throw new CustomException(HttpStatus.NOT_FOUND, "No subscriptions found");
         }
         return subscriptions.stream()
-            .map(this::toSubscriptionDto)
-            .collect(Collectors.toList());
+                .map(this::toSubscriptionDto)
+                .collect(Collectors.toList());
     }
 
     /** Handle Paymob webhook callback */
@@ -217,7 +224,7 @@ public class PaymentService {
     @Transactional
     public void handlePaymentResponse(String success, String orderId, String transactionId) {
         log.info("Payment callback: success={}, orderId={}, transactionId={}", success, orderId, transactionId);
-        
+
         if (!"true".equalsIgnoreCase(success)) {
             log.error("Payment failed: success=false");
             throw new CustomException(HttpStatus.BAD_REQUEST, "Payment failed");
@@ -230,7 +237,7 @@ public class PaymentService {
         if (payment == null && transactionId != null && !transactionId.trim().isEmpty()) {
             payment = paymentRepository.findByTransactionId(transactionId).orElse(null);
         }
-        
+
         if (payment == null) {
             log.error("Payment not found for orderId={} or transactionId={}", orderId, transactionId);
             throw new CustomException(HttpStatus.NOT_FOUND, "Payment not found");
@@ -391,6 +398,16 @@ public class PaymentService {
 
     private String createPaymobOrder(String authToken, Payment payment) {
         RestTemplate restTemplate = new RestTemplate();
+
+        String merchantOrderId = null;
+        if (payment.getOrderId() != null) {
+            merchantOrderId = payment.getOrderId().toString();
+        } else if (payment.getRepairRequestId() != null) {
+            merchantOrderId = payment.getRepairRequestId().toString();
+        } else if (payment.getSubscriptionId() != null) {
+            merchantOrderId = payment.getSubscriptionId().toString();
+        }
+
         JSONObject body = new JSONObject()
                 .put("auth_token", authToken)
                 .put("delivery_needed", false)
@@ -398,6 +415,9 @@ public class PaymentService {
                 .put("currency", "EGP")
                 .put("items", new JSONArray());
 
+        if (merchantOrderId != null) {
+            body.put("merchant_order_id", merchantOrderId);
+        }
         ResponseEntity<String> response = restTemplate.exchange(paymobOrderUrl, HttpMethod.POST,
                 new HttpEntity<>(body.toString(), jsonHeaders()), String.class);
 
@@ -455,16 +475,16 @@ public class PaymentService {
 
         if (address != null) {
             billing.put("street", address.getStreet())
-                .put("building", address.getBuilding())
-                .put("floor", "1")
-                .put("city", address.getCity())
-                .put("state", address.getState());
+                    .put("building", address.getBuilding())
+                    .put("floor", "1")
+                    .put("city", address.getCity())
+                    .put("state", address.getState());
         } else {
             billing.put("street", "Unknown Street")
-                .put("building", "0")
-                .put("floor", "1")
-                .put("city", "Unknown City")
-                .put("state", "Unknown");
+                    .put("building", "0")
+                    .put("floor", "1")
+                    .put("city", "Unknown City")
+                    .put("state", "Unknown");
         }
 
         return billing;
@@ -487,16 +507,16 @@ public class PaymentService {
 
         if (address != null) {
             billing.put("street", address.getStreet())
-                .put("building", address.getBuilding())
-                .put("floor", "1")
-                .put("city", address.getCity())
-                .put("state", address.getState());
+                    .put("building", address.getBuilding())
+                    .put("floor", "1")
+                    .put("city", address.getCity())
+                    .put("state", address.getState());
         } else {
             billing.put("street", shop.getName())
-                .put("building", "0")
-                .put("floor", "1")
-                .put("city", "Cairo")
-                .put("state", "Cairo");
+                    .put("building", "0")
+                    .put("floor", "1")
+                    .put("city", "Cairo")
+                    .put("state", "Cairo");
         }
 
         return billing;
@@ -591,18 +611,18 @@ public class PaymentService {
 
         UUID shopId=payment.getShop().getId();
         Subscription lastSubscription = subscriptionRepository
-            .findFirstByShopIdOrderByCreatedAtDesc(shopId)
-            .orElse(null);
-        
+                .findFirstByShopIdOrderByCreatedAtDesc(shopId)
+                .orElse(null);
+
         int months=payment.getAmount().divide(BigDecimal.valueOf(1000), 0, BigDecimal.ROUND_DOWN).intValue();
 
         LocalDateTime startDate;
         LocalDateTime endDate;
         if (lastSubscription != null && lastSubscription.getEndDate().isAfter(LocalDateTime.now())) {
             startDate = lastSubscription.getEndDate();
-        } 
+        }
         else {
-            startDate = LocalDateTime.now();                        
+            startDate = LocalDateTime.now();
         }
         endDate = startDate.plusMonths(months);
 
@@ -626,8 +646,8 @@ public class PaymentService {
     // Support Methods
     private boolean isSupportedPaymentType(PaymentType paymentType) {
         return paymentType == PaymentType.ORDER_PAYMENT ||
-               paymentType == PaymentType.REPAIR_PAYMENT ||
-               paymentType == PaymentType.SUBSCRIPTION_PAYMENT;
+                paymentType == PaymentType.REPAIR_PAYMENT ||
+                paymentType == PaymentType.SUBSCRIPTION_PAYMENT;
     }
 
     private HttpHeaders jsonHeaders() {
@@ -682,10 +702,34 @@ public class PaymentService {
         dto.setStartDate(subscription.getStartDate());
         dto.setEndDate(subscription.getEndDate());
         dto.setCreatedAt(subscription.getCreatedAt());
+
+        // Populate status from the associated payment if possible
+        if (subscription.getPayment() != null) {
+            dto.setStatus(subscription.getPayment().getPaymentStatus() == PaymentStatus.COMPLETED ? "ACTIVE" : "PENDING");
+            dto.setPaymentStatus(subscription.getPayment().getPaymentStatus().toString());
+            dto.setPaymentMethod(subscription.getPayment().getPaymentMethod().toString());
+        } else {
+            dto.setStatus("ACTIVE");
+            dto.setPaymentStatus("COMPLETED");
+        }
+        return dto;
+    }
+
+    private SubscriptionResponseDto fromPaymentToSubscriptionDto(Payment payment) {
+        SubscriptionResponseDto dto = new SubscriptionResponseDto();
+        dto.setShopId(payment.getShop().getId());
+        dto.setMonths(payment.getAmount().divide(BigDecimal.valueOf(1000), 0, BigDecimal.ROUND_DOWN).intValue());
+        dto.setBaseAmount(BigDecimal.valueOf(1000));
+        dto.setTotalAmount(payment.getAmount());
+        dto.setType(SubscriptionType.COMMISSION);
+        dto.setCreatedAt(payment.getCreatedAt());
+        dto.setStatus("PENDING");
+        dto.setPaymentStatus(payment.getPaymentStatus().toString());
+        dto.setPaymentMethod(payment.getPaymentMethod().toString());
         return dto;
     }
 
     public Page<PaymentDto> getAllPayments(Pageable pageable) {
-      return paymentRepository.findAll(pageable).map(this::toDto);
+        return paymentRepository.findAll(pageable).map(this::toDto);
     }
 }
