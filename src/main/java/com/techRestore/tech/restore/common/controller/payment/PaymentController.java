@@ -3,6 +3,10 @@ package com.techRestore.tech.restore.common.controller.payment;
 import java.util.Map;
 import java.util.UUID;
 
+import com.techRestore.tech.restore.common.exception.CustomException;
+import com.techRestore.tech.restore.common.model.entities.Shop;
+import com.techRestore.tech.restore.shop.dto.subscription.SubscriptionResponseDto;
+import com.techRestore.tech.restore.shop.repository.ShopRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;

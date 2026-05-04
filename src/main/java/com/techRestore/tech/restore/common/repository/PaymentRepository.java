@@ -31,9 +31,9 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     Optional<Payment> findByTransactionId(String transactionId);
 
     boolean existsByOrderIdAndPaymentStatus(UUID orderId, PaymentStatus status);
-    
+
     boolean existsByRepairRequestIdAndPaymentStatus(UUID repairRequestId, PaymentStatus status);
-    
+
     boolean existsBySubscriptionIdAndPaymentStatus(UUID subscriptionId, PaymentStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
@@ -45,7 +45,7 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     List<Payment> findByShopIdAndPaymentStatus(UUID shopId, PaymentStatus paymentStatus);
 
     List<Payment> findByShopIdAndPaymentTypeAndPaymentStatus(UUID shopId, PaymentType paymentType, PaymentStatus paymentStatus);
-    
+
     Page<Payment> findAllByUserId(UUID userId, Pageable pageable);
 
     Page<Payment> findAllByPaymentMethodAndPaymentStatusAndPaymentType(
@@ -54,4 +54,6 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
             PaymentType type,
             Pageable pageable
     );
+
+    Optional<Payment> findFirstByShopIdAndPaymentTypeOrderByCreatedAtDesc(UUID shopId, PaymentType paymentType);
 }

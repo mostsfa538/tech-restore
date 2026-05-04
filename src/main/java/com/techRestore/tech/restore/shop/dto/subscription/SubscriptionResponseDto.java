@@ -15,6 +15,9 @@ public class SubscriptionResponseDto {
   private BigDecimal baseAmount;
   private BigDecimal totalAmount;
   private SubscriptionType type;
+  private String status;
+  private String paymentStatus;
+  private String paymentMethod;
   private LocalDateTime startDate;
   private LocalDateTime endDate;
   private LocalDateTime createdAt;
