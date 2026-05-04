@@ -65,7 +65,7 @@ public class AppConfig {
                                 "/swagger-resources/**",
                                 "/webjars/**")
                         .permitAll()
-                        .requestMatchers("/login/oauth2/code/**", "/oauth2/authorization/**", "oauth2/success")
+                        .requestMatchers("/login/oauth2/code/**", "/oauth2/authorization/**", "/oauth2/success")
                         .permitAll()
                         .requestMatchers("/api/auth/register/user", "/api/auth/login",
                                 "/api/auth/verify-email", "/api/auth/resend-otp", "api/auth/forgot-password",
