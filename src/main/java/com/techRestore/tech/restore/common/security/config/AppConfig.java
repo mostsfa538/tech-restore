@@ -1,8 +1,10 @@
 package com.techRestore.tech.restore.common.security.config;
 
-import lombok.RequiredArgsConstructor;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
-import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.caffeine.CaffeineCacheManager;
@@ -21,6 +23,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.techRestore.tech.restore.common.security.filter.JWTAuthenticationFilter;
 import com.techRestore.tech.restore.common.security.jwt.JwtService;
 import com.techRestore.tech.restore.common.security.jwt.RefreshTokenService;
@@ -30,13 +33,8 @@ import com.techRestore.tech.restore.common.security.userdetails.ShopDetailsServi
 import com.techRestore.tech.restore.common.security.userdetails.UserDetailsServiceImpl;
 import com.techRestore.tech.restore.common.utils.CookieUtil;
 
-import java.util.Arrays;
-import java.util.concurrent.TimeUnit;
-
 import jakarta.servlet.http.HttpServletResponse;
-
-import java.util.Collections;
-import java.util.List;
+import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 @Configuration
@@ -67,7 +65,8 @@ public class AppConfig {
                                 "/swagger-resources/**",
                                 "/webjars/**")
                         .permitAll()
-                        .requestMatchers("/login/oauth2/code/**", "/oauth2/authorization/**").permitAll()
+                        .requestMatchers("/login/oauth2/code/**", "/oauth2/authorization/**", "oauth2/success")
+                        .permitAll()
                         .requestMatchers("/api/auth/register/user", "/api/auth/login",
                                 "/api/auth/verify-email", "/api/auth/resend-otp", "api/auth/forgot-password",
                                 "/api/auth/test-cookie",
@@ -140,8 +139,7 @@ public class AppConfig {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedOrigins(Arrays.asList(
                 "https://tech-restore.net",
-                "https://www.tech-restore.net"
-        ));
+                "https://www.tech-restore.net"));
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
         corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
