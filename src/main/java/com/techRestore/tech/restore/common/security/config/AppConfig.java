@@ -65,7 +65,7 @@ public class AppConfig {
                                 "/swagger-resources/**",
                                 "/webjars/**")
                         .permitAll()
-                        .requestMatchers("/login/oauth2/code/**", "/oauth2/authorization/**", "/oauth2/success")
+                        .requestMatchers("/login/oauth2/code/**", "/oauth2/authorization/**")
                         .permitAll()
                         .requestMatchers("/api/auth/register/user", "/api/auth/login",
                                 "/api/auth/verify-email", "/api/auth/resend-otp", "api/auth/forgot-password",
@@ -192,7 +192,7 @@ public class AppConfig {
                 cookieUtil.addRefreshTokenCookie(response, refreshToken);
 
                 cookieUtil.addClientAccessTokenCookie(response, accessToken);
-                response.sendRedirect("https://api.tech-restore.net/oauth2/success");
+                response.sendRedirect("https://tech-restore.net/");
 
             } catch (Exception e) {
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
