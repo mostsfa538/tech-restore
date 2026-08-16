@@ -2,8 +2,10 @@ package com.techRestore.tech.restore.shop.controller;
 
 import com.techRestore.tech.restore.common.controller.BaseController;
 import com.techRestore.tech.restore.shop.dto.product.CreateProductDto;
+import com.techRestore.tech.restore.shop.dto.product.CreateProductV2Dto;
 import com.techRestore.tech.restore.shop.dto.product.ProductResponseDTO;
 import com.techRestore.tech.restore.shop.dto.product.UpdateProductDto;
+import org.springframework.http.MediaType;
 import com.techRestore.tech.restore.shop.dto.shop.StockUpdateRequest;
 import com.techRestore.tech.restore.shop.service.ProductImportService;
 import com.techRestore.tech.restore.shop.service.ShopProductService;
@@ -37,6 +39,13 @@ public class ShopProductController extends BaseController {
     public ResponseEntity<ProductResponseDTO> addProductToShop(
             @RequestBody @Valid CreateProductDto createProductDto) {
         ProductResponseDTO product = shopProductService.addProductToShop(createProductDto);
+        return createdResponse(product);
+    }
+
+    @PostMapping(value = "/v2", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProductResponseDTO> addProductToShopV2(
+            @ModelAttribute @Valid CreateProductV2Dto createProductDto) {
+        ProductResponseDTO product = shopProductService.addProductToShopV2(createProductDto);
         return createdResponse(product);
     }
 

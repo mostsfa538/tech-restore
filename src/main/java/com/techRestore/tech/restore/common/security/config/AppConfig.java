@@ -63,7 +63,8 @@ public class AppConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/swagger-resources/**",
-                                "/webjars/**")
+                                "/webjars/**",
+                                "/uploads/**")
                         .permitAll()
                         .requestMatchers("/login/oauth2/code/**", "/oauth2/authorization/**")
                         .permitAll()
@@ -104,7 +105,8 @@ public class AppConfig {
                         .requestMatchers("/api/shop/inventory/**").hasAnyRole("SELLER", "BOTH")
                         .requestMatchers("/api/users/**", "/api/products/**").hasAnyRole("GUEST")
                         .requestMatchers("/api/reviews/**").hasAnyRole("GUEST", "SHOP_OWNER")
-                        .anyRequest().authenticated())
+                        .anyRequest().authenticated()
+                )
 
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/oauth2/authorization/google")
@@ -139,6 +141,7 @@ public class AppConfig {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedOrigins(Arrays.asList(
                 "https://tech-restore.net",
+                "http://localhost:3000",
                 "https://www.tech-restore.net"));
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
