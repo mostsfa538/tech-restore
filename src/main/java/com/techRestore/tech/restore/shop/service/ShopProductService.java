@@ -8,11 +8,15 @@ import com.techRestore.tech.restore.common.model.entities.Shop;
 import com.techRestore.tech.restore.common.services.BaseService;
 import com.techRestore.tech.restore.common.utils.DTOConverter;
 import com.techRestore.tech.restore.shop.dto.product.CreateProductDto;
+import com.techRestore.tech.restore.shop.dto.product.CreateProductV2Dto;
 import com.techRestore.tech.restore.shop.dto.product.ProductResponseDTO;
 import com.techRestore.tech.restore.shop.dto.product.UpdateProductDto;
 import com.techRestore.tech.restore.shop.dto.shop.StockUpdateRequest;
 import com.techRestore.tech.restore.shop.repository.ProductRepository;
 import com.techRestore.tech.restore.shop.repository.ShopRepository;
+import org.springframework.web.multipart.MultipartFile;
+import java.io.File;
+import java.io.IOException;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -87,6 +91,64 @@ public class ShopProductService extends BaseService<Product, UUID> {
 
         repository.save(product);
         return DTOConverter.convertToProductDTO(product);
+    }
+
+    @CacheEvict(value = {
+        "products",
+        "shopProductPages",
+        "shopCategoryProductPages" 
+    }, allEntries = true)
+    public ProductResponseDTO addProductToShopV2(CreateProductV2Dto createProductDto) {
+        UUID shopId = getCurrentShopId();
+
+        findByIdOrThrow(shopRepository, shopId, "Shop");
+
+        String imageUrl = saveImageFile(createProductDto.image());
+
+        Product product = new Product();
+        product.setShopId(shopId);
+        product.setName(createProductDto.name());
+        product.setDescription(createProductDto.description());
+        product.setPrice(createProductDto.price());
+        product.setImageUrl(imageUrl);
+        product.setStock(createProductDto.stockQuantity());
+        product.setCondition(createProductDto.condition());
+
+        if (createProductDto.categoryId() != null) {
+            Category category = findByIdOrThrow(categoryRepository, createProductDto.categoryId(), "Category");
+            product.setCategory(category);
+        }
+
+        repository.save(product);
+        return DTOConverter.convertToProductDTO(product);
+    }
+
+    private String saveImageFile(MultipartFile image) {
+        if (image == null || image.isEmpty()) {
+            throw new IllegalArgumentException("Image file cannot be empty");
+        }
+
+        String uploadDir = "uploads/";
+        File uploadFolder = new File(uploadDir);
+        if (!uploadFolder.exists()) {
+            uploadFolder.mkdirs();
+        }
+
+        String originalFilename = image.getOriginalFilename();
+        String extension = "";
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        }
+        
+        String fileName = UUID.randomUUID().toString() + extension;
+        File destinationFile = new File(uploadFolder.getAbsolutePath(), fileName);
+        try {
+            image.transferTo(destinationFile);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to save image file: " + e.getMessage(), e);
+        }
+
+        return "/uploads/" + fileName;
     }
 
     @CacheEvict(value = {
