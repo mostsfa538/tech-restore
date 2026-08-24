@@ -140,9 +140,9 @@ public class AppConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration corsConfiguration = new CorsConfiguration();
         corsConfiguration.setAllowedOrigins(Arrays.asList(
-                "https://tech-restore.net",
+                "https://tech-restore.tech",
                 "http://localhost:3000",
-                "https://www.tech-restore.net"));
+                "https://www.tech-restore.tech"));
         corsConfiguration.setAllowCredentials(true);
         corsConfiguration.setAllowedMethods(Collections.singletonList("*"));
         corsConfiguration.setAllowedHeaders(Collections.singletonList("*"));
