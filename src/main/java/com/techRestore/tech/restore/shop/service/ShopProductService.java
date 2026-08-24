@@ -95,6 +95,7 @@ public class ShopProductService extends BaseService<Product, UUID> {
 
     @CacheEvict(value = {
         "products",
+        "productPages",
         "shopProductPages",
         "shopCategoryProductPages" 
     }, allEntries = true)
